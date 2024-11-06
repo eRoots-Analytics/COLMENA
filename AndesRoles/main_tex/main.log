@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.8.29)  6 NOV 2024 16:54
+This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.8.29)  6 NOV 2024 17:23
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -745,7 +745,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 [3]
 
 [4]
-Underfull \hbox (badness 10000) in paragraph at lines 130--131
+Underfull \hbox (badness 10000) in paragraph at lines 142--143
 
  []
 
@@ -754,15 +754,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 130--131
 [5]
 File: pictures/kundurgrid.png Graphic file (type bmp)
 <pictures/kundurgrid.png>
-File: pictures/IEEE118.png Graphic file (type bmp)
-<pictures/IEEE118.png>
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
 
 
 [6]
+File: pictures/IEEE118.png Graphic file (type bmp)
+<pictures/IEEE118.png>
+
 
 [7]
 
@@ -778,12 +775,12 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 23808 strings out of 409029
- 462427 string characters out of 5757553
+ 23812 strings out of 409029
+ 462473 string characters out of 5757553
  1932612 words of memory out of 5000000
- 46150 multiletter control sequences out of 15000+600000
+ 46154 multiletter control sequences out of 15000+600000
  566022 words of font info for 76 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  69i,9n,81p,1108b,3856s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on main.xdv (9 pages, 167780 bytes).
+Output written on main.xdv (9 pages, 186552 bytes).
