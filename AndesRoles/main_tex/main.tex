@@ -12,7 +12,7 @@
 \usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
 % \usepackage{tikz-cd}
 \usepackage{listings}
-% \usepackage{xcolor}
+\usepackage{xcolor}
 % \usepackage[colorlinks, linkcolor = blue, citecolor = magenta]{hyperref}
 \usepackage{tikz}
 % % \usepackage{minted}
@@ -62,7 +62,11 @@
 
 \section{Introduction}
 % ANDES intro
-ANDES Curent \cite{grids:models} is a python package that can be used to model, simulate, and analyze power systems. The package uses predefined models that simulate different elements of an electrical grid. Additionally, the package allows the user to define custom models which relative ease. ANDES stands out from other simulation tools for the use of a hybrid symbolic-numeric framework for modeling differential algebraic equations (DAEs). This project present the objectives for developing test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES. The goal of the project is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid. We will outline the different requirements needed 
+ANDES Curent \cite{grids:models} is a python package that can be used to model, simulate, and analyze power systems. The package uses predefined models that simulate different elements of an electrical grid. Additionally, the package allows the user to define custom models which relative ease. ANDES stands out from other simulation tools for the use of a hybrid symbolic-numeric framework for modeling differential algebraic equations (DAEs). This project present the objectives for developing test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES. The goal of the project is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid. We will outline the different requirements needed. 
+
+\textcolor{red}{I would start by saying what the objective of the project as a whole is. You can read the technical offer inside the documentation folder. For example:}
+
+\textcolor{red}{COLMENA is a decentralized framework that allows the coordination of multiple agents to solve complex problems. The framework is based on the concept of a colony of agents that can communicate and coordinate to solve a problem. The agents can be programmed to have different roles and behaviors. The objective of the project is to develop a test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES (later on, potentially others). The resulting goal is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid, providing useful use cases showing noticeable improvements to be derived from this architecture. The present document is an answer to Objective 1 - Development plan for the validation of the platform.}
 
 \subsection{Power Grid \& Service definition}
 We define an electrical grid as a set of nodes called buses with electrical devices attached to them, the nodes are interconnected with lines. These devices include generators, loads or others types of devices. In ANDES, each device is defined by a set of differential and algebraic equations (DAE) that define how the devices' states change over time.
@@ -186,7 +190,7 @@ The available power reserves is the amount of power that can be activated in a g
 
 The current through a line is limited by a maximum value for security purposes. If the current through a line surpasses the maximum value for a specific amount of time the line can disconnect to avoid being damaged.
 
-\subsection*{Power Balance \& regional power exchanges}
+\subsection*{Power Balance and regional power exchanges}
 
 The power balance is defined as the net power that is coming into the grid. A good performance of the grid should maintain the net power balance close to 0. Additionally, we can also look into the power balances between different areas that are interconnected and define KPI that take into account excessive reliance on these interconnections. One KPI that could be useful for taking into account these power exchanges between areas is the Area Control Error (ACE). The ACE of an area is defined as the difference between the net power exchange and the schedule power exchange with all adjacent areas. It measures if the grid is sticking to the scheduled power exchanges. A good performing grid looks to have an ACE close to $0$.  
 
@@ -198,7 +202,7 @@ The N-1 criterion is a standard used in power system planning and operation to e
 \subsection*{Economic criteria}
 
 
-\nocite{*}
-\printbibliography
+% \nocite{*}
+% \printbibliography
 
 \end{document}

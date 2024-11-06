@@ -1,15 +1,17 @@
 [0] Config.pm:308> INFO - This is Biber 2.20
-[1] Config.pm:311> INFO - Logfile is 'main.blg'
-[209] biber-MSWIN64:340> INFO - === 
-[266] Biber.pm:420> INFO - Reading 'main.bcf'
-[436] Biber.pm:991> INFO - Using all citekeys in bib section 0
-[461] Biber.pm:4463> INFO - Processing section 0
-[482] Biber.pm:4654> INFO - Looking for bibtex file 'ref.bib' for section 0
-[557] bibtex.pm:1713> INFO - LaTeX decoding ...
-[575] bibtex.pm:1519> INFO - Found BibTeX data source 'ref.bib'
-[666] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[666] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[666] Biber.pm:4283> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[667] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
-[682] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
-[688] bbl.pm:779> INFO - Output to main.bbl
+[0] Config.pm:311> INFO - Logfile is 'main.blg'
+[175] biber-MSWIN64:340> INFO - === 
+[233] Biber.pm:420> INFO - Reading 'main.bcf'
+[389] Biber.pm:994> INFO - Found 5 citekeys in bib section 0
+[411] Biber.pm:4463> INFO - Processing section 0
+[425] Biber.pm:4654> INFO - Looking for bibtex file 'ref.bib' for section 0
+[496] bibtex.pm:1713> INFO - LaTeX decoding ...
+[508] bibtex.pm:1519> INFO - Found BibTeX data source 'ref.bib'
+[560] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[560] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[561] Biber.pm:4283> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[561] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
+[570] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[572] bbl.pm:779> INFO - Output to main.bbl
+[573] Biber.pm:131> WARN - Duplicate entry key: 'source:NRELfrequency' in file 'ref.bib', skipping ...
+[573] Biber.pm:133> INFO - WARNINGS: 1
