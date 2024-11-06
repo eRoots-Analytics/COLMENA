@@ -76,7 +76,7 @@ The electrical grid is defined by multiple metrics that define the state of the 
     \item Power injected/consumed $(kW)$: The power injected is by a generator is the amount of power the . The objective of the grid supervisor is to keep the balance of power as close to zero as possible. Raising the amount of power injected by a generator also tends to raise its synchronous speed. It's an important lever in controlling  
 \end{itemize}
 
-The metrics just introduced are key to defining the performance of a grid and to the frequency control response of a power grid. The objective of the frequency response is multiple. On a first time scale (primary response), the control aims to take the system from a transient to a stable condition and avoiding critical values for the frequency. During the secondary response, the objective is to restore the steady state values to their nominal values. Finally, the last response's objective is to restore the the power reserves to their original value.
+The metrics just introduced are key to defining the performance of a grid and to the frequency control response of a power grid. The objective of the frequency response is multiple. On a first time scale (primary response)\cite{source:NRELfrequency}, the control aims to take the system from a transient to a stable condition and avoiding critical values for the frequency. During the secondary response, the objective is to restore the steady state values to their nominal values. Finally, the last response's objective is to restore the the power reserves to their original value \cite{source:bookelectron}.
 \vspace{1em} 
 The objective of the service implemented in COLMENA will be then to aid to the frequency control response by implementing decentralized roles that can improve the performance of the control. This roles will take the form of changing set-points for certain devices, connecting or disconnecting devices such as secondary generators and others. 
 
@@ -129,23 +129,74 @@ Switches are controllable elements that control the connection state of a Line. 
 
 In this section we explain how Andes and COLMENA will work during the simulation and how they will communicate. As a standalone, ANDES simulates the time domain response of the power grid for a pre-set amount of time. The package solves the equations numerically and return the solution but it doesn't simulate the grid in real time, instead it solves it as fast as possible. To enable the integration with COLMENA we modify ANDES into running for a given step-size only when the real time is greater than the simulation time in order for it to catch-up to. ANDES is run parallel to COLMENA on an independent app run on an independent device not part of COLMENA's colony of agents. Specific COLMENA Agents will periodically send requests to the ANDES App to get the simulation's information and to send changes   
 
-From COLMENA's side, we first consider the case were each COLMENA-Agent is paired with a specific ANDES-device.  
+From COLMENA's side, we will define specific COLMENA-agents that will be paired with a single ANDES-device in the grid. The COLMENA-agent will have two main roles in a continuous manner. They will read their device's variables, store the values internally, and send the behavior changes in the form of new set-point and parameter changes for the paired device. These roles will be the building blocks of the COLMENA-ANDES integration.      
 
 \section{Use Case Specification}
 
-\subsection{Grid Definition}
+Having explained the objectives of the project we want to chose specific scenarios that are well adapted to these objectives. In this particular case, we are looking for power grids of considerable size, and with the appropriate types of devices presented earlier such as generators, converters and distributed generation. Additionally, we would want to chose use cases in which the grid can be separated into different areas to properly implement into the simulation the different geographical context that we want to take into account. Finally, we also consider the ease to access information and data about the modeled grid.  
+
+For the first use case we proposes first using the grid defined in  the Kundur two area system  \cite{grids:kundur}. This grid consists of 10 buses divided in 2 areas. Each area includes two synchronous generators. Additionally, this simulation includes a line failure at a specific time step (Line 8, at $t=2s$). The objective of this is to showcase how the decentralized nature of COLMENA can adapt to unexpected events in the grid such as failures and avoid cascading failures in the grid. 
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{pictures/kundurgrid.png}
+    \caption{Kundur grid scheme. \cite{grids:kundur}}
+    \label{fig:kundur2}
+\end{figure}
+
+In this specific use case the COLMENA-Agents will be paired with the different generators and monitor the values provided by the ANDES simulation. Moreover, this agents will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to overtime include different sources of generation and the proposed GFL-GFM converters. 
+
+When this more accessible use case is deploy we want to scale the simulation into a more extensive grid that could be able to showcase the performance of COLMENA in a more complicated environment, with more varieties of models and more complicated control overall. The objective is to eventually run the simulation in larger grids with a larger number of agents. For this we can use other test grids such as the IEEE 118 bus case \cite{grids:ieee118}. This test grid is composed by 118 buses, 54 generators and 99 Loads. Additionally, some of the generators are synchronous condensers who essentially are synchronous motors whose shaft is not connected to any mechanical load. Their main function is to provide reactive power compensation. Moreover, it uses the same models as the ones used in the previous tests cases so transferring the already developed models is feasible.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=1\textwidth]{pictures/IEEE118.png}
+    \caption{IEEE118 grid scheme. \cite{grids:ieee118}}
+    \label{fig:kundur}
+\end{figure}
 
 \subsection{Grid's Performance \& Key Performance Indicators}
 
 In the first section we have defined a set of metrics and states that are key to defining the grids state, specifically when dealing with the frequency response. These include the frequency, the angular speed of the synchronous generators and others. We aim to define key performance indicators (KPI) starting from the metrics defined previously. These KPIs define the performance of the grid with respect to the frequency service control. 
 
 \begin{itemize}
-    \item Deviation of the generator's frequency.
-    \item Deviation of the mean bus frequency in an area from the nominal frequency.
-    \item Steady state frequency value.
+    \item Minimum and maximum of the generator's frequency.
+    \item Minimum and maximum of the mean bus frequency in an area from the nominal frequency.
+    \item Steady state values.
     \item Rate of Change of Frequency (RoCoF).
-    \item Area Control Error (ACE).
+    \item Available power reserves.
+    \item Power Balance \& regional power exchanges.
+    \item N-1 criteria
+    \item Economic criteria
 \end{itemize}
+
+\subsection*{Minimum and maximum of the generator's frequency}
+
+This KPIs is usually used with regards to the primary response in the frequency control response. The objective would be to maintain the generator's frequency $\omega$ as close to the nominal value. In power grids a common value for this KPI in the response is around $0.1\%$ around the nominal value. This is true for both the generator's frequency and the buses' frequency.
+
+\subsection*{RoCoF}
+
+The Rate of Change of Frequency is the frequency's time derivative measured in a given bus. It signals sudden changes in frequency and if its close to $0$ for a given amount of time it can also signal the grid arriving to a steady state. Therefore the RoCoF is key to measure the performance of the grid during. 
+
+\subsection*{Available Power Reserves}
+
+The available power reserves is the amount of power that can be activated in a given amount of time in case of need but its not being used. It usually considers an horizon of 10 to 30 minutes. Additionally, we also need to consider the ramp up capabilities of these power reserves. The ramp up measured in kW/s and is the speed with which this reserve power can come online. The grid operator usually defines minimum requirements for available power values.
+
+\subsection*{Maximum line current}
+
+The current through a line is limited by a maximum value for security purposes. If the current through a line surpasses the maximum value for a specific amount of time the line can disconnect to avoid being damaged.
+
+\subsection*{Power Balance \& regional power exchanges}
+
+The power balance is defined as the net power that is coming into the grid. A good performance of the grid should maintain the net power balance close to 0. Additionally, we can also look into the power balances between different areas that are interconnected and define KPI that take into account excessive reliance on these interconnections. One KPI that could be useful for taking into account these power exchanges between areas is the Area Control Error (ACE). The ACE of an area is defined as the difference between the net power exchange and the schedule power exchange with all adjacent areas. It measures if the grid is sticking to the scheduled power exchanges. A good performing grid looks to have an ACE close to $0$.  
+
+\subsection*{N-1 criteria}
+
+The N-1 criterion is a standard used in power system planning and operation to ensure reliability and resilience. It specifies that a power system should be able to withstand the loss of any single element (like a generator, transformer, or transmission line) without causing a system-wide failure. New devices could be connected or scheduled by the COLMENA agents to help ensure the criterion is respected. 
+
+
+\subsection*{Economic criteria}
+
 
 \nocite{*}
 \printbibliography
