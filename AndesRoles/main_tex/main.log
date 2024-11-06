@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.30)  6 NOV 2024 17:10
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.9.30)  6 NOV 2024 18:15
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -735,11 +735,6 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 [2]
 
 [3]
-Underfull \hbox (badness 10000) in paragraph at lines 126--127
-
- []
-
-
 
 [4]
 <pictures/kundurgrid.png, id=31, 365.365pt x 138.5175pt>
@@ -788,8 +783,8 @@ Overfull \hbox (8.71161pt too wide) in paragraph at lines 224--224
 c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex:224: Misplaced alignment tab character &.
 \namepartgiveni ->&
                    \bibinitperiod \bibinitdelim D\bibinitperiod 
-l.224 \end
-          {document}
+l.224 
+      
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
 simple: Just type `I\&' now. But if some right brace

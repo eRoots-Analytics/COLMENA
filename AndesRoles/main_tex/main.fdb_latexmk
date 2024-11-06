@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber main"] 0 "main.bcf" "main.bbl" "main" 1730909440.14481 -1
-  "main.bcf" 1730909439 108485 6d2af0608ba10db7efed43dee836c12b "pdflatex"
+["biber main"] 0 "main.bcf" "main.bbl" "main" 1730913339.33131 -1
+  "main.bcf" 1730913339 108485 6d2af0608ba10db7efed43dee836c12b "pdflatex"
   "ref.bib" 1730896256 2146 638b96a3fc8f7945de499c58c7a18f31 ""
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1730909438.23091 "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" "main.pdf" "main" 1730909440.14562 2
-  "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" 1730909345 20885 0fdf5bdff2987bf82eaec0bb2dda7e04 ""
+["pdflatex"] 1730913337.71497 "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" "main.pdf" "main" 1730913339.33213 2
+  "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" 1730913336 20885 c72e5bc74d111adddfd20c3783d2094c ""
   "c:/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1727691915 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "c:/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1727693321 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/tcrm1000.tfm" 1727692791 1536 e07581a4bb3136ece9eeb4c3ffab8233 ""
@@ -183,9 +183,9 @@
   "c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1727702060 5523052 a6c4264ca43d05e5adfe84e964c2ac4c ""
   "c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1727702256 3325960 afe7e976690bdbcf358ef765274a238e ""
   "c:/texlive/2024/texmf.cnf" 1727702036 713 e69b156964470283e0530f5060668171 ""
-  "main.aux" 1730909439 2803 3b69c528501fa167086ae61a7c267e7b "pdflatex"
+  "main.aux" 1730913339 2803 3b69c528501fa167086ae61a7c267e7b "pdflatex"
   "main.bbl" 1730909162 10321 fb23c6264abd2f549d3dbddaef5d9b27 "biber main"
-  "main.tex" 1730909345 20885 0fdf5bdff2987bf82eaec0bb2dda7e04 ""
+  "main.tex" 1730913336 20885 c72e5bc74d111adddfd20c3783d2094c ""
   "pictures/IEEE118.png" 1725352752 135789 12d864f42deeaf1ee4bdd16404a912b0 ""
   "pictures/kundurgrid.png" 1725352752 4408 2f5d8ea4b27deb8f17e39e0db3412467 ""
   "pictures/plot.png" 1730814520 46032 fdc0f7ef3e2f43580f5498c4a50f5e61 ""
