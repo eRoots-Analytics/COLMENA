@@ -150,21 +150,26 @@ From the COLMENA's side, we will define specific COLMENA-agents that will be pai
 \textcolor{red}{Here one of the diagrams you had on the slides would be useful}
 
 \section{Use Case Specification}
+\textcolor{red}{Just wondering, should we explain somewhere here the roles, the context, the channels...?}
 
-Having explained the objectives of the project we want to chose specific scenarios that are well adapted to these objectives. In this particular case, we are looking for power grids of considerable size, and with the appropriate types of devices presented earlier such as generators, converters and distributed generation. Additionally, we would want to chose use cases in which the grid can be separated into different areas to properly implement into the simulation the different geographical context that we want to take into account. Finally, we also consider the ease to access information and data about the modeled grid.  
+Having explained the objectives of the project, we want to chose specific scenarios that are well adapted to evaluate these objectives. In this particular case, we are looking for power grids of considerable size, and with the appropriate types of devices presented earlier such as generators and converters to facilitate the integration of distributed generators. Additionally, we would want to choose use cases in which the grid can be separated into different areas to properly implement different geographical contexts to take into account. Finally, we also consider the ease to access information and data about the modeled grid.  
 
-For the first use case we proposes first using the grid defined in  the Kundur two area system  \cite{grids:kundur}. This grid consists of 10 buses divided in 2 areas. Each area includes two synchronous generators. Additionally, this simulation includes a line failure at a specific time step (Line 8, at $t=2s$). The objective of this is to showcase how the decentralized nature of COLMENA can adapt to unexpected events in the grid such as failures and avoid cascading failures in the grid. 
+\textcolor{red}{I would add with an itemize to list the grids we are considering: Kundur, IEEE118, etc. Also, at each point indicate the source of information with a reference}
+
+For the first use case we propose first using the grid defined in the Kundur two area system  \cite{grids:kundur}. This grid consists of 10 buses divided in 2 areas. Each area includes two synchronous generators. Additionally, this simulation includes a line failure at a specific time step (Line 8, at $t=2s$). The objective of this is to showcase how the decentralized nature of COLMENA can adapt to unexpected events in the grid such as failures and avoid cascading failures in the grid. 
 
 \begin{figure}[!htb]
     \centering
-    \includegraphics[width=0.5\textwidth]{pictures/kundurgrid.png}
+    \includegraphics[width=0.7\textwidth]{pictures/kundurgrid.png}
     \caption{Kundur grid scheme. \cite{grids:kundur}}
     \label{fig:kundur2}
 \end{figure}
 
-In this specific use case the COLMENA-Agents will be paired with the different generators and monitor the values provided by the ANDES simulation. Moreover, this agents will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to overtime include different sources of generation and the proposed GFL-GFM converters. 
+In this specific use case the COLMENA-Agents will be paired with the different generators and monitor the values provided by the ANDES simulation. Moreover, these agents will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to include different sources of generation and the proposed GFL-GFM converters. 
 
-When this more accessible use case is deploy we want to scale the simulation into a more extensive grid that could be able to showcase the performance of COLMENA in a more complicated environment, with more varieties of models and more complicated control overall. The objective is to eventually run the simulation in larger grids with a larger number of agents. For this we can use other test grids such as the IEEE 118 bus case \cite{grids:ieee118}. This test grid is composed by 118 buses, 54 generators and 99 Loads. Additionally, some of the generators are synchronous condensers who essentially are synchronous motors whose shaft is not connected to any mechanical load. Their main function is to provide reactive power compensation. Moreover, it uses the same models as the ones used in the previous tests cases so transferring the already developed models is feasible.
+
+
+Once this more accessible use case is deployed, our next goal is to scale the simulation to a more extensive grid that could be able to showcase the performance of COLMENA in a more complicated environment, with more varieties of models and more complicated controls overall. The objective is to eventually run the simulation in larger grids with a larger number of agents. For this we can use other test grids such as the IEEE 118 bus case \cite{grids:ieee118}. This test grid is composed by 118 buses, 54 generators and 99 Loads. Additionally, some of the generators are synchronous condensers which are essentially synchronous motors whose shaft is not connected to any mechanical load. Their main function is to provide reactive power compensation. Moreover, it uses the same models as the ones used in the previous tests cases so transferring the already developed models is feasible.
 
 \begin{figure}[h!]
     \centering
@@ -188,17 +193,21 @@ In the first section we have defined a set of metrics and states that are key to
     \item Economic criteria
 \end{itemize}
 
+\textcolor{red}{A few questions. What do you mean by steady-state values? (I mean, which magnitude? Voltages, currents...?) Also, the $N-1$ criteria will be very hard to assess I believe. Same applies to the economic criteria as we have no information on costs for these grids. Some ideas to add: percentual power losses, maximum overloading of lines, short-circuit currents.} 
+
 \subsection*{Minimum and maximum of the generator's frequency}
 
-This KPIs is usually used with regards to the primary response in the frequency control response. The objective would be to maintain the generator's frequency $\omega$ as close to the nominal value. In power grids a common value for this KPI in the response is around $0.1\%$ around the nominal value. This is true for both the generator's frequency and the buses' frequency.
+This KPIs is usually used with regards to the primary response in the frequency control response. The objective would be to maintain the generator's frequency $\omega$ as close to the nominal value. In moderately strong power grids a common value for this KPI would be around $0.1\%$ around the nominal value. This is true for both the generator's frequency and the buses' frequency.
 
 \subsection*{RoCoF}
 
-The Rate of Change of Frequency is the frequency's time derivative measured in a given bus. It signals sudden changes in frequency and if its close to $0$ for a given amount of time it can also signal the grid arriving to a steady state. Therefore the RoCoF is key to measure the performance of the grid during. 
+The Rate of Change of Frequency is the frequency's time derivative measured in a given bus. It signals sudden changes in frequency and if its close to $0$ for a given amount of time it can also signal the grid reaching a steady state. Therefore the RoCoF is key to measure the performance of the grid during transients. 
 
 \subsection*{Available Power Reserves}
 
 The available power reserves is the amount of power that can be activated in a given amount of time in case of need but its not being used. It usually considers an horizon of 10 to 30 minutes. Additionally, we also need to consider the ramp up capabilities of these power reserves. The ramp up measured in kW/s and is the speed with which this reserve power can come online. The grid operator usually defines minimum requirements for available power values.
+
+\textcolor{red}{OK, the only thing is that it will be hard to model these reserves. Not sure how it is done in ANDES.}
 
 \subsection*{Maximum line current}
 
@@ -208,9 +217,24 @@ The current through a line is limited by a maximum value for security purposes. 
 
 The power balance is defined as the net power that is coming into the grid. A good performance of the grid should maintain the net power balance close to 0. Additionally, we can also look into the power balances between different areas that are interconnected and define KPI that take into account excessive reliance on these interconnections. One KPI that could be useful for taking into account these power exchanges between areas is the Area Control Error (ACE). The ACE of an area is defined as the difference between the net power exchange and the schedule power exchange with all adjacent areas. It measures if the grid is sticking to the scheduled power exchanges. A good performing grid looks to have an ACE close to $0$.  
 
+\textcolor{red}{To be discussed. I like the explanation on the ACE, it is a nice way to measure it. I am not so sure about the power balance concept because by Kirchhoff's first law, the balance will always be maintained. By the way, how would we compute the ACE in ANDES? I have some ideas, but what do you think?}
+
 \subsection*{N-1 criteria}
 
 The N-1 criterion is a standard used in power system planning and operation to ensure reliability and resilience. It specifies that a power system should be able to withstand the loss of any single element (like a generator, transformer, or transmission line) without causing a system-wide failure. New devices could be connected or scheduled by the COLMENA agents to help ensure the criterion is respected. 
+
+\textcolor{red}{Correct. How would we test it? By running many simulations and assessing if we are complying with the criterion?}
+
+\textcolor{red}{I forgot to tell you but a table such as the following would be nice:}
+
+\textcolor{red}{
+\begin{tabular}{lrr}
+    Magnitude & Unit & Description \\
+    Voltage & kV & Voltage at a bus \\
+    Current & A & Current through a branch \\
+    ...
+\end{tabular}
+}
 
 
 \subsection*{Economic criteria}

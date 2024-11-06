@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.8.29)  6 NOV 2024 17:23
+This is XeTeX, Version 3.141592653-2.6-0.999996 (MiKTeX 24.4) (preloaded format=xelatex 2024.8.29)  6 NOV 2024 17:44
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -752,20 +752,25 @@ Underfull \hbox (badness 10000) in paragraph at lines 142--143
 
 
 [5]
-File: pictures/kundurgrid.png Graphic file (type bmp)
-<pictures/kundurgrid.png>
-
 
 [6]
+File: pictures/kundurgrid.png Graphic file (type bmp)
+<pictures/kundurgrid.png>
 File: pictures/IEEE118.png Graphic file (type bmp)
 <pictures/IEEE118.png>
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 
 
 [7]
 
 [8]
 
-[9] (main.aux)
+[9]
+
+[10] (main.aux)
  ***********
 LaTeX2e <2024-06-01> patch level 2
 L3 programming layer <2024-07-20>
@@ -783,4 +788,4 @@ Here is how much of TeX's memory you used:
  1348 hyphenation exceptions out of 8191
  69i,9n,81p,1108b,3856s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on main.xdv (9 pages, 186552 bytes).
+Output written on main.xdv (10 pages, 200212 bytes).
