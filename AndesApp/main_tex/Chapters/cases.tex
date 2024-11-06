@@ -1,0 +1,208 @@
+\section[short]{Additional and Alternative Formulation}
+
+\subsection{Devices}
+
+In our modelling, we consider an electrical device as the representation of the physical capabilities of an element of the grid. Let's first define the concept of a simple device. A simple device is a device with a state variable $x \in \mathbb{R}^n$, an algebraic variable $y \in \mathbb{R}^m$, a set of parameters $p \in \mathbb{R}^k$ and a set of acceptable roles $\mathcal{R}(d)$. The set of acceptable roles is limited by the capabilities of the device and also by the state and algebraic variables available to the device. So we have that:
+
+\begin{equation}
+    \mathcal{R}(d) = \{ r_i := (f_{r_i}(x,y), g_{r_i}(x,y)) | i \in \}
+\end{equation}
+
+Additionally a simple device can only have a single active role at a time. This type of device is meant as a building block for more complicated devices and is a useful tool to see the direct link between the active roles and the final DAE of an agent. In this case we have that if role $r$ is active at a certain time then the DAE is the following.
+
+\begin{align}
+    \dot{x} &= f_r(x,y)\\
+    0 &= g_r(x,y) 
+\end{align}
+
+While the whole DAE for every timesteps get the following form:
+
+\begin{align}
+    \dot{x} &= \sum_{r_i \in \mathcal{R}(d)} u_{r_i}(t) f_{r_i}(x,y)\\
+    0 &= \sum_{r_i \in \mathcal{R}(d)} u_{r_i}(t) g_{r_i}(x,y)
+\end{align}
+
+
+Lets take for example a generator device. The generator has at least the states $\delta$ the rotor angle and $\omega$ the rotor's speed. An acceptable role for a generator needs to define the differential equations for this variables and take into account the dependencies into the definition of $f(x,y)$ and $g(x,y)$.
+
+\subsection{Edges}
+
+Previously, we defined an environment as a set af agents that can share information \ref{environment}. This information is exchanged through edges. The edge is composed of a logger, and a dashboard. The logger stores the data inputed from the different agents and the dahsboard stores the data that edge outputs that is available to the agents. To define the behaviour of the edge and how the data stored evolves we need to work with different parts:
+
+\begin{itemize}
+    \item A measure: the type of value that the agents publish to the logger.
+    \item An update function to filter the logger overtime.
+    \item A KPI of the form $f(logger)$ to publsih to the dashboard.
+\end{itemize}
+
+These three elements along with the environment definition define the behaviour and the interactions of the edge. 
+
+\subsection{Behavioural Roles}
+
+One way to think about the roles of an agent is to think about the DAE that this role represents. In this proposed definition the active role completely defines the evolution of the agents state $x$ by a set of differeential equations $f(x,y)$ and algebraic rquations $g(x,y)$.
+\begin{definition}
+    Let $A$ a role belonging to the role set $\mathcal{R}(d)$ of the agent $d$. Then $A := \{ f_{A|I}(x,y), g_{A|I}(x,y) | I \in  \mathcal{R}(d)\} $ such that when the agent $d$ takes on the role $A$ the agent behavior is described by this DAE:
+    \begin{align}
+        \dot{x}_{A} &= \sum_{A_i \in \mathcal{R}(d)} u_{A_i}(t) f_{A|A_i}(x,y)\\
+        0 &= \sum_{A_i \in \mathcal{R}(d)} u_{A_i}(t) g_{A|A_i}(x,y) \qquad \forall A_i
+    \end{align}
+
+    \begin{equation}
+        u_A(t) = \begin{cases}
+            1 & \text{if role is A} \\
+            0 & \text{if else} 
+        \end{cases}
+    \end{equation}
+\end{definition}
+
+This role definition lends itself to combining multiple roles. We can add the differential equations of the active roles and define  
+a new DAE that takes into account multiple roles. Let's take for exampla an agent $a$ at time $t$ with active roles $A,B,C \in \mathcal{d}$. Then the DAE at time $t$ is defined as follows:
+
+Finally, we can express the DAE $\forall t \in \mathcal{T}$ combining the previous deifnitions as follows
+\begin{align}
+    \dot{x} &= \sum_{A_i \in \mathcal{R}(d)}u_{A_i}(t)\sum_{A_j \in \mathcal{R}(d)} f_{A_i|A_j}(x,y)\\
+    0 &= \sum_{A_i \in \mathcal{R}(d)}u_{A_i}(t)\sum_{A_j \in \mathcal{R}(d)} g_{A_i|A_j}(x,y)\\
+\end{align}
+
+In this case, we can see that the system is heavily dependent on the interactions between the different roles. However, if we consider the roles to be independent from each other ($f_{A_i|A_j}(x,y) = 0 \forall i \neq j$) we can simplify the DAE and get a DAE with the following equations:
+
+\begin{align}
+    \dot{x} &= \sum_{A_i \in \mathcal{R}(d)} u_{A_i}(t)f_{A_i|A_i}(x,y)\\
+    0 &= \sum_{A_i \in \mathcal{R}(d)}u_{A_i}(t)g_{A_i|A_i}(x,y)\\
+\end{align}
+
+\subsection{Restarting roles}
+
+As we can see, properly defining the interactions between the roles is a critical part of the modelization. More specifically, defining the appropriate behaviour of the device's states when swapping the roles can be challenging. For this purpose, we define a role that restarts the state from an initial point $x_0$ after a role swap. This new initial state is defined by the function $x_0:= f_0(x,y)$ that derpends on the state $x$ and the variables $y$ from before the role swap. Defining a role like this has the advantage of not having to deal with the interactions between different roles.\\
+
+A \textbf{restarting role} $a$ is a normal behaviour role defined by differential and algebraic 
+
+\subsection{Relational Roles}
+
+In order to differentiate we can also define relational roles. In this case the role of the agent is not directly tied to a DAE but to how the agent interacts with the other agents in the grid.
+More specifically, this roles define the interactions between the agents and the edges they belong to. In contrast to the behavioural roles, relational roles are not specific to the device the agent controls but to the edge they belong to. They are also more qualitative with regards 
+
+\begin{itemize}
+    \item Publish: Publish the agent's metric to the edge's logger.
+    \item Reader: Reading metrics or a specific KPI from the edge's logger.
+    \item Sleep: Momentarily not engaging with the edge in any way.
+    \item Connect/Disconnect.
+\end{itemize}
+
+\subsection{Case Study: GFM-GFL Generator/Converter}
+
+\subsubsection{GFL role}
+
+The converter in GFL mode acts as a current source that is connected to a bus. The value of the current produced by the source is governed by the DAE
+relative to the control model REGC_A \cite{model:REGC_A}. More specifically, the agent gets as parameters the reference values for the active and reactive current and outputs the values $I_{pout}$ and $I_{qout}$ the observe values for the current source. Notably, the model has 3 states in the block diagram of the role:
+
+\begin{itemize}
+    \item $I_q$ the state of a lag anti windup.
+    \item $I_p$ the state of a lag anti windup.
+    \item $v_meas$ the state of a voltage filter.
+\end{itemize}
+
+We can see that all these states are the outputs from different type of filters. In this case, if their inputs go to zero their outputs will tend to zero over time. If we consider a change of role to the GFL role we need to make ensure that we the state values after the role change are coherent with what we would expect from the real world. In this case, if we consider that the grid had achieved a sterady-state we could just re initialize the state values to $0$. If this was not possible, we would need to make sure the states values are updated correctly even if the role is not currently active. Using functions of the type $f_{GFL|GFM}(x,y)$ describing the influence of one role to the states on the other roles can solve this problem.\\ 
+\subsection{GFM role}
+
+The converter in GFM acts as a voltage source for the rest of the grid. The converter in this role works in a similar way to the GFL role, in this case the model gets the activer power and the voltage as reference and outputs the actual voltage value of the source. Here the block diagram consists of multiple controllers included Proportional Integral (PI) controllers. The states present in the model are the following. In particular it works by defining a new state $\delta$ that imitates the 
+
+\begin{itemize}
+    \item $\delta$ the virtual delta 
+    \item $P_{sen_y}, Q_{sen_y}$ states in a lag transfer function.
+    \item $P_{sig_y}, Q_{sig_y}$ states in a lag transfer function. 
+    \item $u_d, u_q$ states in a lag transfer function. 
+    \item Various states of internal PI Controllers.
+\end{itemize}
+
+As we can see, in this model there are as well numerous states that are outputs of filters but there are also more complicated states, specially the ones that are outputs of integrators. These states need to be treated carefully since even if the grid reaches a steady-state the internal values of the control circuit won't reset. 
+
+
+\section[short]{Test Case: 2 Role Generator}
+
+The objective of this test case is to set up a simple power grid in which the framework explained in the previous chapter is used in specific example. The aim is to see how the different works in a close model, and using this test case as a first step for the integration of the simulation into COLMENA. We will first explain the modelization of the grid and the different roles, then will explain the simulation and finally we 
+
+\subsection{Grid Modelling}
+
+This test case will use the 2 area system kundur grid \cite{grids:kundur} but adding some specific modifications for the colmena framework. The grid consists of 11 buses, 4 synchronous generators and multiple lines. The grid is also separated into two areas, where each device belongs to one area or the other.  \\
+
+In order to integrate COLMENA's framework we consider the devices simulated as agents of COLMENA. Additionally, we consider the synchronous generators of the grid as agents with two distinct roles, the same roles as we defined in \ref{fig:kundur2}. The presence of two areas is also very useful to test the part of the framework related to the communication between agents. In fact we can use the two areas as different environements and an edge defined in their respective area.  \\
+
+The edges are defined as follows: with the measure $\omega$ the frequency of the genrator rotor's, the update function $f(logger, t)$ that filters the measures older than 10 seconds and the KPI is the mean of the measures in the logger.   
+
+\subsection{Simulations}
+
+In this section we will perform 2 simulations over the gird. The first one uses the same synchronous generators defined in the section \ref{whatever}. The objective 
+The second on performs a simulation exclusively from Andes' point of view, where the COLMENA algorithm is not present yet. However, to get as close as possible to the final integration between Andes and COLMENA we develop a run the code from an indepedent script separate from Andes usual simulation routines. The simulation tries to imitate the real-time nature of the COLMENA workflow. The second simulation also strives to//
+
+The script runs a simulation for 20 seconds. In the simulation, Andes is called by the script iteratively every 0.5 seconds. When ANdes is called, andes solves the DAE iteratively until the time that was 
+
+\begin{algorithm}
+    \caption{COLMENA Simulation}
+    \begin{algorithmic}[1]
+    \State Initialize grid states $x$ to $x_0$ through Power Flow results.
+    \State $t \gets 0$
+    \State $t_{batch size} \gets 0.5 s$
+    \While{$t \leq t_{end}$}
+        \For{agent in the set of Agents}
+            \State Set Agent'0s role
+        \EndFor
+        \State Call Andes simulation
+        \State Get KPI's information
+    \EndWhile
+    \State Finalize the result
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+    \caption{Andes Call}
+    \begin{algorithmic}[1]
+    \State Get new roles from COLMENA 
+    \State $t \gets 0$
+    \State $t_{batch size} \gets 0.5 s$
+    \For{Agent in Set of Agent}
+        \State $u^{agent}_{role} \gets  0$
+        \State Set new role in Andes 
+        \State  Agent.role $\gets$ new role
+        \State $u^{agent}_{role} \gets  1$
+    \EndFor
+    \While{$t \leq t_{batch size}$}
+        \State Perform Trapezoidal Step and define $\Delta x$
+        \State $x_{t+1} \gets x_t + \Delta x$
+        \State $t \gets t + h$
+    \EndWhile
+    \State Update Edges.
+    \State Sleep until $t_{real time} = t_{batch_size}$
+    \State Sync KPIs with COLMENA.
+    \end{algorithmic}
+\end{algorithm}
+
+Finally, we also explain how the edges process the information from the agents in each iteration. First the agents with role \textit{publisher} their specific metric to the edge's logger. Then the edge's logger filters the edge's values depending on the time they where recorded and finally the edge measures the KPI from the available data in the logger. In this specific test case we have that there is a single logger in per edge where the agent metric is $\omega$ the frequency and the time range for the filter function is $t_range = 10s$.
+
+\begin{algorithm}
+    \caption{Update Edges Call}
+    \begin{algorithmic}[1]
+    \For{edge in Edges}
+        \For{agent in edge}
+            \If{role publisher $in$ agent.active_roles}
+                \State Publish agent.metric to edge.logger
+            \EndIf
+        \EndFor
+
+        \For{entry in edge.logger}
+            \State $t \gets time.time()$
+            \If{Time entry was logged$ \leq t - t_{range}$}
+                \State eliminate entry from logger
+            \EndIf
+        \EndFor
+
+        \State $KPI \gets f_{KPI}(logger_values)$
+    \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Result}
+
+Let us now explain the results of the simulation.
+
+\subsection{COLMENA Integration}
