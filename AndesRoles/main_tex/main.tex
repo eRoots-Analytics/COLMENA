@@ -144,7 +144,28 @@ For the first use case we proposes first using the grid defined in  the Kundur t
     \label{fig:kundur2}
 \end{figure}
 
-In this specific use case the COLMENA-Agents will be paired with the different generators and monitor the values provided by the ANDES simulation. Moreover, this agents will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to overtime include different sources of generation and the proposed GFL-GFM converters. 
+In this specific use case the COLMENA-Agents will be paired with the different generators and monitor the values provided by the ANDES simulation. Moreover, this agents will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to overtime include different sources of generation and the proposed GFL-GFM converters. Let's see a proof of concept of what the integration could look like. In this use case one of the COLMENA Agents is able to modify the inertia parameter of the generator 1 inside the simulation depending of the value of the generator's speed $\omega$. By modifying the inertia what we expect to see is the generator's angular velocity $\omega$ having 2 distinct behaviors.  
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|}
+    \hline
+    Operating State & KPI                              & Parameter $M$ value \\ \hline
+    A               & $\omega \in [1 - \varepsilon, 1 + \varepsilon]$ & 12  \\ \hline
+    B               & $\omega \notin [1 - \varepsilon, 1 + \varepsilon]$ & 120               \\ \hline
+    \end{tabular}
+    \caption{Generator set-points summary.}
+\end{table}
+  
+
+\begin{figure}[h]  % [h] places the figure "here"
+    \centering
+    % Fit the PGF figure to the page width
+    \includegraphics[width=1\textwidth]{pictures/plot.png}
+
+    \caption{Time series of the distributed generator's frequency.}
+    \label{fig:sample_figure2}
+\end{figure}
 
 When this more accessible use case is deploy we want to scale the simulation into a more extensive grid that could be able to showcase the performance of COLMENA in a more complicated environment, with more varieties of models and more complicated control overall. The objective is to eventually run the simulation in larger grids with a larger number of agents. For this we can use other test grids such as the IEEE 118 bus case \cite{grids:ieee118}. This test grid is composed by 118 buses, 54 generators and 99 Loads. Additionally, some of the generators are synchronous condensers who essentially are synchronous motors whose shaft is not connected to any mechanical load. Their main function is to provide reactive power compensation. Moreover, it uses the same models as the ones used in the previous tests cases so transferring the already developed models is feasible.
 
@@ -200,5 +221,4 @@ The N-1 criterion is a standard used in power system planning and operation to e
 
 \nocite{*}
 \printbibliography
-
 \end{document}

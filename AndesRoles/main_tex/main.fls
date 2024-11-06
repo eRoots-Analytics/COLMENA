@@ -1,8 +1,8 @@
-PWD c:/Users/pablo/OneDrive/Escritorio/Proyectos/AndesRoles/main_tex
+PWD c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex
 INPUT c:/texlive/2024/texmf.cnf
 INPUT c:/texlive/2024/texmf-dist/web2c/texmf.cnf
 INPUT c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT c:/Users/pablo/OneDrive/Escritorio/Proyectos/AndesRoles/main_tex/main.tex
+INPUT c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex
 OUTPUT main.log
 INPUT c:/texlive/2024/texmf-dist/tex/latex/base/article.cls
 INPUT c:/texlive/2024/texmf-dist/tex/latex/base/article.cls
@@ -237,6 +237,9 @@ INPUT c:/texlive/2024/texmf-dist/tex/latex/biblatex/blx-case-expl3.sty
 INPUT c:/texlive/2024/texmf-dist/tex/latex/biblatex/blx-case-expl3.sty
 INPUT c:/texlive/2024/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
 INPUT c:/texlive/2024/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+INPUT ./main.aux
+INPUT ./main.aux
+INPUT main.aux
 OUTPUT main.aux
 INPUT c:/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 INPUT c:/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
@@ -306,6 +309,11 @@ INPUT ./pictures/kundurgrid.png
 INPUT ./pictures/kundurgrid.png
 INPUT ./pictures/kundurgrid.png
 INPUT ./pictures/kundurgrid.png
+INPUT ./pictures/plot.png
+INPUT ./pictures/plot.png
+INPUT ./pictures/plot.png
+INPUT ./pictures/plot.png
+INPUT ./pictures/plot.png
 INPUT ./pictures/IEEE118.png
 INPUT ./pictures/IEEE118.png
 INPUT ./pictures/IEEE118.png
