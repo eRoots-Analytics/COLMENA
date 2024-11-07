@@ -35,6 +35,7 @@
       \strng{authornamehash}{ecec65b415b19b3621e8d452315cd17f}
       \strng{authorfullhash}{ecec65b415b19b3621e8d452315cd17f}
       \strng{authorfullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \field{extraname}{1}
       \field{sortinit}{1}
       \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
@@ -111,6 +112,75 @@
       \field{labeltitlesource}{title}
       \field{title}{Mohan, Undeland, Robbins}
     \endentry
+    \entry{image:diagram:governor}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=632e3d1560f3ae20d5b8b63dd8d5153a}{%
+           family={Corporation},
+           familyi={C\bibinitperiod},
+           given={PowerWorld},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{fullhash}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{fullhashraw}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{bibnamehash}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{authorbibnamehash}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{authornamehash}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{authorfullhash}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \strng{authorfullhashraw}{632e3d1560f3ae20d5b8b63dd8d5153a}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.powerworld.com/WebHelp/Default.htm}}
+      \field{title}{Governor Model: TGOV1 and TGOV1D}
+      \field{urlday}{11}
+      \field{urlmonth}{10}
+      \field{urlyear}{2024}
+      \field{year}{2024}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://www.powerworld.com/WebHelp/Default.htm
+      \endverb
+      \verb{url}
+      \verb https://www.powerworld.com/WebHelp/Default.htm
+      \endverb
+    \endentry
+    \entry{source:andes:models:generator}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=ecec65b415b19b3621e8d452315cd17f}{%
+           family={Cui},
+           familyi={C\bibinitperiod},
+           given={Hantao},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{fullhash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{fullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{bibnamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorbibnamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authornamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorfullhash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorfullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \field{extraname}{2}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://docs.andes.app/en/stable/groupdoc/SynGen.html}}
+      \field{title}{Andes Generator Model}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://docs.andes.app/en/stable/groupdoc/SynGen.html
+      \endverb
+      \verb{url}
+      \verb https://docs.andes.app/en/stable/groupdoc/SynGen.html
+      \endverb
+    \endentry
     \entry{grids:kundur}{article}{}{}
       \name{author}{1}{}{%
         {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
@@ -127,8 +197,8 @@
       \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
@@ -163,8 +233,9 @@
       \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
       \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
       \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{extraname}{1}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm}}
@@ -179,6 +250,77 @@
       \endverb
       \verb{url}
       \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+    \endentry
+    \entry{grids:ieee300}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf300/pg_tca300bus.htm}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/pf300/pg_tca300bus.htm
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/pf300/pg_tca300bus.htm
+      \endverb
+    \endentry
+    \entry{grids:activsg2000}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=b85317d5fc9b016c6d69cb84f9f442a0}{%
+           family={University},
+           familyi={U\bibinitperiod},
+           given={Texas\bibnamedelima A&M},
+           giveni={T\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \strng{namehash}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{fullhash}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{fullhashraw}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{bibnamehash}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{authorbibnamehash}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{authornamehash}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{authorfullhash}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{authorfullhashraw}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/}}
+      \field{title}{ACTIVSg2000: 2000-bus synthetic grid on footprint of Texas}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/
+      \endverb
+      \verb{url}
+      \verb https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/
       \endverb
     \endentry
   \enddatalist

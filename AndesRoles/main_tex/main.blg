@@ -1,0 +1,18 @@
+[0] Config.pm:308> INFO - This is Biber 2.20
+[0] Config.pm:311> INFO - Logfile is 'main.blg'
+[105] biber-MSWIN64:340> INFO - === 
+[152] Biber.pm:420> INFO - Reading 'main.bcf'
+[254] Biber.pm:994> INFO - Found 9 citekeys in bib section 0
+[267] Biber.pm:4463> INFO - Processing section 0
+[277] Biber.pm:4654> INFO - Looking for bibtex file 'ref.bib' for section 0
+[333] bibtex.pm:1713> INFO - LaTeX decoding ...
+[359] bibtex.pm:1519> INFO - Found BibTeX data source 'ref.bib'
+[419] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[419] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[419] Biber.pm:4283> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[419] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
+[427] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[431] bbl.pm:779> INFO - Output to main.bbl
+[431] Biber.pm:131> WARN - Duplicate entry key: 'image:diagram:governor' in file 'ref.bib', skipping ...
+[431] Biber.pm:131> WARN - Duplicate entry key: 'image:diagram:governor' in file 'ref.bib', skipping ...
+[431] Biber.pm:133> INFO - WARNINGS: 2

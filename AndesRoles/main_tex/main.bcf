@@ -100,7 +100,7 @@
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>maxcitenames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>2</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>maxsortnames</bcf:key>
@@ -116,15 +116,15 @@
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>minbibnames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>1</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>mincitenames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>1</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>minsortnames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>1</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>minitems</bcf:key>
@@ -335,7 +335,7 @@
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>maxcitenames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>2</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>maxsortnames</bcf:key>
@@ -351,15 +351,15 @@
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>minbibnames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>1</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>mincitenames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>1</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>minsortnames</bcf:key>
-      <bcf:value>3</bcf:value>
+      <bcf:value>1</bcf:value>
     </bcf:option>
     <bcf:option type="singlevalued">
       <bcf:key>minitems</bcf:key>
@@ -2379,10 +2379,18 @@
     <bcf:citekey order="1" intorder="1">grids:models</bcf:citekey>
     <bcf:citekey order="2" intorder="1">source:NRELfrequency</bcf:citekey>
     <bcf:citekey order="3" intorder="1">source:bookelectron</bcf:citekey>
-    <bcf:citekey order="4" intorder="1">grids:kundur</bcf:citekey>
-    <bcf:citekey order="5" intorder="1">grids:kundur</bcf:citekey>
-    <bcf:citekey order="6" intorder="1">grids:ieee118</bcf:citekey>
-    <bcf:citekey order="7" intorder="1">grids:ieee118</bcf:citekey>
+    <bcf:citekey order="4" intorder="1">image:diagram:governor</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">source:andes:models:generator</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">image:diagram:governor</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">image:diagram:governor</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">grids:kundur</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">grids:ieee118</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">grids:ieee300</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">grids:activsg2000</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">grids:kundur</bcf:citekey>
+    <bcf:citekey order="13" intorder="1">grids:kundur</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">grids:ieee118</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">grids:ieee118</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

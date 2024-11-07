@@ -62,36 +62,69 @@
 
 \section{Introduction}
 % ANDES intro
-ANDES Curent \cite{grids:models} is a python package that can be used to model, simulate, and analyze power systems. The package uses predefined models that simulate different elements of an electrical grid. Additionally, the package allows the user to define custom models which relative ease. ANDES stands out from other simulation tools for the use of a hybrid symbolic-numeric framework for modeling differential algebraic equations (DAEs). This project present the objectives for developing test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES. The goal of the project is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid. We will outline the different requirements needed. 
+COLMENA is a decentralized framework that allows the coordination of multiple agents to solve complex problems. The framework is based on the concept of a colony of agents that can communicate and coordinate to solve a problem. The agents can be programmed to have different roles and behaviors. The objective of the project is to develop a test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES \cite{grids:models}(later on, potentially others). The resulting goal is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid, providing useful use cases showing noticeable improvements to be derived from this architecture. The present document is an answer to Objective 1 - Development plan for the validation of the platform.
 
 \textcolor{red}{I would start by saying what the objective of the project as a whole is. You can read the technical offer inside the documentation folder. For example:}
 
-\textcolor{red}{COLMENA is a decentralized framework that allows the coordination of multiple agents to solve complex problems. The framework is based on the concept of a colony of agents that can communicate and coordinate to solve a problem. The agents can be programmed to have different roles and behaviors. The objective of the project is to develop a test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES (later on, potentially others). The resulting goal is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid, providing useful use cases showing noticeable improvements to be derived from this architecture. The present document is an answer to Objective 1 - Development plan for the validation of the platform.}
+
 
 \subsection{Power Grid \& Service definition}
 We define an electrical grid as a set of nodes called buses with electrical devices attached to them. The nodes are interconnected between them through branches, traditionally, power lines and/or transformers. The devices connected to each given bus are generators, loads or others types of devices. In ANDES, each device is defined by a set of differential and algebraic equations (DAE) that define how the devices' states change over time.
 
 \textcolor{red}{Let's draw a simple network showing buses and lines between them to give a first idea of the systems we are dealing with.}
 
-The electrical grid is defined by multiple magnitudes that define its overall state. Some of the more critical metrics that we consider are the following.
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.7\textwidth]{pictures/5bus.png}
+    \caption{Power grid diagram with buses, lines and generators.}
+    \label{fig:diagram_pairing}
+\end{figure}
+
+
+The electrical grid is defined by multiple magnitudes that define its overall state. Some of the more critical metrics that we consider are the following. The one most important to our use case is the frequency since it's linked with most other values and a drop in general, maintaining the frequency is one of the most important tasks of a grid operator.
 
 \begin{itemize}
     \item \textcolor{red}{Make bold each item such as below}
     \item \textbf{Frequency:} The frequency can be understood as a local measurement that describes the voltage at a specific bus. A device called Phasor Measurement Unit (PMU) can measure the frequency of the bus it is connected to. Maintaining the frequency at the nominal value (e.g. $50$~Hz in Europe) is key for the proper functioning of the grid. Frequency values above or below this value can unbalance the grid from a power point of view or even damage certain components. It is worth mentioning that while the frequency is a local variable, it is often the case that the frequency is the same, or very similar, in all buses.   
     \item \textcolor{red}{Something to be aware of: is the frequency at each bus a different variable from the synchronous rotor speed? You say the two are very closely related, which is true, but I do not know if ANDES treats them separately.}
-    \item Synchronous Rotor's Speed: Synchronous generators are device that generate power which is then inject to the grid. This is done by magnetically coupling a stator and a rotor that spins at a certain speed, ideally as close as to the nominal frequency. The value of the frequency in the grids buses and the angular speed of the rotor are closely linked and are frequently used interchangeably. In fact, generators can see a drop in their angular speed to mitigate a drop in frequency in a close bus.
+    \item \textbf{Synchronous Generator Shaft's Speed}: Synchronous generators are device that generate power which is then inject to the grid. This is done by magnetically coupling a stator and a rotor that spins at a certain speed, ideally as close as to the nominal frequency. The value of the frequency in the grids buses and the angular speed of the rotor are closely linked and are frequently used interchangeably. In fact, generators can see a drop in their angular speed to mitigate a drop in frequency in a close bus.
     \item \textcolor{red}{Better to mention voltage magnitude, just to avoid confusion}
-    \item Voltage $(V)$: The voltage is a magnitude linked to a specific bus and also needs to be as close to the nominal value as possible. Drops in frequency can be linked to drops in voltage.
-    \item \textcolor{red}{A recommendation: never put units in math mode in LaTeX, that is, do not italisize them!}
-    \item \textcolor{red}{To be reviewed the following explanation. Generators inject the power the loads request. This goes back to the frequency variations we have been talking about this morning.}
-    \item Power injected/consumed $(kW)$: The power injected is by a generator is the amount of power the . The objective of the grid supervisor is to keep the balance of power as close to zero as possible. Raising the amount of power injected by a generator also tends to raise its synchronous speed. It's an important lever in controlling  
+    \item \textbf{Voltage Magnitude(V)}: The voltage is a magnitude linked to a specific bus and also needs to be as close to the nominal value as possible. Drops in frequency can be linked to drops in voltage.
+    \item \textbf{Power injected/consumed (kW)}: The power injected is by a generator is the amount of power the . The objective of the grid supervisor is to keep the balance of power as close to zero as possible. Raising the amount of power injected by a generator also tends to raise its synchronous speed. It's an important lever in controlling  
 \end{itemize}
 
 \textcolor{red}{From the various available grid measurements, I would emphasize we will focus on the frequency for these first study cases. This will make the following explanation more clear I think.}
 
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        Magnitude & Unit & Description \\
+        Voltage & kV & Voltage at a bus \\
+        Generator Speed & Hz & Rotations of the shaft er second\\
+        Current & A & Current through a branch \\
+        Frequency & Hz & Frequency of the sinusoidal voltage signal at a bus\\
+        RoCof & Hz/s & Frequency's derivative \\
+        Power Injected & kW & Power injected to the grid by a generator. \\
+    \end{tabular}
+    \caption{Summary of the metric's definition}
+\end{table}
+  
+
 The metrics just introduced are key to defining the performance of a grid and to the frequency control response of a power grid. The objective of the frequency response is multiple. On a first time scale (primary response)\cite{source:NRELfrequency}, the control aims to take the system from a transient to a stable condition and avoiding critical values for the frequency. During the secondary response, the objective is to restore the steady state values to their nominal values. Finally, the last response's objective is to restore the the power reserves to their original value \cite{source:bookelectron}.
 
 The objective of the service implemented in COLMENA will be then to aid to the frequency control response by implementing decentralized roles that can improve the performance of the control. These roles will take the form of changing set-points for certain devices, connecting or disconnecting devices such as secondary generators and others. 
+
+Additionally, we will define the different metrics in relations to their context in the grid. This means that every metric is measured in a specific context like a given area or a type of electrical device. This way we can group the values of the previously defined metrics in specific contexts such as the following and develop more specific insights.
+
+\begin{itemize}
+\item Local: Measurements that can be done in the same device. 
+\item Semi-Local: Measurements that can be done in the devices connected to the same bus. 
+\item Regional: Measurements that can be done in the devices from the same given area. 
+\item Categorical: Measurements that can be done in the devices of the same type. 
+\item Adjacent: Measurements that can be done in the devices that are just one connection away.
+\end{itemize}
+
 
 \subsection{Devices}
 
@@ -110,13 +143,27 @@ In the following sections we will se how these devices fit with the service of c
 
 \subsubsection*{Synchronous Generators}
 
-Generators are devices that inject power to the grid. A synchronous generator injects the power through a rotating part that spins synchronously to the grid's frequency. The synchronous generators in the simulation will be defined by two internal states: $\omega \in \mathbb{R}$ the angular velocity and $\theta  \in \mathbb{R}$. The generator's turbine can set the value of the power being generator's or the set point for the reference angular speed $\omega_{ref}$. Controlling these set points is key to improve the performance of the grid.
+Generators are devices that inject power to the grid. A synchronous generator injects the power through a rotating part that spins synchronously to the grid's frequency. The synchronous generators in the simulation will be defined by two internal states: $\omega \in \mathbb{R}$ the angular velocity and $\theta  \in \mathbb{R}$ the shaft's angular position. The generator's turbine can set the value of the power being injected by the generator's or the set point for the reference angular speed $\omega_{ref}$. Controlling these set points is key to improve the performance of the grid and impacts the directly on the grid. The generator model used in the simulation can be consulted at \cite{image:diagram:governor} and \cite{source:andes:models:generator}, it also includes the governor's and the exciter's model.
 
-\textcolor{red}{OK, I see you are mentioning it here. Can you maybe add an image of the block diagram of generators in ANDES? And maybe also some references pointing to papers or the ANDES documentation itself}
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=1\textwidth]{pictures/governor.png}
+    \caption{Block diagram of a generator's governor controlling the injected power. \cite{image:diagram:governor}}
+    \label{pic:governor_diagram}
+\end{figure} 
 
 \subsubsection*{Converters \& distributed generation}
 
-The modelling of distributed generation in ANDES usually combines the generation considered as a DC current source and a battery that is connected to a AC-DC converter. The converter that is paired to this ensemble can control both the active and reactive power that is injected to the grid and that is stored in the battery (if present). The control of the setup is defined by the parameters $\gamma_p, \gamma_q \in [0,1]$ . These parameters define which proportion of the active and reactive power respectively and generated by the setup is injected to the grid. We can therefore define different operating points for the distributed generation depending on the power injected. The power that is not injected is then saved by the battery. This can be expressed as these three different operating points:
+Converters can take the form of a Voltage Source Converter (VSC). A VSC is a converter (converts a DC current to AC) with some differences to classical converters. They are commonly used to track the angle of the grid at a bus and inject (or absorb) active and reactive power from an energy source. They are usually paired with DC sources of energy as a way to connect them to the grid. We consider a VSC that can operate in two modes: 'Grid following'(GFL) and 'Grid forming'(GFM). 
+
+\begin{itemize}
+    \item Grid Following: In the GFL mode, the converter tracks the grid's frequency and injects a controlled power, acting as an ideal current source.
+    \item Grid Forming: In the GFM mode, the converter creates its own frequency and imposes a voltage differential acting as an ideal voltage source.
+\end{itemize}
+
+In terms of control, both GFM and GFL have reference values they have to track with controllers. The control is built with the goal of following the reference value as close as possible. For the GFL mode the reference value usually refers to the power injected, while for the GFM its the frequency or voltage. This GFM behavior is quite close to one of a typical synchronous generator. The flexibility and the different set points of this type of converter fit well with the decentralized control principle of COLMENA.
+
+The modelling of distributed generation, modelling tools usually combines the generation considered as a DC current source and a battery that are connected to a AC-DC converter. The converter that is paired to this ensemble can control both the active and reactive power that is injected to the grid and that is stored in the battery (if present). The control of the setup is defined by the parameters $\gamma_p, \gamma_q \in [0,1]$ . These parameters define which proportion of the active and reactive power respectively and generated by the setup is injected to the grid. We can therefore define different set points for the distributed generation depending on the power injected. The power that is not injected is then saved by the battery. This can be expressed as these three different set points:
 
 \begin{itemize}
     \item $\gamma_p = 1$ all of the power generated is injected to the grid.
@@ -125,21 +172,20 @@ The modelling of distributed generation in ANDES usually combines the generation
 \end{itemize}
 
 \textcolor{red}{To me it makes more sense to move this paragraph to the beginning of the section, as it is the first time you mention converters, and then detail the control of converters and the $\gamma$ factor.}
-In the setup that we just explained the converter can take the form of a Voltage Source Converter (VSC). A VSC is a converter (converts a DC current to AC) with some differences to classical converters. They are commonly used to track the angle of the grid at a bus and inject (or absorb) active and reactive power from an energy source. They are usually paired with DC sources of energy as a way to connect them to the grid. We consider a VSC that can operate in two modes: 'Grid following'(GFL) and 'Grid forming'(GFM). 
-
-\begin{itemize}
-    \item Grid Following: In the GFL mode, the converter tracks the grid's frequency and injects a controlled power, acting as an ideal current source.
-    \item Grid Forming: In the GFM mode, the converter creates its own frequency and imposes a voltage differential acting as an ideal voltage source.
-\end{itemize}
-
-In terms of control, both GFM and GFL have reference values they have to track with controllers. The control is built with the goal of following the reference value as close as possible. For the GFL mode the reference value usually refers to the power injected, while for the GFM its the frequency or voltage. This GFM behavior is quite close to one of a typical synchronous generator. The flexibility and the different set points of this type of converter fit well with the decentralized control principle of COLMENA.  
 
 \subsubsection*{Loads}
 \textcolor{red}{Recommendation to add a bus indicating powers flowing there, and voltages as nodal magnitudes. It will make it easier to understand for people in the BSC.}
-A load is an electrical model that is connected to a bus and consumes a given amount of active and reactive($P(MW),  Q (Mvar)$ respectively). In the context of the frequency control service, the load device can have varying values of $P$ and $Q$ depending on the state of the grid. More specifically, . These adaptable response can be very useful to the grid in order to adapt to drops in generation or line faults.
+A load is an electrical model that is connected to a bus and consumes a given amount of active and reactive($P(MW),  Q (Mvar)$ respectively). In the context of the frequency control service, the load device can have varying values of $P$ and $Q$ depending on the state of the grid. More specifically, operators can control the power consumed by enforcing load shedding which consist in reducing part of the power being used. This response can be very useful to the grid in order to adapt to drops in generation or line faults.
+
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.5\textwidth]{pictures/busdiagram.png}
+    \caption{Bus power exchange diagram.}
+    \label{pic:bus_diagram}
+\end{figure} 
 
 \subsubsection*{Switches}
-Switches are controllable elements that control the connection state of a Line. In this case the operating states are just 'Open' or 'Closed'. In the open state no current travels directly between the buses while in the Closed state the line works at normal operation. 
+Switches are controllable elements that control the connection state of a Line. In this case the set states are just 'Open' or 'Closed'. In the open state no current travels directly between the buses while in the Closed state the line works at normal operation. 
 
 \subsection{Andes-COLMENA Integration requirements}
 
@@ -149,10 +195,25 @@ From the COLMENA's side, we will define specific COLMENA-agents that will be pai
 
 \textcolor{red}{Here one of the diagrams you had on the slides would be useful}
 
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=0.7\textwidth]{pictures/colmena_pairing.png}
+    \caption{COMENA-Agent pairing diagram.}
+    \label{fig:diagram_pairing}
+\end{figure}
+
+
 \section{Use Case Specification}
 \textcolor{red}{Just wondering, should we explain somewhere here the roles, the context, the channels...?}
 
-Having explained the objectives of the project, we want to chose specific scenarios that are well adapted to evaluate these objectives. In this particular case, we are looking for power grids of considerable size, and with the appropriate types of devices presented earlier such as generators and converters to facilitate the integration of distributed generators. Additionally, we would want to choose use cases in which the grid can be separated into different areas to properly implement different geographical contexts to take into account. Finally, we also consider the ease to access information and data about the modeled grid.  
+Having explained the objectives of the project, we want to chose specific scenarios that are well adapted to evaluate these objectives. In this particular case, we are looking for power grids of considerable size, and with the appropriate types of devices presented earlier such as generators and converters to facilitate the integration of distributed generators. Additionally, we would want to choose use cases in which the grid can be separated into different areas to properly implement different geographical contexts to take into account. Finally, we also consider the ease to access information and data about the modeled grid. We consider the following as interesting candidates: 
+
+\begin{itemize}
+    \item Kundur 2-area system \cite{grids:kundur}
+    \item IEEE-118 bus test case \cite{grids:ieee118} 
+    \item IEEE 300 bus test case  \cite{grids:ieee300} 
+    \item ACTIVSg 2000 bus test case  \cite{grids:activsg2000} 
+\end{itemize}
 
 \textcolor{red}{I would add with an itemize to list the grids we are considering: Kundur, IEEE118, etc. Also, at each point indicate the source of information with a reference}
 
@@ -204,15 +265,21 @@ In the first section we have defined a set of metrics and states that are key to
 \begin{itemize}
     \item Minimum and maximum of the generator's frequency.
     \item Minimum and maximum of the mean bus frequency in an area from the nominal frequency.
-    \item Steady state values.
+    \item Voltage steady state values.
     \item Rate of Change of Frequency (RoCoF).
     \item Available power reserves.
     \item Power Balance \& regional power exchanges.
     \item N-1 criteria
     \item Economic criteria
+    \item Power Losses
 \end{itemize}
 
+
+
 \textcolor{red}{A few questions. What do you mean by steady-state values? (I mean, which magnitude? Voltages, currents...?) Also, the $N-1$ criteria will be very hard to assess I believe. Same applies to the economic criteria as we have no information on costs for these grids. Some ideas to add: percentual power losses, maximum overloading of lines, short-circuit currents.} 
+
+\textcolor{blue}{Yeah N-1 can be complicated.} 
+
 
 \subsection*{Minimum and maximum of the generator's frequency}
 
@@ -224,9 +291,11 @@ The Rate of Change of Frequency is the frequency's time derivative measured in a
 
 \subsection*{Available Power Reserves}
 
-The available power reserves is the amount of power that can be activated in a given amount of time in case of need but its not being used. It usually considers an horizon of 10 to 30 minutes. Additionally, we also need to consider the ramp up capabilities of these power reserves. The ramp up measured in kW/s and is the speed with which this reserve power can come online. The grid operator usually defines minimum requirements for available power values.
+The available power reserves is the amount of power that can be activated in a given amount of time in case of need but its not being used. It usually considers an horizon of 10 to 30 minutes. Additionally, we also need to consider the ramp up capabilities of these power reserves. The ramp up measured in kW/s and is the speed with which this reserve power can come online. These power reserves come in the form of battery storage and ancillary generators that can be ramped up when necessary. The grid operator usually defines minimum requirements for available power values.
 
 \textcolor{red}{OK, the only thing is that it will be hard to model these reserves. Not sure how it is done in ANDES.}
+
+\textcolor{red}{My, idea is to consider Storage Systems and Generators that can be connected or disconnected.}
 
 \subsection*{Maximum line current}
 
@@ -258,8 +327,94 @@ The N-1 criterion is a standard used in power system planning and operation to e
 
 \subsection*{Economic criteria}
 
+Economic criteria for grid performance focuses on minimizing costs by prioritizing energy production based on the merit order. This approach ranks power sources from least to most expensive, using cheaper, typically renewable sources first to reduce overall energy costs. Efficient grid performance depends on aligning supply with demand through this ranking, ensuring that the most economical energy is produced and dispatched first while maintaining reliability.
+
+\subsection*{Power Losses}
+
+Grid performance is also influenced by power losses and reactive compensation. Power losses, primarily due to resistance in transmission lines, reduce overall efficiency and increase operational costs. To mitigate these losses, reactive compensation is used, which balances reactive power in the grid, improving voltage stability and reducing strain on transmission infrastructure
+
+\subsection{Role Definitions}
+
+The envisioned integration of Andes and COLMENA places a special focus on the grid's frequency control response. For this purpose we propose a set of roles that can be taken by the COLMENA agents in order to control the grid in a decentralized grid. The roles are explained descriptively.  
+
+\subsubsection*{Device Basic Role}
+
+The device basic role defines the basic operations needed for the agents and devices to coordinate through Andes-COLMENA. The agent that takes on this role is supposed to be paired to a single device of type generator, although we can consider this role being taken multiple times by the same agent in order to control multiple devices. In this case the device basic roles is persistent and has the following functions:
+
+ \begin{itemize}
+     \item Initializes a client that calls Andes and sets up the exchange of information.
+     \item Stores the state and algebraic variables relative to the device it is paired up.
+     \item Changes the parameter when it receives the message to do so through the appropriate channel.
+     \item Changes the behaviour of the device when instructed to do so through the appropriate channel.
+ \end{itemize}
+
+Taking the example of a generator device this role has the requirement of having a generator and at least these 2 channels:
+
+\begin{itemize}
+    \item Channel Generator parameter change: where it receives both the parameter to change and the new value.
+    \item Channel Generator measurements: where it publishes the frequency of the generator every time step.
+\end{itemize}
+
+\subsubsection*{Rotor Speed Optimizer}
+
+This role specific to an agent with requirement "generator" is activated when the rotor's speed is unusual (high value, high RoCoF) and defines the reference value for the rotor's speed $\omega_ref$. This role can be subdivided into transient and steady state depending on the grid's state since it can behave differently based on the grid's state.  
+
+\subsubsection*{Rotor Speed Setter}
+
+This role specific to an agent with requirement "generator" receives a reference value of the rotor's speed $\omega_{ref}$ and modifies the generator's parameters in order to get to that value. The actions are:
+
+\begin{itemize}
+    \item Reading the $\omega_{ref}$ continuously.
+    \item Adapt the control strategy in Andes through a parameter change.
+    \item Deactivate the role when the $\omega \in [\omega_{ref} - \varepsilon, \omega_{ref} + \varepsilon]$ in the steady state.
+\end{itemize}
+
+This role will usually adapt the generator's power in order to get the desired speed. More generally, we can imagine this role being extended to set other types of variables in a given device. This could be implemented through a feedback control loop or through a feed forward control loop. These are strategies that can be represented as a block diagram where the input signal is the difference between a reference value and the real value. 
+
+\subsubsection*{Voltage Optimizer Role}
+
+This role specific to an COLMENA agent with the requirement of being paired with a electrical and being a controllable device receives computes the optimal voltage when there is a deviation from the desired voltage.
+
+More generally, we can imagine this role being extended to set type of value for the a state in a given device. 
+\subsubsection*{Load Shedding Role}
+
+This role can be taken by agents associated with a load consuming device in the grid. It is activated in the secondary response to counter a drop in frequency.
+
+\begin{itemize}
+    \item Continuously diminishes the power being used by the load.
+    \item When the frequency is back to a nominal value, it goes back to the desired power.
+\end{itemize}
+
+\subsubsection*{Reserve Activation Role}
+
+This role can be taken by agents associated with ancillary generation or batteries consuming device in the grid. It is activated in the secondary response to counter a drop in frequency.
+
+\begin{itemize}
+    \item Connect or Disconnect the reserve to the grid.
+    \item Set the power injected to the grid.
+\end{itemize}
+
+\subsubsection*{Area Monitoring Role}
+
+This role can be taken by agents associated with in a specific geographical area. The role monitors the power balance of that area with the rest of the grid. It has access to the appropriate communication channels. WHen activated it's charged with:
+\begin{itemize}
+    \item Monitoring the power balance in the area. 
+    \item Flagging the areas of the grid with power unbalances.
+\end{itemize}
+
+\subsubsection*{Current Security role}
+If current value through the line is above the security current then open publish the change of behavior in the appropriate channel. It also disconnects line to avoid a cascading failure in the grid.
+
+\subsubsection*{Simulation Role}
+
+This role could simulate a specific event in the grid ahead of time and decide on changes that would make the grid more prepared for that specific change. The role could run Andes itself with some change in the line such a failure line or a generator disconnecting and decided on necessary changes to adapt.
+
+\section{Conclusion \& Future work}
+
+Grid performance through decentralized control strategies presents an interesting opportunity for the COLMENA framework. By pairing agents with grid components, such as generators and converters, COLMENA could enable real-time monitoring and control adjustments that enhance grid stability, particularly in response to frequency disturbances and power imbalances. This approach was explored using the Kundur test case showcases the potential of COLMENA. COLMENA could change the behavior of agents in response to changes in KPIs such as frequency stability. The agents would then send messages through thew appropriate channels signaling changes in the set point of the devices that would be reflected in the ANDES simulation.
+
+Future work should focus on expanding the scope and complexity of the use cases. This includes integrating a broader range of devices, such as advanced energy storage systems, and simulating additional scenarios that include renewable energy sources and demand response mechanisms. More specifically, we want to deploy a use case in the IEEE 118 bus system. Additionally, we will focus on clearly defining the communication channels between COLMENA agents, and the contexts  and requierements that define the agents in the COLMENA framework for this use case. Finally, we also want to develop more complex roles that could properly   
 
 % \nocite{*}
 % \printbibliography
-
 \end{document}
