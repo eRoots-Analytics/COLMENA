@@ -727,6 +727,12 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 61.
  (c:/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+<pictures/5bus.png, id=4, 324.21124pt x 156.585pt>
+File: pictures/5bus.png Graphic file (type png)
+<use pictures/5bus.png>
+Package pdftex.def Info: pictures/5bus.png  used on input line 78.
+(pdftex.def)             Requested size: 241.49895pt x 116.63803pt.
+
 
 [1
 

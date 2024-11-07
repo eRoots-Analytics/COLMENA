@@ -127,7 +127,6 @@
       \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \field{extraname}{1}
       \field{sortinit}{4}
       \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
@@ -181,67 +180,6 @@
       \verb{url}
       \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
       \endverb
-    \endentry
-    \entry{grids:kundur2}{article}{}{}
-      \name{author}{1}{}{%
-        {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
-           family={Huang},
-           familyi={H\bibinitperiod},
-           given={Qiuhua},
-           giveni={Q\bibinitperiod}}}%
-      }
-      \strng{namehash}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{fullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{fullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{bibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{authorbibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
-      \field{extraname}{2}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
-      \field{title}{RLGC repository}
-      \field{urlday}{13}
-      \field{urlmonth}{8}
-      \field{urlyear}{2024}
-      \field{year}{2022}
-      \field{urldateera}{ce}
-      \true{nocite}
-      \verb{urlraw}
-      \verb https://github.com/RLGC-Project/RLGC
-      \endverb
-      \verb{url}
-      \verb https://github.com/RLGC-Project/RLGC
-      \endverb
-    \endentry
-    \entry{source:bookconverter}{book}{}{}
-      \name{author}{1}{}{%
-        {{hash=3cf02b93dbdf5a09b7f834472e4ab0c5}{%
-           family={Power\bibnamedelimb Electronics:\bibnamedelima Converters},
-           familyi={P\bibinitperiod\bibinitdelim E\bibinitperiod\bibinitdelim C\bibinitperiod},
-           given={&\bibnamedelima Design},
-           giveni={&\bibinitperiod\bibinitdelim D\bibinitperiod},
-           suffix={Applications},
-           suffixi={A\bibinitperiod}}}%
-      }
-      \strng{namehash}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{fullhash}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{fullhashraw}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{bibnamehash}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{authorbibnamehash}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{authornamehash}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{authorfullhash}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \strng{authorfullhashraw}{3cf02b93dbdf5a09b7f834472e4ab0c5}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{title}{B.M. Weedy | B.J. Cory N. Jenkins | J.B. Ekanayake | G. Strbab}
-      \true{nocite}
     \endentry
   \enddatalist
 \endrefsection
