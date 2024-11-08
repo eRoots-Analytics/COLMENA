@@ -1,8 +1,6 @@
 from flask import Flask
-from markupsafe import escape
 from flask import url_for, request, render_template_string, jsonify, send_file
 import io
-from flask_sqlalchemy import SQLAlchemy
 from collections import OrderedDict
 import os, sys
 import time
@@ -25,19 +23,9 @@ login_form_html = """
         <p><input type="submit" value="Login"></p>
     </form>
 """
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
-db = SQLAlchemy(app)
 # In-memory storage for received JSON data (list of dictionaries)
 json_storage = []
 
-# Define a model to store JSON data
-class Data(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    json_data = db.Column(db.Text, nullable=False)
-
-# Initialize the database
-with app.app_context():
-    db.create_all()
 
 @app.route('/')
 def index():
