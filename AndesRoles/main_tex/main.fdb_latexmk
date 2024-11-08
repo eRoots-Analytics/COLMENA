@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber main"] 1731061734.40751 "main.bcf" "main.bbl" "main" 1731061741.03052 0
-  "main.bcf" 1731061740 108609 426a7ee120af9345c5f3229777400318 "pdflatex"
+["biber main"] 1731061734.40751 "main.bcf" "main.bbl" "main" 1731069332.08719 0
+  "main.bcf" 1731069331 108609 426a7ee120af9345c5f3229777400318 "pdflatex"
   "ref.bib" 1730995568 3474 6900c19179b33ee03d685cb4ba3cb611 ""
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1731061738.91305 "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" "main.pdf" "main" 1731061741.03148 0
-  "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" 1731061729 37365 4db5d16afd43bc0d72abcd2f34fadf85 ""
+["pdflatex"] 1731069328.8718 "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" "main.pdf" "main" 1731069332.08813 0
+  "c:/Users/pablo/OneDrive/Escritorio/Proyectos/COLMENA/AndesRoles/main_tex/main.tex" 1731069327 36361 aea3902b11e195a98d075a6381ef4006 ""
   "c:/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1727691915 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "c:/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1727693321 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "c:/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/tcrm1000.tfm" 1727692791 1536 e07581a4bb3136ece9eeb4c3ffab8233 ""
@@ -179,10 +179,10 @@
   "c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1727702060 5523052 a6c4264ca43d05e5adfe84e964c2ac4c ""
   "c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1727702256 3325960 afe7e976690bdbcf358ef765274a238e ""
   "c:/texlive/2024/texmf.cnf" 1727702036 713 e69b156964470283e0530f5060668171 ""
-  "main.aux" 1731061740 4019 98a7598426d63bbaa096af5f65080ed8 "pdflatex"
+  "main.aux" 1731069331 4017 672b2b1cbf0c1133216ba4717d03c83b "pdflatex"
   "main.bbl" 1731061736 13657 56d043ed6eecd7845653094401d0c56d "biber main"
-  "main.run.xml" 1731061740 2395 1575f6bbc0c6be1b1dbf4e9f7ecaa5c6 "pdflatex"
-  "main.tex" 1731061729 37365 4db5d16afd43bc0d72abcd2f34fadf85 ""
+  "main.run.xml" 1731069331 2395 1575f6bbc0c6be1b1dbf4e9f7ecaa5c6 "pdflatex"
+  "main.tex" 1731069327 36361 aea3902b11e195a98d075a6381ef4006 ""
   "pictures/IEEE118.png" 1725352752 135789 12d864f42deeaf1ee4bdd16404a912b0 ""
   "pictures/busdiagram.png" 1730991420 23939 1e2ee7afb636c00cbcbccc04c85d81fd ""
   "pictures/colmena_pairing.png" 1728382386 16169 cb57e9a37a1992683482b236a7de1382 ""
