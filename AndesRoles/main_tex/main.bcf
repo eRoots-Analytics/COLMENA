@@ -2391,7 +2391,6 @@
     <bcf:citekey order="13" intorder="1">grids:kundur</bcf:citekey>
     <bcf:citekey order="14" intorder="1">grids:ieee118</bcf:citekey>
     <bcf:citekey order="15" intorder="1">grids:ieee118</bcf:citekey>
-    <bcf:citekey order="16" intorder="1" nocite="1">*</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">
@@ -2403,14 +2402,4 @@
     </bcf:sort>
   </bcf:sortingtemplate>
   <!-- DATALISTS -->
-  <bcf:datalist section="0"
-                name="none/global//global/global/global"
-                type="entry"
-                sortingtemplatename="none"
-                sortingnamekeytemplatename="global"
-                labelprefix=""
-                uniquenametemplatename="global"
-                labelalphanametemplatename="global"
-                namehashtemplatename="global">
-  </bcf:datalist>
 </bcf:controlfile>
