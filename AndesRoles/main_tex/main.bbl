@@ -199,6 +199,7 @@
       \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \field{extraname}{1}
       \field{sortinit}{8}
       \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
@@ -324,6 +325,65 @@
       \verb{url}
       \verb https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/
       \endverb
+    \endentry
+    \entry{grids:kundur2}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Qiuhua},
+           giveni={Q\bibinitperiod}}}%
+      }
+      \strng{namehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{bibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorbibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \field{extraname}{2}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
+      \field{title}{RLGC repository}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+      \verb{url}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+    \endentry
+    \entry{source:bookconverter}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=2207c6ffad5c1c7b27e88bff8539e577}{%
+           family={Strbab},
+           familyi={S\bibinitperiod},
+           given={B.M.\bibnamedelimi Weedy\bibnamedelimb |\bibnamedelimb B.J.\bibnamedelimi Cory\bibnamedelimb N.\bibnamedelimi Jenkins\bibnamedelimb |\bibnamedelimb J.B.\bibnamedelimi Ekanayake\bibnamedelimb |\bibnamedelima G.},
+           giveni={B\bibinitperiod\bibinitdelim W\bibinitperiod\bibinitdelim |\bibinitperiod\bibinitdelim B\bibinitperiod\bibinitdelim C\bibinitperiod\bibinitdelim N\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim |\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim E\bibinitperiod\bibinitdelim |\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+      }
+      \strng{namehash}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{fullhash}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{fullhashraw}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{bibnamehash}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{authorbibnamehash}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{authornamehash}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{authorfullhash}{2207c6ffad5c1c7b27e88bff8539e577}
+      \strng{authorfullhashraw}{2207c6ffad5c1c7b27e88bff8539e577}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Power Electronics: Converters, Applications, & Design}
+      \true{nocite}
     \endentry
   \enddatalist
 \endrefsection

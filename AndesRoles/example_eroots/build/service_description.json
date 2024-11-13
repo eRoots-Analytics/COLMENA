@@ -1,0 +1,32 @@
+{
+    "id": {
+        "value": "ErootsUseCase"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_areas",
+            "imageId": "pablodejuan/colmena-grid_areas"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "AndesTimeSync",
+            "imageId": "pablodejuan/colmena-andestimesync",
+            "hardwareRequirements": [],
+            "kpis": []
+        },
+        {
+            "id": "BasicRole",
+            "imageId": "pablodejuan/colmena-basicrole",
+            "hardwareRequirements": [],
+            "kpis": []
+        },
+        {
+            "id": "BehaviorChangeRole",
+            "imageId": "pablodejuan/colmena-behaviorchangerole",
+            "hardwareRequirements": [],
+            "kpis": []
+        }
+    ]
+}
