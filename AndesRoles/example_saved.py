@@ -360,12 +360,38 @@ class ExampleSaved(Service):
             
         @Persistent()
         def behavior(self):
-            pass
-            self.frequency.read()
+            frequency = self.frequency.read()
             delta_p_ref += self.h*self.Ki*(self.omega - 1) 
             behaviorChangeDict = {}
             behaviorChangeDict['value'] = 1 + delta_p_ref
             behaviorChangeDict['add'] = False
+            behaviorChangeDict['model_name'] = 'TGOV1'
+            behaviorChangeDict['var_name'] = 'pref'
+            self.behaviorChange.publish(behaviorChangeDict)
+            
+    class SecondaryPowerResponse(Role):
+        @Metric('frequency')
+        @Channel('behaviorChange')
+        #@KPI('(mean(deriv(frequency))< 0.001 && mean(frequency)[1]')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.Ki = data.get('controller_gain', None)
+            self.delta_p_ref = 0 
+            self.h = 0.001
+            self.p_ref = 1
+            self.data = self.behavior
+            
+        @Persistent()
+        def behavior(self):
+            frequency = self.frequency.read()
+            behaviorChangeDict = {}
+            behaviorChangeDict['value'] = self.h
+            behaviorChangeDict['add'] = True
             behaviorChangeDict['model_name'] = 'TGOV1'
             behaviorChangeDict['var_name'] = 'pref'
             self.behaviorChange.publish(behaviorChangeDict)

@@ -13,19 +13,33 @@
         {
             "id": "AndesTimeSync",
             "imageId": "pablodejuan/colmena-andestimesync",
-            "hardwareRequirements": [],
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
             "kpis": []
         },
         {
-            "id": "BasicRole",
-            "imageId": "pablodejuan/colmena-basicrole",
-            "hardwareRequirements": [],
+            "id": "BasicRole1",
+            "imageId": "pablodejuan/colmena-basicrole1",
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
             "kpis": []
         },
         {
             "id": "BehaviorChangeRole",
             "imageId": "pablodejuan/colmena-behaviorchangerole",
-            "hardwareRequirements": [],
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
+            "kpis": []
+        },
+        {
+            "id": "SecondaryPowerResponse",
+            "imageId": "pablodejuan/colmena-secondarypowerresponse",
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
             "kpis": []
         }
     ]

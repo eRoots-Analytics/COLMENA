@@ -18,7 +18,12 @@ from andes.routines.criteria import deltadelta
 from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
 from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
-
+from andes.main import System
+# Append the parent directory of the current script's directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+import aux_function as aux
+# Now import aux_function from the adjusted path
+#from Scripts.scripts import aux_function as aux
 logger = logging.getLogger(__name__)
 
 def f_condition(mdl, device_idx, colmena_device =[1], epsilon = 0.003, dae_t = 0):
@@ -375,7 +380,7 @@ class TDS_stepwise(BaseRoutine):
                         edges += [edge]
         self.edges = edges 
 
-    def get_new_roles(self, directory):
+    def get_new_roles(self, directory, generator = False):
         res_dict = {}
         system = self.system
         for uid in range(system.GENROU_bimode.n):
@@ -389,6 +394,87 @@ class TDS_stepwise(BaseRoutine):
                 system.GENROU_bimode.alter("Mb", idx=idx, value= 1.7)
         return 
 
+    def topology_change(self, add_changes = [], remove_changes=[]):
+        system_from = self.system
+        system_dict = system_from.as_dict()
+        system_to  = System()
+        
+        for removal in remove_changes:
+            model_name, idx = removal.values()
+            model_from = getattr(system_from, model_name)
+            model_from.idx2uid(idx)
+            #Removal could be buggy
+            #We first remove the affected device
+            if model_name != 'Bus':
+                for key, value in system_dict[model_name].items():
+                    new_value = [v for i, v in enumerate(value) if i!=idx]
+                    system_dict[model_name][key] = new_value
+            
+            #We check if its a bus splitting
+            if model_name == 'Bus':
+                busA_idx = idx
+                busB_idx = model_from.n+1
+                busA = {'model_name':'Bus', 'param_dict':{'idx': busA_idx}}
+                busB = {'model_name':'Bus', 'param_dict':{'idx': busB_idx}}
+                add_changes.append(busA)
+                add_changes.append(busB)
+                first = True
+                if busA_idx in system_dict['Line']['bus1']:
+                    position = system_dict['Line']['bus1'].index(busA_idx)
+                    if first:
+                        system_dict['Line']['bus1'][position] = busB_idx
+                    first = False
+        
+        for model, param_dict in system_dict.items():
+            for i in range(len(param_dict['u'])):        
+                new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list)}
+                system_to.add(model, new_dict)
+                
+        for change in add_changes:
+            model_name, param_dict = change.values()
+            system_to.add(model_name, param_dict)
+            
+        system_to.setup()
+        system_to.PFlow.run()
+        #Probar sin powerflow
+        aux.transfer_grid_info(system_from, system_to)
+        return system_to
+        
+    def run_set_points(self, batch_size = 0.5, tmax = 20, verbose = False):
+        colmena_sync = True
+        debugging = sys.gettrace() is not None
+        self.config.tmax = tmax
+        
+        self.save_roles = []
+        while colmena_sync and self.system.dae.t < self.config.tmax:
+            time_start = time.time()
+            self.run_individual_batch(t_sim=batch_size, no_summary=False, verbose = verbose)
+            
+            new_set_points = self.get_set_points()
+            self.set_set_points(new_set_points)
+            role_data = []
+            self.save_roles.append((role_data))
+        return
+    
+    def run_topology_change(self, remove_changes =[], add_changes = [], batch_size = 0.5, tmax = 20, verbose = False):
+        colmena_sync = True
+        debugging = sys.gettrace() is not None
+        system = self.system
+        self.config.tmax = tmax
+        
+        self.save_roles = []
+        while colmena_sync and self.system.dae.t < self.config.tmax:
+            self.run_individual_batch(t_sim=batch_size, no_summary=False)
+            
+            #We sync the results to colmena
+            #We read the results the new roles from Colmena
+            
+            done = False
+            if self.system.dae.t > 10 and not done:
+                self.topology_change(remove_changes=remove_changes, add_changes=add_changes)
+                done = True
+        return
+    
     def run_batches(self, colmena = None, initialize_edges = False, batch_size = 0.5, tmax = 20, verbose = False):
         colmena_sync = True
         debugging = sys.gettrace() is not None
@@ -438,11 +524,11 @@ class TDS_stepwise(BaseRoutine):
             self.save_roles.append((role_data))
         return
 
-    def run_individual_batch(self,  t_run=1, t_sim=1, no_summary=False, **kwargs):
+    def run_individual_batch(self,  t_run=1, t_sim=1, no_summary=False, verbose = False, **kwargs):
         self.config.tf = max(0, self.system.dae.t) + t_sim
         self.config.fixt = 1
         self.config.shrinkt = 0
-        return self.run(t_run = t_run, no_summary= no_summary, kwargs=kwargs)
+        return self.run(t_run = t_run, no_summary= no_summary, verbose = verbose, kwargs=kwargs)
     
     def run_andes_sync(self, queue, edges = None, batch_size = 0.5, tmax = 20):
         colmena_sync = True
@@ -483,6 +569,88 @@ class TDS_stepwise(BaseRoutine):
         self.config.shrinkt = 0
         self.run(t_run = self.system.dae.h, no_summary= no_summary, kwargs=kwargs)
     
+    def get_set_points(self, line_id = 8, line_toggle = True):
+        set_point_changes = []
+        line_n = self.system.Line.n
+        line_resistance = False
+        resistance = False
+        if line_toggle:
+            new_set_point = {}
+            new_set_point['model'] = 'Toggle'
+            new_set_point['param'] = 't'
+            new_set_point['value'] = 5
+            new_set_point['idx'] = 1
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+            return set_point_changes
+        elif line_resistance:
+            new_set_point = {}
+            new_set_point['model'] = 'Line'
+            new_set_point['param'] = 'b'
+            new_set_point['value'] = 1e9
+            new_set_point['idx'] = 'Line_8'
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+            new_set_point = {}
+            new_set_point['model'] = 'Line'
+            new_set_point['param'] = 'g'
+            new_set_point['value'] = 1e9
+            new_set_point['idx'] = 'Line_8'
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+        for i in range(line_n):
+            if self.system.dae.t < 5 or line_id!=5:
+                continue
+            elif resistance:
+                new_set_point = {}
+                new_set_point['model'] = 'Line'
+                new_set_point['param'] = 'u'
+                new_set_point['value'] = 0
+                new_set_point['idx'] = i
+                new_set_point['add'] = False
+            elif self.system.dae.t > 5:
+                new_set_point = {}
+                new_set_point['model'] = 'Line'
+                new_set_point['param'] = 'u'
+                new_set_point['value'] = 0
+                new_set_point['idx'] = i
+                new_set_point['add'] = False
+            elif self.system.dae.t > 10:
+                new_set_point['model'] = 'Line'
+                new_set_point['param'] = 'u'
+                new_set_point['value'] = 1
+                new_set_point['idx'] = i
+                new_set_point['add'] = False
+            if 'new_set_point' in locals():        
+                set_point_changes.append(new_set_point)
+        if not line_failure:
+            new_set_point = {}
+            new_set_point['model'] = 'GENROU'
+            new_set_point['param'] = 'u'
+            new_set_point['value'] = 0
+            new_set_point['idx'] = i
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+        return set_point_changes
+            
+    
+    def set_set_points(self, set_points):
+        for set_point in set_points:
+            model_name = set_point['model']
+            param = set_point['param']
+            value = set_point['value']
+            idx = set_point['idx']
+            add = set_point['add']
+            
+            model = getattr(self.system, model_name)
+            idx = model.idx.v[idx]
+            uid = model.idx2uid(idx)
+            param = getattr(model, param)
+            if add:
+                value = value + param.v[uid]  
+                
+            model.alter(src = param.name, idx = idx, value = value)
+            
     def set_new_roles(self, roles_dict={}):
         possible_roles = ['a', 'b', 'c', 'd', 'e', 'f', ' g']
         system = self.system
@@ -511,7 +679,7 @@ class TDS_stepwise(BaseRoutine):
         
         return True,
 
-    def run(self, t_run=1, no_summary=False, **kwargs):
+    def run(self, t_run=1, no_summary=False, verbose = False, **kwargs):
         """
         Run time-domain simulation using numerical integration.
 
@@ -568,8 +736,10 @@ class TDS_stepwise(BaseRoutine):
         last = False
         i = 0
         print(f'System starts at t = {system.dae.t}')
+        print(f'The value of u in Line_8 is: {self.system.Line.u.v[7]}')
         while (system.dae.t - self.h < self.config.tf) or (system.dae.t - self.h < t_run) and (not self.busted):
-            print(f"This is the integration step {i}, for time {system.dae.t} and delta t is {self.h}")
+            if verbose:
+                print(f"This is the integration step {i}, for time {system.dae.t} and delta t is {self.h}")
             logger.debug("Start to integrate time step t=%g", system.dae.t)
 
             # call perturbation file if specified
@@ -995,7 +1165,7 @@ class TDS_stepwise(BaseRoutine):
         system = self.system
 
         # refresh switch times if enabled
-        if self.config.refresh_event:
+        if self.config.refresh_event :
             system.store_switch_times(system.exist.pflow_tds)
 
         # if not all events have been processed

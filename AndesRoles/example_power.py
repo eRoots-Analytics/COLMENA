@@ -187,5 +187,17 @@ class ErootsPowerCaseDecentralised(Service):
             behaviorChangeDict.update(self.device_dict)
             self.P_change += power_change
             self.behaviorChange.publish(behaviorChangeDict)
+    
         
+    class OnlineOPF_S1(Role):
+        @Channel('OPF_update')
+        @Channel('behaviorChange')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            #WE FIRST INITIALIZE THE ROLE PARAMETERS 
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.grid = data.get('system', None)
+            self.t_start = time.time()
+            
         

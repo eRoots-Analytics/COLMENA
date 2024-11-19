@@ -1,9 +1,9 @@
-ANDES 0.post15.dev0+g2151e94
+ANDES 0.post16.dev0+gdf1f2f8
 Copyright (C) 2015-2022 Hantao Cui
 
 ANDES comes with ABSOLUTELY NO WARRANTY
-Case file: C:\Users\pablo\AppData\Local\Programs\Python\Python312\Lib\site-packages\andes\cases\kundur\kundur_full.xlsx
-Report time: 11/12/2024 01:57:35 PM
+Case file: C:\Users\pablo\OneDrive\Escritorio\Proyectos\COLMENA\AndesApp\andes\cases\kundur\kundur_full.xlsx
+Report time: 11/18/2024 05:57:13 PM
 
 Power flow converged in 5 iterations.
 Flat-start: No

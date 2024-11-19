@@ -109,3 +109,29 @@ def delete_last_row(workbook, sheet_name):
     sheet.delete_rows(max_row)
     
     return last_row_dict
+
+def transfer_grid_info(system_from, system_to):
+    for model_from in system_from.models:
+        if model_from.n == 0:
+            continue
+        model_name = model_from.name
+        model_to = getattr(system_to, model_name)
+        
+        for var_name, var_from in model_from._states_and_ext().items():
+            for i in range(model_from.n):
+                var_to = getattr(model_to, var_name)
+                var_to.v[i] = var_from.v[i]
+                
+        for var_name, var_from in model_from._algebs_and_ext().items():
+            for i in range(model_from.n):
+                var_to = getattr(model_to, var_name)
+                var_to.v[i] = var_from.v[i]
+        
+        for var_name, var_from in model_from._all_params().items():
+            for i in range(model_from.n):
+                var_to = getattr(model_to, var_name)
+                var_to.v[i] = var_from.v[i]
+    
+    system_to.dae_t = system_from.dae_t
+    return system_to
+                

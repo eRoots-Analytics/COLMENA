@@ -53,6 +53,7 @@ class ErootsUseCase(Service):
     
     class AndesTimeSync(Role):
         @Metric('frequency')
+        @Requirements('GENERATOR')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
@@ -73,17 +74,19 @@ class ErootsUseCase(Service):
                 elif self.t_andes + self.t_run <= t_role and self.t_andes < self.t_max:
                     responseRun = requests.get(andes_url + '/run', params = {'t_run':self.t_run})
                     self.t_andes = responseRun.json()['Time']
-                    print('Andes is running code:', responseRun.status_code)
+                    print('Andes is running code:', responseRun.status_code, "Andes time is", self.t_andes)
                 else:
-                    print('Andes is not running')
+                    _ = 0
+                    #print('Andes is not running and time is', self.t_andes)
             except Exception as e:
                 print(e)
                 traceback.print_exc()
                 
                 
-    class BasicRole(Role):
+    class BasicRole1(Role):
         @Metric('frequency')
         @Channel('behaviorChange')
+        @Requirements('GENERATOR')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS 
@@ -121,6 +124,7 @@ class ErootsUseCase(Service):
         def behavior(self):
             verbose = True
             responseAndes = self.sync2Andes()
+            print(f"role 1 synced at {time.time() - self.t_start}")
             value = self.publish_metric('omega')
             change = False
             if value > 1.003:
@@ -135,10 +139,10 @@ class ErootsUseCase(Service):
             if change and not verbose:
                 print('Parameter M is =', self.M_value)
                 print('Omega is', value)
-                
     
     class BehaviorChangeRole(Role):
         @Channel('behaviorChange')
+        @Requirements('GENERATOR')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS 
@@ -164,6 +168,39 @@ class ErootsUseCase(Service):
             param = new_behavior['param']
             value = new_behavior['value']
             self.change2Andes(param, value)
-           
-              
+            
+    class SecondaryPowerResponse(Role):
+        @Metric('frequency')
+        @Channel('behaviorChange')
+        @Requirements('GENERATOR')
+        #@KPI('(mean(deriv(frequency))< 0.001 && mean(frequency)[1]')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.Ki = data.get('controller_gain', None)
+            self.delta_p_ref = 0 
+            self.h = 0.001
+            self.p_ref = 1
+            self.data = self.behavior
+            
+        @Persistent()
+        def behavior(self):
+            eps = 0.003
+            frequency = self.frequency.read()
+            behaviorChangeDict = {}
+            if frequency > 1 + eps:
+                power_add = -self.h
+            elif frequency < 1 - eps:
+                power_add = -self.h
+            else:
+                power_add = 0  
+            behaviorChangeDict['value'] = power_add
+            behaviorChangeDict['add'] = True
+            behaviorChangeDict['model_name'] = 'TGOV1'
+            behaviorChangeDict['var_name'] = 'pref'
+            self.behaviorChange.publish(behaviorChangeDict)
             
