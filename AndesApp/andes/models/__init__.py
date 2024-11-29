@@ -24,7 +24,7 @@ file_classes = list([
     ('synchronous', ['GENCLS', 'GENROU', 'PLBVFU1']),
     ('GENROU_bimode', ['GENROU_bimode', 'Neighbourhood', 'Toggle_Line', 'Areac']),
     ('governor', ['TG2', 'TGOV1', 'TGOV1DB', 'TGOV1N', 'TGOV1NDB',
-                  'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB', 'HYGOV4']),
+                  'IEEEG1', 'IEESGO', 'GAST', 'HYGOV', 'HYGOVDB', 'HYGOV4', 'TGOV1_bis']),
     ('vcomp', ['IEEEVC']),
     ('exciter', ['EXDC2', 'IEEEX1', 'ESDC1A', 'ESDC2A', 'EXST1', 'ESST3A', 'SEXS',
                  'IEEET1', 'EXAC1', 'EXAC2', 'EXAC4', 'ESST4B', 'AC8B', 'IEEET3',

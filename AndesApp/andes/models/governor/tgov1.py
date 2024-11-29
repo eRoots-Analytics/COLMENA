@@ -258,3 +258,10 @@ class TGOV1NDB(TGOV1DBData, TGOV1NDBModel):
     def __init__(self, system, config):
         TGOV1DBData.__init__(self)
         TGOV1NDBModel.__init__(self, system, config)
+
+class TGOV1_bis(TGOV1):
+    def __init__(self, system, config):
+        TGOV1.__init__(self, system, config)
+        self.p_add = NumParam(name = 'p_add', default=0)
+        self.pout.e_str = self.pout.e_str + '+p_add'
+        self.pout.v_str = self.pout.v_str + '+p_add'

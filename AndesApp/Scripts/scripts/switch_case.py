@@ -20,6 +20,8 @@ import colmena_test as Colmena
 from scipy.optimize import approx_fprime
 plt.rcParams['pgf.texsystem'] = 'pdflatex'
 
+#
+#ad.prepare()
 current_directory = os.path.dirname(os.path.abspath(__file__))
 two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
@@ -34,7 +36,6 @@ import warnings
 #warnings.simplefilter("error")
 ad.config_logger(30)
 list_cases()
-base_case = False
 line_activate = True
 print(andes.__file__)
 
@@ -43,6 +44,7 @@ matplotlib.use('TkAgg')
 system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
 system.add(model='Toggle', param_dict={'model':'Line', 'dev':'Line_8', 't':4, 'idx':2})
 system.setup()
+base_case = False
 if base_case:
     system.PFlow.run()
     system.TDS_stepwise.config.refresh_event = 1   
@@ -54,9 +56,135 @@ if base_case:
     #pyplot.plot()
 
 line_dict = {'u':0,'idx': 15, 'bus1':7, 'bus2':9}
+line_activate = False
 if line_activate:
     system_dict = system.as_dict()
     system.PFlow.run()
+    ad.config_logger(stream_level=20)        
     system.TDS_stepwise.run_topology_change(remove_changes=[{'model_name':'Bus', 'idx':7}])
     system.TDS_stepwise.load_plotter()
-    
+
+system_intermittent = True
+#Chnages mades
+#A: changed gamma_p value
+#B: changed droop constrant R value
+#C: changed turbine pout value
+#D: changed turbine pref value 
+#E: changed load p2p value
+#F: changed load p0 value
+set_points = ['intermittent', 'droop', 'turbine', 'pref', 'load', 'load_p0' ]
+variables = ['pout', 'pout', 'pout', 'pref', 'v', 'v']
+models = ['TGOV1', 'TGOV1', 'TGOV1', 'TGOV1', 'PQ', 'PQ']
+initialize = 4
+set_points_diff = set_points[initialize:]
+if system_intermittent:
+    for i, set_point in enumerate(set_points_diff):
+        system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
+        system.setup()
+        system.PFlow.run()
+        system.TDS_stepwise.run_set_points(set_points = set_point)
+        system.TDS_stepwise.load_plotter()
+        matplotlib.use('TkAgg')
+        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+        fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1.pref, a=(0,1,2,3))
+        ax.set_title(set_point)
+
+        model_name = models[initialize + i]
+        var_name = variables[initialize + i]
+        model = getattr(system, model_name)
+        var = getattr(model, var_name)
+        fig, ax = system.TDS_stepwise.plt.plot(var, a=(0))
+        ax.set_title(set_point)
+        #fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+        #pyplot.plot()
+
+system_converter = False
+if system_converter:
+    system = ad.load(get_case('ieee14/ieee14_pvd1.xlsx'), setup = False)
+    #system.as_dict()
+    system.setup()
+    system.PFlow.run()
+    system.TDS.run()
+    #system.TDS_stepwise.run_set_points(set_points = 'converter')
+    system.TDS.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS.plt.plot(system.PVD1.v, a=(0))
+    fig, ax = system.TDS.plt.plot(system.PVD1.v, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+    #pyplot.plot()
+
+governor_bis = False
+if governor_bis:
+    system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
+    system_dict = system.as_dict()
+    system_to = ad.System()
+    for i in range(2):
+        idx = system.TGOV1.idx.v[i]
+        syn = system.TGOV1.syn.v[i]
+        system_to.add(model = 'TGOV1_bis', param_dict= {'idx':idx, 'syn':syn, 'p_add':0.1})
+    for model, param_dict in system_dict.items():
+        for i in range(len(param_dict['u'])):    
+            if model == 'TGOV1' and i < 2:
+                continue    
+            new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list) or isinstance(value, np.ndarray)}
+            system_to.add(model, new_dict)
+    system =system_to
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = 'PQ')
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+    #pyplot.plot()
+
+
+dynload = True
+if dynload:
+    system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
+    for i in range(system.PQ.n):
+        idx = system.PQ.idx.v[i]
+        zip_dict = {"idx": i,
+        "u": 1.0,
+        "name": "ZIP_" + str(i),
+        "pq": "PQ_0",
+        "kpp": 50.0,
+        "kpi": 40.0,
+        "kpz": 10.0,
+        "kqp": 100.0,
+        "kqi": 0.0,
+        "kqz": 0.0
+        }
+        system.add(model = 'ZIP', param_dict= zip_dict)
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = 'load_p0')
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0))
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+    #pyplot.plot()
+
+
+dynload2 = True
+if dynload2:
+    system = ad.load(get_case('ieee14/ieee14_zip'), setup = False)
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = None)
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0))
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+    #pyplot.plot()
+
+usecase_motor = True
+if usecase_motor:
+    system = ad.load(get_case('ieee14/ieee14_zip'), setup = False)
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = None)
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0))
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+    #pyplot.plot()

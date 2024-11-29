@@ -3,7 +3,7 @@ SuiteSparse solvers provided by ``kvxopt``.
 """
 
 import logging
-
+import traceback
 import numpy as np
 from kvxopt import matrix, umfpack, klu
 
@@ -134,6 +134,11 @@ class SuiteSparseSolver:
             return np.ravel(self.b)
         except ArithmeticError:
             logger.error('Jacobian matrix is singular.')
+            logger.debug(f'Jacobian matrix (A):\n{self.A}')
+            logger.debug(f'Right-hand side vector (b): {self.b}')
+            logger.debug(f'Symbolic factorization (F): {self.F}')
+            logger.debug(f'Numeric factorization (N): {self.N}')
+            traceback.print_exc()
             # diag = self.A[0:self.A.size[0] ** 2:self.A.size[0]+1]
             # idx = (np.argwhere(np.array(matrix(diag)).ravel() == 0.0)).ravel()
             # logger.error('The xy indices of associated variables:')

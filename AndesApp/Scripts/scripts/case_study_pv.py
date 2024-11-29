@@ -30,7 +30,7 @@ individual_case = False
 
 ss = andes.run(get_case("ieee14/ieee14_pvd1.xlsx"))
 aux.set_config(ss, setup =2)
-
+andes.prepare()
 ss.PFlow.run()
 ss.TDS_colmena.run()
 matplotlib.use('TkAgg') 

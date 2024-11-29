@@ -12,9 +12,11 @@ import colmena
 import matplotlib.pyplot as plt
 #We first define the andes directory
 current_directory = os.path.dirname(os.path.abspath(__file__))
-two_levels_up = os.path.dirname(os.path.dirname(current_directory))
+two_levels_up = os.path.dirname(current_directory)
 sys.path.insert(0, two_levels_up)
-import andes as ad
+sys.path.insert(0, two_levels_up + '/AndesApp')
+
+from AndesApp import andes as ad
 andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_dict = {"case_file":andes_directory}
 

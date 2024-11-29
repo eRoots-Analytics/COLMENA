@@ -354,32 +354,6 @@ class TDS_stepwise(BaseRoutine):
         logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
         logger.debug("Resuming from t=%.4fs.", system.dae.t)
 
-    def sync2colmena(self, colmena):
-        kpis = {}
-        if not hasattr(self, 'edges'):
-            colmena.KPIs = 1
-            return
-        for edge in self.edges:
-            kpis[edge.id] = edge.kpi
-        colmena.KPIs = kpis
-        return True
-    
-    def set_edges(self, use_collection = True):
-        edges = []
-        for model in self.system.models:
-            if model.group == "Collection" and model.name == "Areac":
-                for uid in model.idx:
-                    if use_collection:
-                        edge = ct.Edge(self.system, collection_uid =uid)
-                        edges += [edge]
-                    else:    
-                        adresses = []
-                        for i in range(model.n):
-                            adresses += [i]
-                        edge = ct.Edge(self.system, adresses=adresses)
-                        edges += [edge]
-        self.edges = edges 
-
     def get_new_roles(self, directory, generator = False):
         res_dict = {}
         system = self.system
@@ -402,16 +376,18 @@ class TDS_stepwise(BaseRoutine):
         for removal in remove_changes:
             model_name, idx = removal.values()
             model_from = getattr(system_from, model_name)
-            model_from.idx2uid(idx)
+            uid = model_from.idx2uid(idx)
             #Removal could be buggy
             #We first remove the affected device
-            if model_name != 'Bus':
+            if model_name != 'Bus' or True:
                 for key, value in system_dict[model_name].items():
-                    new_value = [v for i, v in enumerate(value) if i!=idx]
+                    new_value = [v for i, v in enumerate(value) if i!=uid]
                     system_dict[model_name][key] = new_value
             
             #We check if its a bus splitting
             if model_name == 'Bus':
+                bus_dict = system_from.as_dict()['Bus']
+                bus_dict = {key:value[uid] for key,value in bus_dict.items()}
                 busA_idx = idx
                 busB_idx = model_from.n+1
                 busA = {'model_name':'Bus', 'param_dict':{'idx': busA_idx}}
@@ -425,35 +401,55 @@ class TDS_stepwise(BaseRoutine):
                         system_dict['Line']['bus1'][position] = busB_idx
                     first = False
         
+        _=0
         for model, param_dict in system_dict.items():
             for i in range(len(param_dict['u'])):        
-                new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list)}
+                new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list) or isinstance(value, np.ndarray)}
+                new_dict_ = 0
                 system_to.add(model, new_dict)
                 
         for change in add_changes:
             model_name, param_dict = change.values()
-            system_to.add(model_name, param_dict)
+            system_to.add(model_name, param_dict) 
             
         system_to.setup()
         system_to.PFlow.run()
+        system_to.PFlow.converged = True
+        tds_to = system_to.TDS_stepwise
+        tds_to.init()
+        system_to.TDS_stepwise.init()
+        x0_save = self.x0
+        self.x0 = np.zeros(len(tds_to.x0))
+        self.x0[:len(x0_save)] = x0_save
+        y0_save = self.y0
+        self.y0 = np.zeros(len(tds_to.y0))
+        self.y0[:len(y0_save)] = y0_save
+        f0_save = self.f0
+        self.f0 = np.zeros(len(tds_to.f0))
+        self.f0[:len(f0_save)] = f0_save
+        qg_save = self.qg
+        self.qg = np.zeros(len(tds_to.qg))
+        self.qg[:len(qg_save)] = qg_save
         #Probar sin powerflow
         aux.transfer_grid_info(system_from, system_to)
         return system_to
         
-    def run_set_points(self, batch_size = 0.5, tmax = 20, verbose = False):
-        colmena_sync = True
+    def run_set_points(self, set_points = None, unique_change = False, batch_size = 0.5, tmax = 20, verbose = False):
         debugging = sys.gettrace() is not None
         self.config.tmax = tmax
-        
+        changes_done = False
         self.save_roles = []
-        while colmena_sync and self.system.dae.t < self.config.tmax:
+        while self.system.dae.t < self.config.tmax:
             time_start = time.time()
             self.run_individual_batch(t_sim=batch_size, no_summary=False, verbose = verbose)
-            
-            new_set_points = self.get_set_points()
-            self.set_set_points(new_set_points)
-            role_data = []
-            self.save_roles.append((role_data))
+
+            if changes_done is False and self.system.dae.t > 10:
+                new_set_points = self.get_set_points(set_points)
+                self.set_set_points(new_set_points)
+                role_data = []
+                self.save_roles.append((role_data))
+                if unique_change is True:
+                    changes_done = False
         return
     
     def run_topology_change(self, remove_changes =[], add_changes = [], batch_size = 0.5, tmax = 20, verbose = False):
@@ -463,18 +459,57 @@ class TDS_stepwise(BaseRoutine):
         self.config.tmax = tmax
         
         self.save_roles = []
+        change_done = False
         while colmena_sync and self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
             
             #We sync the results to colmena
             #We read the results the new roles from Colmena
             
-            done = False
-            if self.system.dae.t > 10 and not done:
-                self.topology_change(remove_changes=remove_changes, add_changes=add_changes)
-                done = True
+            if self.system.dae.t > 10 and not change_done:
+                system_from = self.system
+                system_to = self.topology_change(remove_changes=remove_changes, add_changes=add_changes)
+                self.system = system_to
+                self.init()
+                test_result = self.test_init()
+                #system_to.PFlow.run()
+                test_result = self.test_init()
+                change_done = True
+        return
+
+    def run_secondary_response(self, batch_size = 0.5, tmax = 20, verbose = False):
+        self.config.tmax = tmax
+        self.save_roles = []
+        change_done = False
+        while self.system.dae.t < self.config.tmax:
+            self.run_individual_batch(t_sim=batch_size, no_summary=False)
+            
+            #We sync the results to colmena
+            #We read the results the new roles from Colmena
+            for idx in self.GENROU.idx.v:
+                if self.secondary_response_condition(idx):
+                    self.secondary_response_role(idx)
         return
     
+    def secondary_response_condition(self, idx):
+        eps = 0.001
+        uid = self.system.GENROU.idx2uid(idx)
+        steady_state_condition = self.system.dae.t > 50
+        frequency_condition = self.system.GENROU.omega.v[uid] > 1 + eps
+        condition = steady_state_condition and frequency_condition
+        return condition
+    
+    def secondary_response_role(self, idx, batch_size, Kp=0.1):
+        uid = self.system.GENROU.idx2uid(idx)
+        omega = self.system.GENROU.omega.v[uid]
+        diff = 1 - omega
+        
+        p_diff =  diff*Kp
+        existing_value = self.system.TGOV1.paux[uid]
+        self.system.TGOV1.alter(src='paux', idx = idx, value = existing_value + p_diff)
+        return
+
+
     def run_batches(self, colmena = None, initialize_edges = False, batch_size = 0.5, tmax = 20, verbose = False):
         colmena_sync = True
         debugging = sys.gettrace() is not None
@@ -482,8 +517,6 @@ class TDS_stepwise(BaseRoutine):
         self.config.tmax = tmax
         
         self.save_roles = []
-        if initialize_edges:
-            self.set_edges()
         
         while colmena_sync and self.system.dae.t < self.config.tmax:
             time_start = time.time()
@@ -500,8 +533,6 @@ class TDS_stepwise(BaseRoutine):
                 raise(f"Loop took too long: {elapsed_time:.4f} seconds")
             
             #We sync the results to colmena
-            self.update_edges(directory=None)
-            colmena_sync = self.sync2colmena(colmena=colmena)
             
             #We read the results the new roles from Colmena
             if colmena is None:
@@ -526,55 +557,81 @@ class TDS_stepwise(BaseRoutine):
 
     def run_individual_batch(self,  t_run=1, t_sim=1, no_summary=False, verbose = False, **kwargs):
         self.config.tf = max(0, self.system.dae.t) + t_sim
-        self.config.fixt = 1
-        self.config.shrinkt = 0
-        return self.run(t_run = t_run, no_summary= no_summary, verbose = verbose, kwargs=kwargs)
+        self.config.shrinkt = 1
+        return self.run(t_run = t_run, no_summary= no_summary, verbose = verbose, kwargs=kwargs) 
     
-    def run_andes_sync(self, queue, edges = None, batch_size = 0.5, tmax = 20):
-        colmena_sync = True
-        debugging = True
-        initialize_edges = False
-        if edges is None:
-            self.set_edges()
-        else:
-            self.edges = edges
-            
-        while colmena_sync and self.system.dae.t < tmax:
-            time_start = time.time()
-            self.run_individual_batch(t_sim=batch_size, no_summary=False)
-            
-            #Sleep for the rest of the calculation
-            elapsed_time = time.time() - time_start
-            time_sleep = batch_size - elapsed_time
-            if time_sleep >= 0:
-                time.sleep(time_sleep)
-            elif debugging:
-                _ = 0 
-            else: 
-                raise(f"Loop took too long: {elapsed_time:.4f} seconds")
-            
-            for edge in self.edges:
-                edge.update()
-            kpis = [edge.kpi for edge in self.edges]
-            queue.put(kpis)
-            #We read the results the new roles from Colmena
-            new_roles = queue.get()
-            
-            self.set_new_roles()
-        return
-    
-    def run_andes_inapp(self, t_sim=1, no_summary=False, **kwargs):
-        self.config.tf = max(0, self.system.dae.t) + t_sim
-        self.config.fixt = 1
-        self.config.shrinkt = 0
-        self.run(t_run = self.system.dae.h, no_summary= no_summary, kwargs=kwargs)
-    
-    def get_set_points(self, line_id = 8, line_toggle = True):
+    def get_set_points(self, set_points = None, line_id = 8, line_toggle = True):
         set_point_changes = []
         line_n = self.system.Line.n
         line_resistance = False
+        line_failure = False
         resistance = False
-        if line_toggle:
+        change_turbine = False
+        if set_points == 'intermittent':
+            new_set_point = {}
+            new_set_point['model'] = 'GENROU'
+            new_set_point['param'] = 'gammap'
+            new_set_point['value'] = -0.1
+            new_set_point['idx'] = 1
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+
+        elif set_points == 'turbine':
+            new_set_point = {}
+            new_set_point['model'] = 'TGOV1'
+            new_set_point['param'] = 'paux0'
+            new_set_point['value'] = 0.1
+            new_set_point['idx'] = 1
+            new_set_point['add'] = True
+            set_point_changes.append(new_set_point)
+        
+        if set_points == 'load_p0':
+            new_set_point = {}
+            new_set_point['model'] = 'PQ'
+            new_set_point['param'] = 'p0'
+            new_set_point['value'] = 2
+            new_set_point['idx'] = 'PQ_0'
+            new_set_point['add'] = True
+            set_point_changes.append(new_set_point)
+        
+
+        elif set_points == 'droop':
+            new_set_point = {}
+            new_set_point['model'] = 'TGOV1'
+            new_set_point['param'] = 'R'
+            new_set_point['value'] = 0.1
+            new_set_point['idx'] = 1
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+
+        elif set_points == 'converter':
+            new_set_point = {}
+            new_set_point['model'] = 'PVD1'
+            new_set_point['param'] = 'gammap'
+            new_set_point['value'] = 0.1
+            new_set_point['idx'] = 1
+            new_set_point['add'] = True
+            set_point_changes.append(new_set_point)
+        
+        elif set_points == 'load':
+            new_set_point = {}
+            new_set_point['model'] = 'PQ'
+            new_set_point['param'] = 'Ppf'
+            new_set_point['value'] = 0.5
+            new_set_point['idx'] = 'PQ_0'
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+
+        elif set_points == 'pref':
+            new_set_point = {}
+            new_set_point['model'] = 'TGOV1'
+            new_set_point['param'] = 'pref0'
+            new_set_point['value'] = 0.1
+            new_set_point['idx'] = 1
+            new_set_point['add'] = True
+            set_point_changes.append(new_set_point)
+
+        elif line_toggle:
             new_set_point = {}
             new_set_point['model'] = 'Toggle'
             new_set_point['param'] = 't'
@@ -583,6 +640,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['add'] = False
             set_point_changes.append(new_set_point)
             return set_point_changes
+        
         elif line_resistance:
             new_set_point = {}
             new_set_point['model'] = 'Line'
@@ -601,6 +659,8 @@ class TDS_stepwise(BaseRoutine):
         for i in range(line_n):
             if self.system.dae.t < 5 or line_id!=5:
                 continue
+            if set_points is None:
+                break
             elif resistance:
                 new_set_point = {}
                 new_set_point['model'] = 'Line'
@@ -623,7 +683,7 @@ class TDS_stepwise(BaseRoutine):
                 new_set_point['add'] = False
             if 'new_set_point' in locals():        
                 set_point_changes.append(new_set_point)
-        if not line_failure:
+        if not line_failure and set_points is None:
             new_set_point = {}
             new_set_point['model'] = 'GENROU'
             new_set_point['param'] = 'u'
@@ -643,13 +703,18 @@ class TDS_stepwise(BaseRoutine):
             add = set_point['add']
             
             model = getattr(self.system, model_name)
-            idx = model.idx.v[idx]
+            #idx = model.idx.v[idx]
             uid = model.idx2uid(idx)
-            param = getattr(model, param)
-            if add:
-                value = value + param.v[uid]  
-                
-            model.alter(src = param.name, idx = idx, value = value)
+            param = getattr(model, param, None)
+            if param is not None:
+                if add:
+                    value = value + param.v[uid]
+                model.alter(src = param.name, idx = idx, value = value)
+            
+            else:
+                if add:
+                    value = value + getattr(self.system.config,param)
+                setattr(self.system.config, param, value) 
             
     def set_new_roles(self, roles_dict={}):
         possible_roles = ['a', 'b', 'c', 'd', 'e', 'f', ' g']
@@ -750,7 +815,6 @@ class TDS_stepwise(BaseRoutine):
             # call the stepping method of the integration method (or data replay)
             
             if self.data_csv is None:
-                colmena_status = self.colmena_step(dict_changes2, system.dae.t) 
                 step_status = self.itm_step()  # compute for the current step
             else:
                 step_status = self._csv_step()
@@ -1109,24 +1173,7 @@ class TDS_stepwise(BaseRoutine):
             breakpoint()
         system.exit_code += 1
 
-        return False
-    
-    def update_edges(self, directory = None):
-        #Placeholder function to sync to colmena
-        #sends KPI and Measurements.
-        if not hasattr(self, "edges") :
-            #this case is if we are running tds withouth a colmena object
-            return True
-        elif len(self.edges) == 0:
-            return True
-        KPI_dict = {}
-        for edge in self.edges:
-            edge.publish_measurement(self.system, self.system.dae.t)
-            edge.computeKPI()
-            edge.publish_KPI(directory = directory)
-            edge.update_log(tnow = self.system.dae.t, tforget = 0.1)
-        
-        return True   
+        return False   
         
     def save_output(self, npz=True):
         """

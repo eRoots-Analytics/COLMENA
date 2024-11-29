@@ -7,6 +7,7 @@ import time
 import cvxpy as cp
 import traceback
 import queue
+from controllers import Stabilizer
 from test_examples import TestExamples
 from colmena import (
     Context,
@@ -169,5 +170,28 @@ class ErootsDynamicsDecentralised(Service):
             self.model_name = data.get('model_name', None)
             self.device_dict = {'model_name': self.model_name, 'device_idx': self.idx}
             self.t_start = time.time()
-        
-        
+    
+    class stabilizerRole(Role):
+        @Channel('island')
+        @Metric('voltage')
+        @KPI('voltage')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            #WE FIRST INITIALIZE THE ROLE PARAMETERS 
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'device_idx': self.idx}
+            self.t_start = time.time()
+            self.controller = Stabilizer()
+
+        @Persistent()
+        def behavior(self):
+            inputs = self.controller.get_input_vars()
+            for input in inputs:
+                responseAndes = requests.get(andes_url + '/device_sync', params = input)
+            input_signal = self.controller.compute_input(responseAndes)
+            output_signal = self.controller.apply(input_signal)
+            responseAndes = requests.get(andes_url + '/device_sync', params = input)

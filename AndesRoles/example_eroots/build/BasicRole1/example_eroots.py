@@ -20,7 +20,7 @@ from colmena import (
     KPI,
 )
 
-andes_url = 'http://127.0.0.1:5000'
+andes_url = 'http://localhost:5000'
 current_directory = os.path.dirname(__file__)
 json_path = os.path.join(current_directory, 'data.json')
 

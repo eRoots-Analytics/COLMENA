@@ -112,9 +112,10 @@ def delete_last_row(workbook, sheet_name):
 
 def transfer_grid_info(system_from, system_to):
     for model_from in system_from.models:
+        model_from = getattr(system_from, model_from)
         if model_from.n == 0:
             continue
-        model_name = model_from.name
+        model_name = model_from.class_name
         model_to = getattr(system_to, model_name)
         
         for var_name, var_from in model_from._states_and_ext().items():
@@ -130,8 +131,21 @@ def transfer_grid_info(system_from, system_to):
         for var_name, var_from in model_from._all_params().items():
             for i in range(model_from.n):
                 var_to = getattr(model_to, var_name)
-                var_to.v[i] = var_from.v[i]
+                try:
+                    var_to.v[i] = var_from.v[i]
+                except:
+                    _ = 0
+        
+        for var_name, var_from in model_from.discrete.items():
+            for i in range(model_from.n):
+                var_to = getattr(model_to, var_name)
+                for flag in ['v', 'zu', 'zl', 'zi']:
+                    try:
+                        val = getattr(var_from, flag)[i]
+                        getattr(var_to, flag)[i] = val
+                    except:
+                        _ = 0
     
-    system_to.dae_t = system_from.dae_t
+    system_to.dae.t = system_from.dae.t
     return system_to
                 
