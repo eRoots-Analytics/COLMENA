@@ -185,3 +185,14 @@ class EXDC2(EXDC2Data, EXDC2Model):
     def __init__(self, system, config):
         EXDC2Data.__init__(self)
         EXDC2Model.__init__(self, system, config)
+        self.v_aux = NumParam(default=0)
+        self.vi.e_str = self.vi.e_str + '+ v_aux'
+        self.vi.v_str = self.vi.v_str + '+ v_aux'
+
+
+class EXDC2_modified(EXDC2):
+    def __init__(self, system, config):
+        EXDC2.__init__(self, system, config)
+        self.v_aux = NumParam(default=0)
+        self.vi.e_str = self.vi.e_str + '+ v_aux'
+        self.vi.v_str = self.vi.v_str + '+ v_aux'

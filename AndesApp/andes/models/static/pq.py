@@ -220,3 +220,9 @@ class PQ(PQData, Model):
                        "(q0 * vcmp_zi + Xlb * vcmp_zl * v**2 + Xub * vcmp_zu * v**2) + " \
                        "u * Indicator(dae_t >= 0) * " \
                        "(q2q * Qpf + q2i * Iqeq * v + q2z * Xeq * v**2)"
+
+class PQ_intermittent(PQ):
+    def __init__(self, system=None, config=None):
+        super().__init__(system, config)
+        self.paux = NumParam(default = 0)
+        self.v.e_str = self.v.e_str.replace('Ppf', '(Ppf + paux)')

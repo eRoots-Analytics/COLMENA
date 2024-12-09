@@ -477,37 +477,97 @@ class TDS_stepwise(BaseRoutine):
                 change_done = True
         return
 
-    def run_secondary_response(self, batch_size = 0.5, tmax = 20, verbose = False):
+    def init_PIcontrollers(self, model):
+        model.PIcontroller = []
+        for i in range(model.n):
+            PIparams= {'dt':0.1, 'Kp':0.1, 'Ki':2, 'Uref':1}
+            model.PIcontroller.append(aux.PIcontroller(**PIparams))
+        return
+    
+    def run_stabilizer_response(self, Ks=1, batch_size = 0.1, tmax = 20, verbose = False):
         self.config.tmax = tmax
         self.save_roles = []
+        model = self.system.TGOV1
+        model.Stabilizers = []
+        n_stabilizer = model.n
+        n_stabilizer = 1
+        for i in range(model.n):
+            Stabilizer_params = custom_dict = {"params": 0, "dt": batch_size, "T1": 0.05, "T2": 1, "T3": 0.05,
+            "T4": 1, "T5": 0.01, "T6": 0.01, "A1": 1.0, "A2": 0.5, "A3": 0.5, "A4": 1.0, "A5": 1.0, 
+            "A6": 1.0, "Ks": Ks, "Lmin": -10,"Lmax": 10, 'idx': i}
+            model.Stabilizers.append(aux.Stabilizer(**Stabilizer_params))
+        change_done = False
+        og_signal = False
+        while self.system.dae.t < self.config.tmax:
+            self.run_individual_batch(t_sim=batch_size, no_summary=False)
+            
+            #We sync the results to colmena
+            #We read the results the new roles from Colmena
+            for i, idx in enumerate(self.system.TGOV1.idx.v):
+                uid = model.idx2uid(idx)
+                if i > n_stabilizer:
+                    break 
+                if self.secondary_response_condition(idx):
+                    controller = self.system.TGOV1.Stabilizers[uid]
+                    input_signal = (self.system.GENROU.omega.v[uid] - 1)
+                    new_set_point = controller.get_set_point(input_signal)
+                    self.set_set_points(new_set_point)
+                    _=0
+        return
+
+    def run_secondary_response(self, batch_size = 0.5, controller_control = False, tmax = 20, verbose = False):
+        self.config.tmax = tmax
+        self.save_roles = []
+        self.init_PIcontrollers(self.system.GENROU)
         change_done = False
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
             
             #We sync the results to colmena
             #We read the results the new roles from Colmena
-            for idx in self.GENROU.idx.v:
+            for i, idx in enumerate(self.system.GENROU.idx.v):
                 if self.secondary_response_condition(idx):
-                    self.secondary_response_role(idx)
+                    if controller_control:
+                        controller = self.system.GENROU.PIcontroller[i]
+                        ctrl_input = self.system.GENROU.omega.v[i]
+                        ctrl_input = np.mean(self.system.GENROU.omega.v)
+                        new_set_point = controller.get_set_point(ctrl_input)
+                        self.set_set_points(new_set_point)
+                    else:
+                        new_set_point = self.secondary_response_role(idx)
+                        self.set_set_points(new_set_point)
         return
     
     def secondary_response_condition(self, idx):
         eps = 0.001
-        uid = self.system.GENROU.idx2uid(idx)
-        steady_state_condition = self.system.dae.t > 50
+        t_steady = 0
+        try:
+            uid = self.system.GENROU.idx2uid(idx)
+        except:
+            uid = int(idx[-1])-1
+        steady_state_condition = self.system.dae.t > t_steady
         frequency_condition = self.system.GENROU.omega.v[uid] > 1 + eps
+        frequency_condition = True
         condition = steady_state_condition and frequency_condition
         return condition
     
-    def secondary_response_role(self, idx, batch_size, Kp=0.1):
+    def secondary_response_role(self, idx, Kp=0.1):
+        res_changes = []
         uid = self.system.GENROU.idx2uid(idx)
         omega = self.system.GENROU.omega.v[uid]
         diff = 1 - omega
         
         p_diff =  diff*Kp
-        existing_value = self.system.TGOV1.paux[uid]
-        self.system.TGOV1.alter(src='paux', idx = idx, value = existing_value + p_diff)
-        return
+        existing_value = self.system.TGOV1.paux.v[uid]
+        self.system.TGOV1.alter(src='paux',idx = idx, value = existing_value + p_diff)
+        new_set_point = {}
+        new_set_point['model'] = 'TGOV1'
+        new_set_point['param'] = 'paux0'
+        new_set_point['value'] = existing_value + p_diff
+        new_set_point['idx'] = idx
+        new_set_point['add'] = False
+        res_changes.append(new_set_point)
+        return res_changes
 
 
     def run_batches(self, colmena = None, initialize_edges = False, batch_size = 0.5, tmax = 20, verbose = False):
@@ -567,6 +627,10 @@ class TDS_stepwise(BaseRoutine):
         line_failure = False
         resistance = False
         change_turbine = False
+
+        if set_points is None:
+            return {}
+
         if set_points == 'intermittent':
             new_set_point = {}
             new_set_point['model'] = 'GENROU'
@@ -585,15 +649,44 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['add'] = True
             set_point_changes.append(new_set_point)
         
-        if set_points == 'load_p0':
+        elif set_points == 'fload':
             new_set_point = {}
-            new_set_point['model'] = 'PQ'
-            new_set_point['param'] = 'p0'
-            new_set_point['value'] = 2
-            new_set_point['idx'] = 'PQ_0'
+            new_set_point['model'] = 'FLoad'
+            new_set_point['param'] = 'kp'
+            new_set_point['value'] = 50
+            new_set_point['idx'] = 'FLoad_1'
             new_set_point['add'] = True
             set_point_changes.append(new_set_point)
         
+        elif set_points == 'load_p0':
+            new_set_point = {}
+            new_set_point['model'] = 'PQ'
+            new_set_point['param'] = 'p0'
+            new_set_point['value'] = 1
+            new_set_point['idx'] = 'PQ_1'
+            new_set_point['add'] = True
+            set_point_changes.append(new_set_point)
+            new_set_point = {}
+            new_set_point['model'] = 'PQ'
+            new_set_point['param'] = 'Ppf'
+            new_set_point['value'] = 15.7
+            new_set_point['idx'] = 'PQ_1'
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+            new_set_point = {}
+            new_set_point['model'] = 'PQ'
+            new_set_point['param'] = 'p2p'
+            new_set_point['value'] = 0.5
+            new_set_point['idx'] = 'PQ_1'
+            new_set_point['add'] = False
+            #set_point_changes.append(new_set_point)
+            new_set_point = {}
+            new_set_point['model'] = 'PQ'
+            new_set_point['param'] = 'p2i'
+            new_set_point['value'] = 0
+            new_set_point['idx'] = 'PQ_1'
+            new_set_point['add'] = False
+            #set_point_changes.append(new_set_point)
 
         elif set_points == 'droop':
             new_set_point = {}
@@ -618,7 +711,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['model'] = 'PQ'
             new_set_point['param'] = 'Ppf'
             new_set_point['value'] = 0.5
-            new_set_point['idx'] = 'PQ_0'
+            new_set_point['idx'] = 'PQ_1'
             new_set_point['add'] = False
             set_point_changes.append(new_set_point)
 
@@ -629,6 +722,24 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.1
             new_set_point['idx'] = 1
             new_set_point['add'] = True
+            set_point_changes.append(new_set_point)
+
+        elif set_points == 'ZIP':
+            new_set_point = {}
+            new_set_point['model'] = 'ZIP'
+            new_set_point['param'] = 'kpp'
+            new_set_point['value'] = 10
+            new_set_point['idx'] = 'ZIP_1'
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
+
+        elif set_points == 'motor':
+            new_set_point = {}
+            new_set_point['model'] = 'Motor5'
+            new_set_point['param'] = 'kpp'
+            new_set_point['value'] = 10
+            new_set_point['idx'] = 'ZIP_1'
+            new_set_point['add'] = False
             set_point_changes.append(new_set_point)
 
         elif line_toggle:
@@ -703,8 +814,17 @@ class TDS_stepwise(BaseRoutine):
             add = set_point['add']
             
             model = getattr(self.system, model_name)
+            if model.n == 0:
+                return
             #idx = model.idx.v[idx]
-            uid = model.idx2uid(idx)
+            try:
+                uid = model.idx2uid(idx)
+            except:
+                if isinstance(idx, str):
+                    idx = int(idx[-1])
+                idx = model.idx.v[max(0,idx-1)]
+                uid = model.idx2uid(idx)
+
             param = getattr(model, param, None)
             if param is not None:
                 if add:
@@ -712,9 +832,10 @@ class TDS_stepwise(BaseRoutine):
                 model.alter(src = param.name, idx = idx, value = value)
             
             else:
+                param = set_point['param']
                 if add:
-                    value = value + getattr(self.system.config,param)
-                setattr(self.system.config, param, value) 
+                    value = value + getattr(model.config,param)
+                setattr(model.config, param, value) 
             
     def set_new_roles(self, roles_dict={}):
         possible_roles = ['a', 'b', 'c', 'd', 'e', 'f', ' g']

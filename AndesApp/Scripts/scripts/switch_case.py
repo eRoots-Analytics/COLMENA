@@ -64,7 +64,7 @@ if line_activate:
     system.TDS_stepwise.run_topology_change(remove_changes=[{'model_name':'Bus', 'idx':7}])
     system.TDS_stepwise.load_plotter()
 
-system_intermittent = True
+system_intermittent = False
 #Chnages mades
 #A: changed gamma_p value
 #B: changed droop constrant R value
@@ -100,10 +100,10 @@ if system_intermittent:
 
 system_converter = False
 if system_converter:
-    system = ad.load(get_case('ieee14/ieee14_pvd1.xlsx'), setup = False)
+    system = ad.run(get_case('ieee14/ieee14_pvd1_bis.xlsx'))
     #system.as_dict()
-    system.setup()
-    system.PFlow.run()
+    ad.config_logger(stream_level=20)  
+    system.PFlow.run()      
     system.TDS.run()
     #system.TDS_stepwise.run_set_points(set_points = 'converter')
     system.TDS.load_plotter()
@@ -139,10 +139,11 @@ if governor_bis:
 
 
 dynload = True
-if dynload:
+if dynload and False:
     system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
-    for i in range(system.PQ.n):
+    for i in range(1):
         idx = system.PQ.idx.v[i]
+        bus = system.PQ.bus.v[i]
         zip_dict = {"idx": i,
         "u": 1.0,
         "name": "ZIP_" + str(i),
@@ -152,9 +153,12 @@ if dynload:
         "kpz": 10.0,
         "kqp": 100.0,
         "kqi": 0.0,
-        "kqz": 0.0
+        "kqz": 0.0,
+        'bus': bus
         }
-        system.add(model = 'ZIP', param_dict= zip_dict)
+        fload_dict = {"idx": i, "pq": "PQ_0", "bus":bus}
+        #system.add(model = 'ZIP', param_dict= zip_dict)
+        system.add(model = 'FLoad', param_dict= fload_dict)
     system.setup()
     system.PFlow.run()
     system.TDS_stepwise.run_set_points(set_points = 'load_p0')
@@ -165,26 +169,85 @@ if dynload:
     #pyplot.plot()
 
 
-dynload2 = True
-if dynload2:
-    system = ad.load(get_case('ieee14/ieee14_zip'), setup = False)
+dynload_pq = True 
+if dynload_pq:
+    system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
+    """system.PQ.config.p2p = 1
+    system.PQ.config.p2i = 0
+    system.PQ.config.p2z = 0
+    system.PQ.config.q2q = 1
+    system.PQ.config.q2i = 0
+    system.PQ.config.q2z = 0
+    system.Toggle.alter(src='u', idx=1, value=0)
+"""
     system.setup()
     system.PFlow.run()
-    system.TDS_stepwise.run_set_points(set_points = None)
+    system.TDS_stepwise.run_set_points(set_points = 'load_p0', tmax = 18)
     system.TDS_stepwise.load_plotter()
     matplotlib.use('TkAgg')
-    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0))
-    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.PQ.v, a=(0,1), linestyles=['-.'])
     #pyplot.plot()
+
+dynload_fload = False
+if dynload_fload:
+    system = ad.load(get_case('ieee14/ieee14_fload.json'), setup = False)
+    system.FLoad.set(src='busf', idx='FLoad_1', value='BusFreq_3', attr='v')
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = 'fload')
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.FLoad.v, a=(0), linestyles=['-.'])
+    #pyplot.plot()
+
+dynload_zip = True
+if dynload_zip:
+    system = ad.load(get_case('ieee14/ieee14_zip.json'), setup = False)
+    #system.ZIP.set(src='busf', idx='ZIP_1', value='BusFreq_3', attr='v')
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = 'ZIP')
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.ZIP.a, a=(0), linestyles=['-.'])
+    #pyplot.plot()
+
+usecase_pq = False
+if usecase_pq:
+    system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = 'load_p0')
+    #system.TDS_stepwise.run_set_points(set_points = None)
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.PQ.v, a=(0), linestyles=['-.'])
+    #pyplot.plot()
+
 
 usecase_motor = True
 if usecase_motor:
-    system = ad.load(get_case('ieee14/ieee14_zip'), setup = False)
+    system = ad.load(get_case('kundur/kundur_motor.xlsx'), setup = False)
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.run_set_points(set_points = 'motor')
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.Motor5.p, a=(0), fig=fig, ax=ax, linestyles=['-.'])
+    #pyplot.plot()
+
+usecase_vsc = False
+if usecase_vsc:
+    system = ad.load(get_case('ieee14/ieee14_regcp1_nopll.json'), setup = False)
     system.setup()
     system.PFlow.run()
     system.TDS_stepwise.run_set_points(set_points = None)
     system.TDS_stepwise.load_plotter()
     matplotlib.use('TkAgg')
-    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0))
-    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(1), fig=fig, ax=ax, linestyles=['-.'])
-    #pyplot.plot()
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.Motor5.p, a=(0), fig=fig, ax=ax, linestyles=['-.'])

@@ -4,6 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{hyperref}
 \usepackage{graphicx}
 % \usepackage{natbib}
 \usepackage{pgf}
@@ -414,6 +415,24 @@ This role can be taken by agents associated with in a specific geographical area
 \subsubsection*{Current Security role}
 If the intensity's value through the line is above the security current then publish the change of behavior in the appropriate channel. It also disconnects line to avoid a cascading failure in the grid. This role could be expanded to take into account other types of failure that damage the grid such as short-circuited lines and gives appropriate adaptations to the grid. Finally, it tries to reconnect the faulted line by adapting the voltage at each end bus
 and reconnect the grid if possible.
+
+
+\section{Current Work}
+
+The current state of the work can be accessed in the Github \href{https://github.com/eRoots-Analytics/COLMENA}{following repository}. The current work can be separated into three main parts:
+
+\begin{itemize}
+    \item A modified version of Andes Curent to be run in parallel to the service application.
+    \item The testing of different device's behaviors that can be then implemented as roles.
+    \item The implementation of the Frequency Control Service using the colmena package.
+\end{itemize}
+
+\subsection{Modified Andes}
+
+The original Andes 
+
+\subsection{Frequency Service Deployment}
+
 
 \section{Conclusion \& Future work}
 
