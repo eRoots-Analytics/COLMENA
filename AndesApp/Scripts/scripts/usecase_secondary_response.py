@@ -64,12 +64,12 @@ if base_case:
     fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1.tm, a=(0,1,2,3))
     #pyplot.plot()
 
-controller_case = False
+controller_case = True
 if controller_case:
     system.setup()
     system.PFlow.run()
     system.TDS_stepwise.config.refresh_event = 1   
-    system.TDS_stepwise.run_secondary_response(tmax = 30, controller_control=True)
+    system.TDS_stepwise.run_secondary_response(tmax = 40, controller_control=True)
     system.TDS_stepwise.load_plotter()
     matplotlib.use('TkAgg')
     fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
@@ -84,7 +84,7 @@ if stabilizer_case:
     system.setup()
     system.PFlow.run()
     system.TDS_stepwise.config.refresh_event = 1   
-    system.TDS_stepwise.run_stabilizer_response(tmax = 20, Ks= 1, batch_size = 0.1)
+    system.TDS_stepwise.run_stabilizer_response(tmax = 35, Ks= 500, batch_size = 0.5)
     system.TDS_stepwise.load_plotter()
     matplotlib.use('TkAgg')
     #fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))

@@ -4,6 +4,9 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{minted}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{graphicx}
 % \usepackage{natbib}
@@ -63,12 +66,12 @@
 
 \section{Introduction}
 % ANDES intro
-COLMENA is a decentralized framework that allows the coordination of multiple agents to solve complex problems. The framework is based on the concept of a colony of agents that can communicate and coordinate to solve a problem. The agents can be programmed to have different roles and behaviors. The objective of the project is to develop a test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES \cite{grids:models}(later on, potentially others). The resulting goal is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid, providing useful use cases showing noticeable improvements to be derived from this architecture. The present document is an answer to Objective 1 - Development plan for the validation of the platform.
+COLMENA is a decentralized framework that allows the coordination of multiple agents to solve complex problems. The framework is based on the concept of a colony of agents that can communicate and coordinate to solve a problem. The agents can be programmed to have different roles and behaviors. The objective of the project is to develop a test case for the COLMENA framework in the context of electrical grids using the simulation tools provided by ANDES \cite{grids:models}(later on, potentially others). The resulting goal is to showcase the capabilities of COLMENA in the context of a decentralized electrical grid, providing useful use cases showing noticeable improvements to be derived from this architecture. The present document is an answer to Objective 1 - Development plan for the validation of the platform and the implementation can be accessed in the\href{https://github.com/eRoots-Analytics/COLMENA}{ following \textbf{repository}} \cite{git:eroots}.
 
 
 
 
-\subsection{Power Grid \& Service definition}
+\section{Power Grid \& Service definition}
 We define an electrical grid as a set of nodes called buses with electrical devices attached to them. The nodes are interconnected between them through branches, traditionally, power lines and/or transformers. The devices connected to each given bus are generators, loads or others types of devices. In ANDES, each device is defined by a set of differential and algebraic equations (DAE) that define how the devices' states change over time.
 
 
@@ -157,7 +160,7 @@ Additionally, we will define the different metrics in relations to their context
 \end{itemize}
 
 
-\subsection{Devices}
+\subsection{Devices}\label{sec:devices}
 
 Power system simulations, such as the ones performed by the ANDES package, are organized around devices. Each device at a given time $t$ is defined by the value's of the algebraic variables and state variables. Devices of the same type have the same variables. In the context of the frequency service control we have found the following devices that can be useful to the simulation and also present some sort of decentralized control.
 
@@ -233,7 +236,7 @@ From the COLMENA's side, we will define specific COLMENA-agents that will be pai
 \end{figure}
 
 
-\section{Use Case Specification}
+\section{Use Case Specification}\label{sec:kundur}
 
 Having explained the objectives of the project, we want to chose specific scenarios that are well adapted to evaluate these objectives. In this particular case, we are looking for power grids of considerable size, and with the appropriate types of devices presented earlier such as generators and converters to facilitate the integration of distributed generators. Additionally, we would want to choose use cases in which the grid can be separated into different areas to properly implement different geographical contexts to take into account. Finally, we also consider the ease to access information and data about the modeled grid. We consider the following as interesting candidates: 
 
@@ -254,7 +257,7 @@ For the first use case we propose first using the grid defined in the Kundur two
     \label{fig:kundur2}
 \end{figure}
 
-In this specific use case the COLMENA-Agent will be paired with a generator   and monitor the values provided by the ANDES simulation. Moreover, this agent will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to overtime include different sources of generation and the proposed GFL-GFM converters. Let's see a proof of concept of what the integration could look like. In this use case one of the COLMENA Agents is able to modify the inertia parameter of the generator 1 inside the simulation depending of the value of the generator's speed $\omega$. By modifying the inertia parameter $M$ we expect to see is the generator's angular velocity $\omega$ having 2 distinct behaviors.  
+In this specific use case the COLMENA-Agent will be paired with a generator and monitor the values provided by the ANDES simulation. Moreover, this agent will be able to modify some of the generators values such as the power injected or internal controlling parameters. The objective is to overtime include different sources of generation and the proposed GFL-GFM converters. Let's see a proof of concept of what the integration could look like. In this use case one of the COLMENA Agents is able to modify the inertia parameter of the generator 1 inside the simulation depending of the value of the generator's speed $\omega$. By modifying the inertia parameter $M$ we expect to see is the generator's angular velocity $\omega$ having 2 distinct behaviors.  
 
 \begin{table}[H]
     \centering
@@ -286,7 +289,7 @@ Once this more accessible use case is deployed, our next goal is to scale the si
     \label{fig:kundur}
 \end{figure}
 
-\subsection{Grid's Performance \& Key Performance Indicators}
+\subsection{Grid's Performance \& Key Performance Indicators}\label{sec:KPI}
 
 In the first section we have defined a set of metrics and states that are key to defining the grids state, specifically when dealing with the frequency response. These include the frequency, the angular speed of the synchronous generators and others. We aim to define key performance indicators (KPI) starting from the metrics defined previously. These KPIs define the performance of the grid with respect to the frequency service control. 
 
@@ -333,25 +336,23 @@ The N-1 criterion is a standard used in power system planning and operation to e
 
 Grid performance is also influenced by power losses and reactive compensation. Power losses, primarily due to resistance in transmission lines, reduce overall efficiency and increase operational costs. To mitigate these losses, reactive compensation is used, which balances reactive power in the grid, improving voltage stability and reducing strain on transmission infrastructure. 
 
+
 \subsection{Role Definitions}
 
 The envisioned integration of Andes and COLMENA places a special focus on the grid's frequency control response. For this purpose we propose a set of roles that can be taken by the COLMENA agents in order to control the grid in a decentralized grid. The roles are explained descriptively.  
 
-\subsubsection*{Device Basic Role}
+\subsubsection*{Device Monitoring Role}
 
-The device basic role defines the basic operations needed for the agents and devices to coordinate through Andes-COLMENA. The agent that takes on this role is supposed to be paired to a single device of type generator, although we can consider this role being taken multiple times by the same agent in order to control multiple devices. In this case the device basic roles is persistent and has the following functions:
+The device monitoring role monitors the values of the different states and variables of a specific electrical device and then publishes the necessary metrics to evaluate the state of the grid. The agent that takes on this role is supposed to be paired to a single device of type generator, although we can consider this role being taken multiple times by the same agent in order to control multiple devices. In this case the device monitoring roles is persistent and has the following functions:
 
  \begin{itemize}
-     \item Initializes a client that calls Andes and sets up the exchange of information.
      \item Stores the state and algebraic variables relative to the device it is paired up.
-     \item Changes the parameter when it receives the message to do so through the appropriate channel.
-     \item Changes the behavior of the device when instructed to do so through the appropriate channel.
+     \item Publishes the necessary data to the appropriates channels
  \end{itemize}
 
-Taking the example of a generator device this role has the requirement of having a generator and at least these 2 channels:
+Taking the example of a generator device this role has the requirement of having a generator and at least these one channels:
 
 \begin{itemize}
-    \item Channel Generator parameter change: where it receives both the parameter to change and the new value.
     \item Channel Generator measurements: where it publishes the frequency of the generator every time step.
 \end{itemize}
 
@@ -413,26 +414,98 @@ This role can be taken by agents associated with in a specific geographical area
 \end{itemize}
 
 \subsubsection*{Current Security role}
-If the intensity's value through the line is above the security current then publish the change of behavior in the appropriate channel. It also disconnects line to avoid a cascading failure in the grid. This role could be expanded to take into account other types of failure that damage the grid such as short-circuited lines and gives appropriate adaptations to the grid. Finally, it tries to reconnect the faulted line by adapting the voltage at each end bus
-and reconnect the grid if possible.
+If the intensity's value through the line is above the security current then publish the change of behavior in the appropriate channel. It also disconnects line to avoid a cascading failure in the grid. This role could be expanded to take into account other types of failure that damage the grid such as short-circuited lines and gives appropriate adaptations to the grid. Finally, it tries to reconnect the faulted line by adapting the voltage at each end bus and reconnect the grid if possible.
 
 
 \section{Current Work}
 
-The current state of the work can be accessed in the Github \href{https://github.com/eRoots-Analytics/COLMENA}{following repository}. The current work can be separated into three main parts:
+\subsection{Current Grid Requirements \& Milestone analysis}
+
+In relation with the current work we define the following milestones:
+
+\subsubsection*{Milestone 1: Requirement analysis for the use case}
+
+A comprehensive analysis of the specific requirements of the selected use case(s) will be performed. It is anticipated that such use cases will deal with large networks, potentially with thousands of nodes, as is the case with of nodes, as is the case in the Spanish network. As such, scenarios containing hundreds of converters will be considered for converters will be considered to represent distributed renewable generation, which would act together as a swarm. The idea is to have numerous control variables that condition the operation of the system and that their optimal determination is favored by the use of the technologies the use of the techniques developed in COLMENA.
+
+The Kundur system presented in \ref{sec:kundur} serves as a good stepping stone for analyzing the different requirements of the implementation. In this power grid the failure of a power line near the beginning of the simulation ($t = 2$ s) destabilizes the grid's frequency and showcases the service's main objective: the frequency response. The line failure provokes a rise in the 4 synchronous generator's (from 1 per unit (p.u.) to 1.006 p.u.). Additionally, after the transient state the system reaches a steady state where the generator's frequencies still deviate substantially from the nominal frequency. Modifying the power provided by the generator would make the frequencies come back to their nominal state.
+
+All in all, this first use case delivers a first application for COLMENA that is tasked with the frequency response. Its objective is to ensure the frequency of the electrical devices as close to the nominal value as possible. For this we require to simulate the behavior of the grid, to monitor the values defining the state of the grid and also to be able to modify the grid's topology and parameters dynamically during the simulation since these are the ways COLMENA will interact with the simulation. The synchronous generators that will eventually be paired with COLMENA agents act as a decentralize control affecting the grid. 
+
+\subsubsection*{Milestone 2: Use case specification, with KPI definition}
+
+This milestone will focus on selecting standard and open network models, such as IEEE 118, ACTIVSg 2000, PEGASE 9241, among others. The aim is for the network to have a sufficiently high number of nodes, be capable of experiencing voltage collapses in case of poor operation, and offer room for improvement by integrating distributed renewable generation units throughout the network. Some potential indicators reflecting the system's state include: percentage of losses, maximum and minimum voltages, maximum branch loading, compliance with the $N - 1$ or $N - 2$ criteria, maximum short-circuit currents, rate of frequency change due to demand increases, among others.
+
+Regarding this milestone the different metrics and KPIs introduced in \ref{sec:KPI} serve as values that can engage and disengage potential COLMENA roles that act upon the frequency response service. The main KPIs and metrics are the mean frequency deviation to the nominal frequency as well as the mean voltage. As seen in \ref{sec:kundur} the objective is to apply changes to the grid when these KPIs are not suitable for normal operation of the grid. Other KPIs that are not specific to the frequency response but are important for grid operations such as voltage values, or short-circuit occurrences have also been considered. 
+
+In fact, the next use cases will include other types of devices available and that will increase the amount of ways that the grid can be changed dynamically throughout the simulation by the agents. These new devices include GFM converters that can adapt their apparent voltage, flexible loads and renewable generation. These new devices that we have already introduced \ref{sec:devices} will bring new ways of changing and adapting the grid dynamically to the requirements of the frequency control response.
+\subsection{Implementation}
+
+The current state of the work can be accessed in the Github \href{https://github.com/eRoots-Analytics/COLMENA}{ following \textbf{repository} } \cite{git:eroots}. The current work can be separated into three main parts:
 
 \begin{itemize}
     \item A modified version of Andes Curent to be run in parallel to the service application.
-    \item The testing of different device's behaviors that can be then implemented as roles.
-    \item The implementation of the Frequency Control Service using the colmena package.
+    \item The implementation of the Frequency Control Service using the COLMENA package.
 \end{itemize}
 
-\subsection{Modified Andes}
 
-The original Andes 
+
+\subsubsection{Modified Andes}
+
+The original Andes package is set up to run a Time Domain Simulation (TDS) from a steady state initial configuration. From these initial conditions the TDS runs offline until the final time that has been set beforehand. To integrate Andes into COLMENA we need to run the simulation online, that means running andes with the same clock as a real life scenario, and being able to affect the grid in real time through the roles actions. For this purpose we modify the original andes code to allow for the following behavior. In this case, Andes simulation time runs parallel to the real time which enables proper communication between both tools. More specifically, Andes first loads the appropriate grid and then runs the simulation online.  
+
+In order to run Andes as a separate instance that can communicate with COLMENA we run it as a Flask app that can receive HTML messages. In the current setup the current machine initializes the flask app by executing the \texttt{app\_andes\_interface.py} file. The flask app then runs in a local port and is ready to receive GET and POST HTML messages from COLMENA when running. The long term objective is to run this app in an independent machine that can reliably communicate with the COLMENA devices.
+
+\begin{algorithm}
+    \caption{Andes App Simulation Pseudocode}
+    \begin{algorithmic}[1]
+        \State Load Grid data
+        \State Run Power Flow 
+        \While{$t_{andes} + \Delta t \leq t_{real}$}
+            \State Get changes from roles
+            \State Apply changes
+            \State Run the simulation for $\Delta t$.
+            \State $t_{andes} \gets t + \Delta t$.
+        \EndWhile
+    \end{algorithmic}
+\end{algorithm}
+
+\begin{listing}[H]
+    \begin{minted}[fontsize=\footnotesize, linenos]{python}
+    # Function to run andes in real time
+    @app.route('/run_real_time', methods=['GET'])
+    def run_real_time():
+        t_run = request.args.get('t_run')
+        t_run = float(t_run)
+        t_now = time.time()
+        try:
+            while system.dae.t <= t_run:
+                if time.time() - t_now >= system.dae.h: 
+                    system.TDS_stepwise.run_andes_inapp(system.dae.h)
+                    t_now = time.time()
+            return jsonify({"Message": 'Success', "Time":system.dae.t}), 200
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            return jsonify({"error": str(e)}), 500
+    \end{minted}
+    \caption{Function to run Andes in real-time using Flask.}
+    \label{code:andes_real_time}
+    \end{listing}
 
 \subsection{Frequency Service Deployment}
 
+With regards to the service and role implementations they can be found in the folder \texttt{AndesRoles}. In the same folder there is the file \texttt{data.json} that describes the electrical device the simulated agent is paired to. This is useful when running the agent through the programming model, this way the roles running know what device they are linked to and what parameters they need to change if necessary. As of now, when running the roles through an agent in a docker container the roles don't have access to that file so it would be necessary to think of an alternative that could bypass this limitation.  
+
+Right now the roles can be executed in two ways: the first one that is more flexible is running them directly on the computer by using the function \texttt{.execute\_role()} on each role included in a service. The second one, closer to the final objective, is first deploying a docker container and then running the services and its roles and that container using zenoh to communicate. In order to show a proof of concept we run a frequency control service with a single agent where the monitoring role and the frequency optimizer role are executed.  
+
+\begin{figure}[H] % Use H to force placement (requires \usepackage{float})
+    \centering
+    \includegraphics[width=1\textwidth]{pictures/screen_roles.png}
+    \caption{Terminal during role execution}
+    \label{fig:example_image}
+\end{figure}
+
+For the second test, we first need to create the docker container with a specific policy, in this case "EAGER", and a given requirement in this case 'GENERATOR'.  
 
 \section{Conclusion \& Future work}
 

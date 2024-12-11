@@ -526,7 +526,7 @@ class TDS_stepwise(BaseRoutine):
             #We sync the results to colmena
             #We read the results the new roles from Colmena
             for i, idx in enumerate(self.system.GENROU.idx.v):
-                if self.secondary_response_condition(idx):
+                if self.secondary_response_condition(idx) and self.system.dae.t > 18:
                     if controller_control:
                         controller = self.system.GENROU.PIcontroller[i]
                         ctrl_input = self.system.GENROU.omega.v[i]

@@ -78,8 +78,24 @@ def run_simulation():
             return jsonify({"error": "No simulation loaded. Load a simulation first."}), 400
 
         # Run the loaded simulation
-        system.Pflow.run()
-        sim_output = system.Pflow.run()
+        system.PFlow.run()
+        sim_output = system.PFlow.run()
+
+        # Return success and results (e.g., output directory or status)
+        return jsonify({"message": "Simulation ran successfully", "output": str(sim_output)}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/run_simulation_online', methods=['POST'])
+def run_simulation_online():
+    global loaded_system
+    try:
+        if not loaded_system:
+            return jsonify({"error": "No simulation loaded. Load a simulation first."}), 400
+
+        # Run the loaded simulation
+        system.PFlow.run()
+        sim_output = system.PFlow.run()
 
         # Return success and results (e.g., output directory or status)
         return jsonify({"message": "Simulation ran successfully", "output": str(sim_output)}), 200

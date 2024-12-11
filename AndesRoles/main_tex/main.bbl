@@ -326,6 +326,36 @@
       \verb https://electricgrids.engr.tamu.edu/electric-grid-test-cases/activsg2000/
       \endverb
     \endentry
+    \entry{git:eroots}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=069c57e3e12b357ea79900759a008aef}{%
+           family={eRoots},
+           familyi={e\bibinitperiod}}}%
+      }
+      \strng{namehash}{069c57e3e12b357ea79900759a008aef}
+      \strng{fullhash}{069c57e3e12b357ea79900759a008aef}
+      \strng{fullhashraw}{069c57e3e12b357ea79900759a008aef}
+      \strng{bibnamehash}{069c57e3e12b357ea79900759a008aef}
+      \strng{authorbibnamehash}{069c57e3e12b357ea79900759a008aef}
+      \strng{authornamehash}{069c57e3e12b357ea79900759a008aef}
+      \strng{authorfullhash}{069c57e3e12b357ea79900759a008aef}
+      \strng{authorfullhashraw}{069c57e3e12b357ea79900759a008aef}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{Available at: \url{https://github.com/eRoots-Analytics/COLMENA}}
+      \field{note}{GitHub repository}
+      \field{title}{COLMENA eRoots Repository}
+      \field{year}{2024}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://github.com/eRoots-Analytics/COLMENA
+      \endverb
+      \verb{url}
+      \verb https://github.com/eRoots-Analytics/COLMENA
+      \endverb
+    \endentry
     \entry{grids:kundur2}{article}{}{}
       \name{author}{1}{}{%
         {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
