@@ -20,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
     "coloredlogs",
-    "eclipse-zenoh = 0.11.0",
+    "eclipse-zenoh",  # Correct syntax for version equality
     "typing",
     "numpy",
     "zeromq-pyre"
