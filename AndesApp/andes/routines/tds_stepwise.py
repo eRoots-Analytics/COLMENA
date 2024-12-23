@@ -477,10 +477,15 @@ class TDS_stepwise(BaseRoutine):
                 change_done = True
         return
 
-    def init_PIcontrollers(self, model):
-        model.PIcontroller = []
+    def init_PIcontrollers(self, model, target_var=None):
+        if not hasattr(model, 'PIcontroller'):
+            model.PIcontroller = []
+        model_name = type(model).__name__
         for i in range(model.n):
-            PIparams= {'dt':0.1, 'Kp':0.1, 'Ki':2, 'Uref':1}
+            idx = i+1
+            PIparams= {'dt':0.1, 'Kp':0.1, 'Ki':-1, 'Uref':1, 'idx':idx, 'model':model_name}
+            if target_var is not None:
+                PIparams['target_var'] = target_var
             model.PIcontroller.append(aux.PIcontroller(**PIparams))
         return
     
@@ -492,7 +497,7 @@ class TDS_stepwise(BaseRoutine):
         n_stabilizer = model.n
         n_stabilizer = 1
         for i in range(model.n):
-            Stabilizer_params = custom_dict = {"params": 0, "dt": batch_size, "T1": 0.05, "T2": 1, "T3": 0.05,
+            Stabilizer_params =  {"params": 0, "dt": batch_size, "T1": 0.05, "T2": 1, "T3": 0.05,
             "T4": 1, "T5": 0.01, "T6": 0.01, "A1": 1.0, "A2": 0.5, "A3": 0.5, "A4": 1.0, "A5": 1.0, 
             "A6": 1.0, "Ks": Ks, "Lmin": -10,"Lmax": 10, 'idx': i}
             model.Stabilizers.append(aux.Stabilizer(**Stabilizer_params))
@@ -515,10 +520,85 @@ class TDS_stepwise(BaseRoutine):
                     _=0
         return
 
-    def run_secondary_response(self, batch_size = 0.5, controller_control = False, tmax = 20, verbose = False):
+    def compute_phase_difference(self, idx, model):
+        uid = model.idx2uid(idx)
+        bus_idx = model.bus.v[uid]
+        phase_actual = model.a.v[uid]
+
+        line = self.system.Line
+        indexes1 = []
+        indexes2 = []
+        if bus_idx in line.bus1.v or bus_idx in line.bus2.v:
+            bus_list1 = line.bus1.v
+            bus_list2 = line.bus2.v
+            indexes1 = [bus_list2[i] for i, v in enumerate(bus_list1) if v == bus_idx]
+            indexes2 = [bus_list1[i] for i, v in enumerate(bus_list2) if v == bus_idx]
+            union = list(set(indexes1).union(indexes2))
+        phases = []
+        phase_diff = 0
+        for j in union:
+            neighbor_uid = self.system.Bus.idx2uid(j)
+            phase_neighbor = self.system.Bus.a.v[neighbor_uid]
+            phase_diff += (phase_actual - phase_neighbor)
+            phases.append(phase_neighbor)
+
+
+    def run_secondary_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 20, verbose = False):
         self.config.tmax = tmax
         self.save_roles = []
-        self.init_PIcontrollers(self.system.GENROU)
+        if model is None:
+            model = self.system.GENROU
+
+        new_target_ref = 'vref'
+        self.init_PIcontrollers(model, target_var=new_target_ref)
+        self.init_PIcontrollers(model, target_var='Pref')
+        change_done = False
+        while self.system.dae.t < self.config.tmax:
+            self.run_individual_batch(t_sim=batch_size, no_summary=False)
+            
+            #We execute the controllers
+            for controller in model.PIcontroller:
+                idx = controller.idx
+                uid = model.idx2uid(idx)
+                if self.secondary_response_condition(idx) and self.system.dae.t > 0.5:
+                    if controller_control:
+                        ctrl_input_omega = model.omega.v[uid]
+                        ctrl_input_phase = model.a.v[uid]
+                        ctrl_input_v = model.v.v[uid]
+                        phase_diff = self.compute_phase_difference(idx, model)
+                        
+                        ctrl_input = phase_diff
+                        if controller.target_var == new_target_ref:
+                            ctrl_input = ctrl_input_v
+                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
+                            self.set_set_points(new_set_point)
+                        elif controller.target_var == 'Pref':
+                            ctrl_input = ctrl_input_omega
+                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
+                            #self.set_set_points(new_set_point)
+                        else:
+                            ctrl_input = ctrl_input_omega
+                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
+                            self.set_set_points(new_set_point)
+                    else:
+                        new_set_point = self.secondary_response_role(idx)
+                        self.set_set_points(new_set_point)
+        return
+    
+    def run_inverter_response(self, batch_size = 0.5, controller_control = True, tmax = 20, verbose = False):
+        #We run the inverter response
+        self.config.tmax = tmax
+        self.system.GENROU.controller = []
+        n = self.system.GENROU.n
+        PI_param= {'dt':0.1, 'Kp':0.1, 'Ki':2, 'Uref':1}
+
+        #we initialize the controllers
+        for i in range(n):
+            neighbors = list(range(1,5))
+            neighbors.remove(i+1)
+            kwargs = {'pi_e': PI_param, 'pi_w': PI_param, 'neighbors': neighbors, 'idx':i}
+            powercontroller = aux.ActivePowerRegulator(**kwargs)
+            self.system.GENROU.controller.append(powercontroller)
         change_done = False
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
@@ -529,12 +609,8 @@ class TDS_stepwise(BaseRoutine):
                 if self.secondary_response_condition(idx) and self.system.dae.t > 18:
                     if controller_control:
                         controller = self.system.GENROU.PIcontroller[i]
-                        ctrl_input = self.system.GENROU.omega.v[i]
-                        ctrl_input = np.mean(self.system.GENROU.omega.v)
+                        ctrl_input = self.system.GENROU.pe.v[i]
                         new_set_point = controller.get_set_point(ctrl_input)
-                        self.set_set_points(new_set_point)
-                    else:
-                        new_set_point = self.secondary_response_role(idx)
                         self.set_set_points(new_set_point)
         return
     

@@ -1,8 +1,12 @@
 from flask import Flask
 from flask import url_for, request, render_template_string, jsonify, send_file
-import io
+from typing import List, TYPE_CHECKING
+from threading import Thread
+from PIL import Image
+from io import BytesIO
+import requests
 from collections import OrderedDict
-import os, sys
+import os, sys, io
 import time
 import numpy as np
 import traceback
@@ -25,29 +29,12 @@ login_form_html = """
 """
 # In-memory storage for received JSON data (list of dictionaries)
 json_storage = []
-
+delta_t = 0.1
 
 @app.route('/')
 def index():
     return 'index'
 
-@app.route('/user/<username>')
-def profile(username):
-    return f'{username}\'s profile'
-
-def do_the_login():
-    # Dummy login logic (for tutorial purposes)
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    if username == 'admin' and password == 'password':
-        return f'Logged in as {username}'
-    else:
-        return 'Invalid credentials, please try again.'
-
-def show_the_login_form():
-    # This would return a form for the user to log in
-    return render_template_string(login_form_html)
 
 # Route to load the simulation case
 @app.route('/load_simulation', methods=['POST'])
@@ -102,11 +89,6 @@ def run_simulation_online():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/upload_json', methods=['POST', 'GET'])
-def get_roles():
-    global get_roles
-    
-
 @app.route('/upload_json', methods=['POST'])
 def upload_json():
     global andes_dir
@@ -158,6 +140,20 @@ def device_role_change():
         print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/set_point_change', methods=['POST'])
+def device_role_change():
+    #method to post the new device role in the app
+    try:
+        set_points_data = request.get_json()
+        for set_point in set_points_data:
+            system.TDS_stepwise.set_set_points(set_point)
+        return jsonify({'message': 'success'}), 200
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/device_sync', methods=['GET'])
 def device_sync(all_devices = False):
@@ -167,12 +163,14 @@ def device_sync(all_devices = False):
         if data is None:
             return jsonify({"error": "No JSON data received!"}), 400
         response = {}
+
         idx = data['idx']
         idx = int(idx)
         model_name = data['model_name']
         model = getattr(system, model_name)
         uid = model.idx2uid(idx)
         response = model.as_dict()
+
         for key in response.keys():
             var_value = response[key][uid]
             if isinstance(var_value, np.generic):
@@ -187,6 +185,7 @@ def device_sync(all_devices = False):
         algebs = model._algebs_and_ext()
         othervars = OrderedDict(states)
         othervars.update(algebs)
+
         for var_name in othervars:
             var = getattr(model, var_name)
             uid = int(uid)
@@ -196,6 +195,9 @@ def device_sync(all_devices = False):
             elif isinstance(var_value, np.ndarray):
                 var_value = var_value.tolist()
             response[var_name] = var_value
+
+        #Since this is used at the very beginning to initialize the agents we can now start the simulation 
+        json_storage['start'] = True
         return jsonify(response), 200
     except Exception as e:
         print(e)
@@ -247,19 +249,19 @@ def run():
 
 @app.route('/run_real_time', methods=['GET'])
 def run_real_time():
-    t_run = request.args.get('t_run')
-    t_run = float(t_run)
+    while not json_storage['start']:
+        _=0
     t_now = time.time()
+    t_run = 0
     try:
         while system.dae.t <= t_run:
-            if time.time() - t_now >= system.dae.h: 
-                system.TDS_stepwise.run_andes_inapp(system.dae.h)
+            if time.time() - t_now >= delta_t: 
+                system.TDS_stepwise.run_individual_batch(delta_t)
                 print(f't_run is {t_run}')
                 print(f't_dae is {system.dae.t}')
                 t_now = time.time()
         return jsonify({"Message": 'Success', "Time":system.dae.t}), 200
     except Exception as e:
-        print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
@@ -288,4 +290,18 @@ def plot():
     
 if __name__ == '__main__':
     app.run(debug=True)
+    andes_url = 'http://127.0.0.1:5000'
+    andes_directory = ad.get_case("kundur/kundur_full.xlsx")
+    andes_dict = {"case_file":andes_directory}
+    kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
+    responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
     
+    responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'GENROU', 'var_name':'omega'})
+    #responsePlot = 600
+    if not isinstance(responsePlot, int) and responsePlot.status_code == 200:
+        img = Image.open(BytesIO(responsePlot.content))
+        # Save or display the image as needed
+        img.show()  # To display it directly
+        img.save("plot.png")  # To save it to a file
+    elif not isinstance(responsePlot, int):
+        print(f"Error: {responsePlot.status_code} - {responsePlot.json().get('error')}")

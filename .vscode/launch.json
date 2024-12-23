@@ -1,22 +1,31 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug colmena_build",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "colmena_build",
-            "args": [
-              "--colmena_path=/mnt/c/Users/pablo/OneDrive/Escritorio/Colmena/programming-model/scripts",
-              "--service_code_path=/mnt/c/Users/pablo/OneDrive/Escritorio/Proyectos/AndesRoles",
-              "--module_name=example_eroots",
-              "--service_name=ErootsUseCase",
-              "--username=pablodejuan"
-            ],
-            "justMyCode": false
-          }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "name": "Python Debugger: all the code",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Debug colmena_build",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "colmena_build",
+      "args": [
+        "--colmena_path=/mnt/c/Users/pablo/OneDrive/Escritorio/Colmena/programming-model/scripts",
+        "--service_code_path=/mnt/c/Users/pablo/OneDrive/Escritorio/Proyectos/AndesRoles",
+        "--module_name=example_eroots",
+        "--service_name=ErootsUseCase",
+        "--username=pablodejuan"
+      ],
+      "justMyCode": false
+    }
+  ]
 }
