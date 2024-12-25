@@ -45,6 +45,7 @@ if inverter_model_bis:
             new_dict_ = 0
             system_to.add(model, new_dict)
     
+    system_to.REGCV1.prepare()
     system_to.REGCV1.alter(src='D', idx = 1, value =100)
     system_to.REGCV1.alter(src='M', idx = 1, value =100)
     system_to.find_devices()
@@ -64,13 +65,16 @@ if inverter_model_bis:
     system.TDS_stepwise.load_plotter()
     matplotlib.use('TkAgg')
     fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2))
-    fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).omega, a=0, linestyles=['-.'])
+    
+    #fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).omega, a=0, linestyles=['-.'])
     fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).v, a=0, linestyles=['-.'])
     fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).a, a=0, linestyles=['-.'])
-    fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).Pref2, a=0, linestyles=['-.'])
+    fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).Qe, a=0, linestyles=['-.'])
+    fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).Pe, a=0, linestyles=['-.'])
+    fig, ax = system.TDS_stepwise.plt.plot(getattr(system, new_model).omega, a=0, linestyles=['-.'])
     _= 0
 
-gfm_gfl_combined = False
+gfm_gfl_combined = True
 if gfm_gfl_combined:
     system = ad.load(get_case('ieee/ieee14_pvd1.xlsx'), setup = False)
     system_original = ad.load(get_case('ieee/ieee14_pvd1.xlsx'), setup = False)

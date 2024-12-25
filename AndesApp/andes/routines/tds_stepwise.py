@@ -477,13 +477,13 @@ class TDS_stepwise(BaseRoutine):
                 change_done = True
         return
 
-    def init_PIcontrollers(self, model, target_var=None):
+    def init_PIcontrollers(self, model, dt = 0.1, Ki =-0.1, Kp=-0.1, target_var=None):
         if not hasattr(model, 'PIcontroller'):
             model.PIcontroller = []
         model_name = type(model).__name__
         for i in range(model.n):
             idx = i+1
-            PIparams= {'dt':0.1, 'Kp':0.1, 'Ki':-1, 'Uref':1, 'idx':idx, 'model':model_name}
+            PIparams= {'dt':0.1, 'Kp':Ki, 'Ki':Kp, 'Uref':1, 'idx':idx, 'model':model_name}
             if target_var is not None:
                 PIparams['target_var'] = target_var
             model.PIcontroller.append(aux.PIcontroller(**PIparams))
@@ -548,10 +548,13 @@ class TDS_stepwise(BaseRoutine):
         self.save_roles = []
         if model is None:
             model = self.system.GENROU
-
-        new_target_ref = 'vref'
-        self.init_PIcontrollers(model, target_var=new_target_ref)
-        self.init_PIcontrollers(model, target_var='Pref')
+            is_genrou = True
+            self.init_PIcontrollers(model, target_var= 'paux')
+        else:
+            new_target_ref1 = 'paux'
+            new_target_ref2 = 'qaux'
+            self.init_PIcontrollers(model, target_var= new_target_ref1, dt=batch_size, Ki=0.5, Kp=-0.1)
+            self.init_PIcontrollers(model, target_var= new_target_ref2, dt=batch_size, Ki=-0.5, Kp=-0.2)
         change_done = False
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
@@ -560,7 +563,7 @@ class TDS_stepwise(BaseRoutine):
             for controller in model.PIcontroller:
                 idx = controller.idx
                 uid = model.idx2uid(idx)
-                if self.secondary_response_condition(idx) and self.system.dae.t > 0.5:
+                if True and self.secondary_response_condition(idx) and self.system.dae.t > 0.5:
                     if controller_control:
                         ctrl_input_omega = model.omega.v[uid]
                         ctrl_input_phase = model.a.v[uid]
@@ -568,15 +571,15 @@ class TDS_stepwise(BaseRoutine):
                         phase_diff = self.compute_phase_difference(idx, model)
                         
                         ctrl_input = phase_diff
-                        if controller.target_var == new_target_ref:
-                            ctrl_input = ctrl_input_v
-                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                            self.set_set_points(new_set_point)
-                        elif controller.target_var == 'Pref':
+                        if controller.target_var == new_target_ref1:
                             ctrl_input = ctrl_input_omega
                             new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                            #self.set_set_points(new_set_point)
-                        else:
+                            self.set_set_points(new_set_point)
+                        elif controller.target_var == new_target_ref2:
+                            ctrl_input = -ctrl_input_v + 1
+                            new_set_point = controller.get_set_point(ctrl_input, feedback = False)
+                            self.set_set_points(new_set_point)
+                        elif is_genrou is True:
                             ctrl_input = ctrl_input_omega
                             new_set_point = controller.get_set_point(ctrl_input, feedback = True)
                             self.set_set_points(new_set_point)
@@ -585,32 +588,30 @@ class TDS_stepwise(BaseRoutine):
                         self.set_set_points(new_set_point)
         return
     
-    def run_inverter_response(self, batch_size = 0.5, controller_control = True, tmax = 20, verbose = False):
+    def run_active_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 20, verbose = False):
         #We run the inverter response
         self.config.tmax = tmax
         self.system.GENROU.controller = []
         n = self.system.GENROU.n
-        PI_param= {'dt':0.1, 'Kp':0.1, 'Ki':2, 'Uref':1}
+        PI_param= {'dt':batch_size, 'Kp':0.1, 'Ki':2, 'Uref':1}
 
         #we initialize the controllers
         for i in range(n):
             neighbors = list(range(1,5))
             neighbors.remove(i+1)
-            kwargs = {'pi_e': PI_param, 'pi_w': PI_param, 'neighbors': neighbors, 'idx':i}
+            kwargs = {'pi_e': PI_param, 'pi_w': PI_param, 'neighbors': neighbors, 'idx':i, 'target_var':'paux'}
             powercontroller = aux.ActivePowerRegulator(**kwargs)
             self.system.GENROU.controller.append(powercontroller)
-        change_done = False
+
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
             
-            #We sync the results to colmena
-            #We read the results the new roles from Colmena
             for i, idx in enumerate(self.system.GENROU.idx.v):
-                if self.secondary_response_condition(idx) and self.system.dae.t > 18:
+                if self.secondary_response_condition(idx) and self.system.dae.t > 0.5:
                     if controller_control:
-                        controller = self.system.GENROU.PIcontroller[i]
-                        ctrl_input = self.system.GENROU.pe.v[i]
-                        new_set_point = controller.get_set_point(ctrl_input)
+                        controller = self.system.GENROU.controller[i]
+                        ctrl_input = self.system.GENROU.Pe.v[i]
+                        new_set_point = controller.get_set_point(ctrl_input, self.system)
                         self.set_set_points(new_set_point)
         return
     
@@ -882,6 +883,8 @@ class TDS_stepwise(BaseRoutine):
             
     
     def set_set_points(self, set_points):
+        if type(set_points) == dict:
+            set_points = [set_points]
         for set_point in set_points:
             model_name = set_point['model']
             param = set_point['param']

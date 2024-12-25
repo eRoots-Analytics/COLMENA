@@ -160,6 +160,7 @@ class PIcontroller:
         self.Lmin = kwargs.get("Lmin", -10.0)  # Minimum limit
         self.Lmax = kwargs.get("Lmax", 10.0)  # Maximum limit
         self.reference = kwargs.get("ref", 1.0)  
+        self.is_delta = kwargs.get("ref", True)  
         self.model = kwargs.get("model", 'GENROU')  
         self.target_var = kwargs.get("target_var", 'paux0')  
         self.idx = kwargs.get("idx", 1)  
@@ -237,7 +238,7 @@ class PIcontroller:
         if self.model != 'GENROU':
             new_set_point['model'] = self.model
             new_set_point['param'] = self.target_var
-            new_set_point['value'] = output + self.reference
+            new_set_point['value'] = output + self.reference*(1-self.is_delta)
         res.append(new_set_point)
         res.append(new_set_point)
         return res
@@ -369,7 +370,7 @@ class Stabilizer():
 
 class ActivePowerRegulator():
     def __init__(self, **kwargs):
-        self.a = kwargs.get("a", 1.0)
+        self.a = kwargs.get("a", 0.1)
         self.idx = kwargs.get("idx", 1.0)
         self.neighbors = kwargs.get("neighbors", 1.0)
         self.w0 = kwargs.get("ref", 1.0)
@@ -380,14 +381,14 @@ class ActivePowerRegulator():
             return
         
         uid = system.GENROU.idx2uid(idx)
-        res = system.GENROU.p.v[uid]
+        res = system.GENROU.Pe.v[uid]
         return res
 
     def compute_input(self, p_i, system =None):
         res = 0
         p_neighbors = [self.get_power(idx, system) for idx in self.neighbors]
         for p_j in p_neighbors:
-            res = (p_j - p_i)
+            res += (p_j - p_i)
         
         return self.a*res
         
@@ -401,6 +402,7 @@ class ActivePowerRegulator():
         new_set_point['idx'] = self.idx
         new_set_point['value'] = self.w0 + d_w
         new_set_point['add'] = False
+        return new_set_point
 
 class VoltageRegulator():
     def __init__(self, **kwargs):
@@ -439,3 +441,34 @@ class VoltageRegulator():
         new_set_point['idx'] = self.idx
         new_set_point['value'] = self.u0 + d_u1 + d_u2
         new_set_point['add'] = False
+
+class DistributedVoltage():
+    def __init__(self, **kwargs):
+        self.params = {}
+        self.dt = kwargs.get("dt", 0.01)
+        self.Kp = kwargs.get("Kp", 0.1)  # Proportional gain
+        self.Ki = kwargs.get("Ki", 0.1)  # Integral gain
+        self.Lmin = kwargs.get("Lmin", -10.0)  # Minimum limit
+        self.Lmax = kwargs.get("Lmax", 10.0)  # Maximum limit
+        self.reference = kwargs.get("ref", 1.0)  
+        self.is_delta = kwargs.get("ref", True)  
+        self.model = kwargs.get("model", 'GENROU')  
+        self.target_var = kwargs.get("target_var", 'paux0')  
+        self.idx = kwargs.get("idx", 1)  
+        
+        self.mu = 0
+        self.v = 0
+        self.epsilon = 0
+        self.epsilon_min = 0
+        self.epsilon_max = 0
+        self.q = 0
+        self.q_min = 0.9
+        self.q_max = 1.1
+        self.D = self.Df(v_0, i)
+        self.g = N*g_av(0)
+
+    def initialise_variables(self):
+        return
+    
+    def update_1(self):
+        return

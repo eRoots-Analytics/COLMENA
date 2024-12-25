@@ -64,12 +64,12 @@ if base_case:
     fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1.tm, a=(0,1,2,3))
     #pyplot.plot()
 
-controller_case = True
+controller_case = False
 if controller_case:
     system.setup()
     system.PFlow.run()
     system.TDS_stepwise.config.refresh_event = 1   
-    system.TDS_stepwise.run_secondary_response(tmax = 40, controller_control=True)
+    system.TDS_stepwise.run_secondary_response(tmax = 40, model = system.GENROU, controller_control=True)
     system.TDS_stepwise.load_plotter()
     matplotlib.use('TkAgg')
     fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
@@ -77,7 +77,20 @@ if controller_case:
     _= 0
     #pyplot.plot()
 
-stabilizer_case = True
+power_control = True
+if power_control:
+    system.setup()
+    system.PFlow.run()
+    system.TDS_stepwise.config.refresh_event = 1   
+    system.TDS_stepwise.run_active_response(tmax = 10,  model = system.GENROU, batch_size = 0.1, controller_control=True)
+    system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=(0,1,2,3))
+    fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1.pout, a=(0,1,2,3), linestyles=['-.'])
+    _= 0
+    #pyplot.plot()
+
+stabilizer_case = False
 if stabilizer_case:
     system = ad.load(get_case('kundur/kundur_full.xlsx'), setup = False)
     system.TGOV1.prepare()
