@@ -3,6 +3,41 @@ import numpy as np
 import matplotlib.pyplot as plt
 import control as ctrl
 
+def replace_in_file(file_path, output_path=None):
+    """
+    Replaces every occurrence of 'STAB2A' with 'IEEEST' in a file.
+
+    Parameters:
+    - file_path (str): Path to the input file.
+    - output_path (str): Path to the output file. If None, the input file is overwritten.
+
+    Returns:
+    - None
+    """
+    try:
+        # Open the file and read its content
+        with open(file_path, 'r') as file:
+            content = file.read()
+
+        # Replace occurrences of 'STAB2A' with 'IEEEST'
+        #content = content.replace('STAB2A', 'ST2CUT')
+        content = content.replace('IEEET2', 'IEEET1')
+
+        # Determine the output file path
+        if output_path is None:
+            return
+            output_path = file_path
+
+        # Write the updated content back to the file
+        with open(output_path, 'w') as file:
+            file.write(content)
+
+        print(f"Successfully replaced models in {output_path}")
+    except FileNotFoundError:
+        print(f"Error: File not found at {file_path}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 def add_sheet(workbook, sheet_name, data):
 
     # Create a new sheet
@@ -464,8 +499,8 @@ class DistributedVoltage():
         self.q = 0
         self.q_min = 0.9
         self.q_max = 1.1
-        self.D = self.Df(v_0, i)
-        self.g = N*g_av(0)
+        #self.D = self.Df(v_0, i)
+        #self.g = N*g_av(0)
 
     def initialise_variables(self):
         return
