@@ -37,6 +37,7 @@ file_classes = list([
     ('renewable', ['REGCA1', 'REGCP1']),
     ('renewable', ['REECA1', 'REECA1E', 'REECA1G']),
     ('renewable', ['REPCA1']),
+    ('renewable', ['REDUAL']),
     ('renewable', ['WTDTA1', 'WTDS', 'WTARA1', 'WTPTA1', 'WTTQA1', 'WTARV1',
                    'REGCV1', 'REGCV2', 'REGF1', 'REGF2', 'REGF3']),
     ('distributed', ['PVD1', 'ESD1', 'EV1', 'EV2', 'DGPRCT1', 'DGPRCTExt']),

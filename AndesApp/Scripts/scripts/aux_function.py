@@ -1,7 +1,49 @@
 import openpyxl
 import numpy as np
 import matplotlib.pyplot as plt
+import os, sys
 import control as ctrl
+current_directory = os.path.dirname(os.path.abspath(__file__))
+two_levels_up = os.path.dirname(os.path.dirname(current_directory))
+sys.path.insert(0, two_levels_up)
+import andes as ad
+
+def build_new_system(system, new_model_name = 'REDUAL'):
+    system_to = ad.System()
+    system_dict = system.as_dict()
+    gen_model = 'GENROU'
+    gen_dependencies = ['IEEEST', 'TGOV1N', 'IEEEX1']
+    n_dual = 1
+    n_genrou = system.GENROU.n - n_dual
+    
+    
+    for model, param_dict in system_dict.items():
+        #if n_genrou is 0 we just change all generators for 
+        if model == gen_model and n_genrou == 0:
+            model = new_model_name
+        elif model in gen_dependencies and n_genrou == 0:
+            continue
+        
+        elif model == gen_model and n_genrou > 0:
+            _ = 0
+            
+        elif model in gen_dependencies and n_genrou > 0:
+            for i in range(n_genrou):
+                new_dict = {key: value[i] for key, value in param_dict.items()}
+                system_to.add(model, new_dict)
+            continue
+        
+        for i in range(len(param_dict['u'])):        
+            new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list) or isinstance(value, np.ndarray)}
+            new_dict_ = 0
+            generator_like = ['GENROU', 'REGCV1', 'REGCA1']
+            if i < n_genrou and model in generator_like:
+                model = 'GENROU'
+            elif i < n_genrou + n_dual and model in generator_like:
+                model = 'REDUAL'
+            system_to.add(model, new_dict)        
+            
+    return system_to
 
 def replace_in_file(file_path, output_path=None):
     """

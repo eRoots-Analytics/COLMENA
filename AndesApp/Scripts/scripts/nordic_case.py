@@ -21,11 +21,11 @@ ad.config_logger(stream_level=10)
 
 system = ad.System()
 system = ad.load(raw_file, addfile=new_dyr_file, setup = False)
-system.Slack.alter(src ='u', idx =19, value = 0)
-system.Slack.alter(src ='u', idx =20, value = 0)
-system.Slack.alter(src ='u', idx =21, value = 0)
-system.Slack.alter(src ='u', idx =22, value = 0)
-system.Slack.alter(src ='u', idx =23, value = 0)
+#system.Slack.alter(src ='u', idx =19, value = 0)
+#system.Slack.alter(src ='u', idx =20, value = 0)
+#system.Slack.alter(src ='u', idx =21, value = 0)
+#system.Slack.alter(src ='u', idx =22, value = 0)
+#system.Slack.alter(src ='u', idx =23, value = 0)
 
 gen_models = ['PV', 'Slack']
 load_models = ['PQ']
@@ -48,7 +48,7 @@ print(f'Power diff is {power_diff}')
 n_PQ = system.PQ.n
 for uid, idx in enumerate(system.PQ.idx.v):
     existing_p = system.PQ.p0.v[uid]
-    system.PQ.alter(src = 'p0', idx = idx, value = existing_p + 1.01*(power_diff/n_PQ))
+    system.PQ.alter(src = 'p0', idx = idx, value = existing_p + 1.00*(power_diff/n_PQ))
 
 total_gen_p = 0
 total_load_p = 0
