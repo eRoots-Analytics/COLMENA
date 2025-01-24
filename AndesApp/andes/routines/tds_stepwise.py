@@ -434,22 +434,30 @@ class TDS_stepwise(BaseRoutine):
         aux.transfer_grid_info(system_from, system_to)
         return system_to
         
-    def run_set_points(self, set_points = None, unique_change = False, batch_size = 0.5, tmax = 20, verbose = False):
-        debugging = sys.gettrace() is not None
-        self.config.tmax = tmax
+    def run_set_points(self, set_points = None, set_points_dict = {}, unique_change = False, batch_size = 0.5, t_change=10, t_max = 20, verbose = False):
+        self.config.tmax = t_max
         changes_done = False
         self.save_roles = []
+
         while self.system.dae.t < self.config.tmax:
             time_start = time.time()
+            try:
+                was_GFM = (self.system.REDUAL.is_GFM.v[0] == 1)
+            except:
+                _ = 0
+
             self.run_individual_batch(t_sim=batch_size, no_summary=False, verbose = verbose)
 
-            if changes_done is False and self.system.dae.t > 10:
+            if changes_done is False and self.system.dae.t > t_change:
                 new_set_points = self.get_set_points(set_points)
+                new_set_points += set_points_dict
                 self.set_set_points(new_set_points)
                 role_data = []
                 self.save_roles.append((role_data))
                 if unique_change is True:
                     changes_done = False
+                self.system.REDUAL.to_reinitialize = (self.system.REDUAL.is_GFM.v[0] == 0)*(was_GFM)
+                
         return
     
     def run_topology_change(self, remove_changes =[], add_changes = [], batch_size = 0.5, tmax = 20, verbose = False):
@@ -466,7 +474,7 @@ class TDS_stepwise(BaseRoutine):
             #We sync the results to colmena
             #We read the results the new roles from Colmena
             
-            if self.system.dae.t > 10 and not change_done:
+            if self.system.dae.t > 5 and not change_done:
                 system_from = self.system
                 system_to = self.topology_change(remove_changes=remove_changes, add_changes=add_changes)
                 self.system = system_to
@@ -707,6 +715,15 @@ class TDS_stepwise(BaseRoutine):
 
         if set_points is None:
             return {}
+
+        if set_points == 'REDUAL':
+            new_set_point = {}
+            new_set_point['model'] = 'REDUAL'
+            new_set_point['param'] = 'is_GFM'
+            new_set_point['value'] = 0
+            new_set_point['idx'] = 'GENROU_10'
+            new_set_point['add'] = False
+            set_point_changes.append(new_set_point)
 
         if set_points == 'intermittent':
             new_set_point = {}
@@ -969,8 +986,11 @@ class TDS_stepwise(BaseRoutine):
             self.summary()
 
         # only initializing at t<0 allows to continue when `run` is called again.
+        redual_init = True
         if system.dae.t < 0:
             self.init()
+        elif redual_init and system.REDUAL.to_reinitialize:
+            system.REDUAL.reinitialize(idx = 'GENROU_10')
         else:  # resume simulation
             self.init_resume()
 

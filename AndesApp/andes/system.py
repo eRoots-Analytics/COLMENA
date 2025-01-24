@@ -2317,6 +2317,9 @@ def _set_hi_name(mdl, vars_dict, dests):
     """
 
     mdl_name = mdl.class_name
+    if mdl_name == 'REDUAL' and 'ud' in vars_dict.keys():
+        #vars_dict.pop('am')
+        _ = 0
     idx = mdl.idx
     for item in vars_dict.values():
         if len(item.r) != len(idx.v):

@@ -122,11 +122,35 @@ class ErootsUseCase(Service):
             self.andes_url = data.get('andes_url', None)
             self.idx = data.get('device_idx', None)
             self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
             controller_dict =  {'dt':0.1, 'Kp':0.1, 'Ki':2, 'Uref':1, 'idx':self.idx}
             self.PIcontroller = aux.PIcontroller(**controller_dict)
 
         @Persistent(it = 10)    
         def behavior(self):
             set_points = self.PIcontroller.get_set_point(input)
-            responseAndes = requests.put()
-            
+            roleChangeDict = set_points.update(self.device_dict)
+            responseAndes = requests.get(andes_url + '/device_role_change', params = roleChangeDict)
+            return responseAndes
+    
+    class GridFormingRole(Role):
+        @Metric('frequency')
+        @Requirements('GFM')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+
+        @Persistent(it = 10)    
+        def behavior(self):
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = 'is_GFM'
+            roleChangeDict['value'] = 1
+            responseAndes = requests.get(andes_url + '/device_role_change', params = roleChangeDict)
+            return responseAndes
+
+        

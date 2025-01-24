@@ -1,5 +1,6 @@
 import openpyxl
 import numpy as np
+from GridCalEngine import Bus
 import matplotlib.pyplot as plt
 import os, sys
 import control as ctrl
@@ -8,7 +9,7 @@ two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
 import andes as ad
 
-def build_new_system(system, new_model_name = 'REDUAL'):
+def build_new_system_legacy(system, new_model_name = 'REDUAL'):
     system_to = ad.System()
     system_dict = system.as_dict()
     gen_model = 'GENROU'
@@ -43,6 +44,23 @@ def build_new_system(system, new_model_name = 'REDUAL'):
                 model = 'REDUAL'
             system_to.add(model, new_dict)        
             
+    return system_to
+
+def build_new_system(system, model_swap = {'REDUAL':['REGCV1','REGCP1']}):
+    system_to = ad.System()
+    system_dict = system.as_dict()
+    
+    for model, param_dict in system_dict.items():
+        if model in model_swap.keys():
+            for model_to in model_swap[model]:
+                for i in range(len(param_dict['u'])):        
+                    new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list) or isinstance(value, np.ndarray)}
+                    system_to.add(model_to, new_dict)
+        else:
+            for i in range(len(param_dict['u'])):        
+                new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list) or isinstance(value, np.ndarray)}
+                system_to.add(model, new_dict)
+
     return system_to
 
 def replace_in_file(file_path, output_path=None):

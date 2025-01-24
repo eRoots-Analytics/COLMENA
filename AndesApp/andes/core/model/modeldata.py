@@ -82,15 +82,16 @@ class ModelData:
     """
 
     def __init__(self, *args, three_params=True, **kwargs):
-        self.params = OrderedDict()
-        self.num_params = OrderedDict()
-        self.idx_params = OrderedDict()
-        self.timer_params = OrderedDict()
-        self.n = 0
-        self.uid = {}
-
-        # indexing bases. Most vectorized models only have one base: self.idx
-        self.index_bases = []
+        if not hasattr(self, 'params'):
+            self.params = OrderedDict()
+            self.num_params = OrderedDict()
+            self.idx_params = OrderedDict()
+            self.timer_params = OrderedDict()
+            self.n = 0
+            self.uid = {}
+    
+            # indexing bases. Most vectorized models only have one base: self.idx
+            self.index_bases = []
 
         if not hasattr(self, 'cache'):
             self.cache = ModelCache()

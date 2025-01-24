@@ -664,7 +664,7 @@ def vars_dict_dae(sys):
             continue
         for v in mdl.states:
             for i, address in enumerate(v.a):
-                var_name = v.name + "_" + mdl.name + "_" + str(i+1)
+                var_name = v.name + "_" + mdl.class_name + "_" + str(i+1)
                 key_sp = sp.Symbol(var_name)
                 dict_res_sp[var_name] = address   
                 dict_res_str[key_sp] = address

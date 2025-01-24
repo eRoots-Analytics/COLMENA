@@ -188,33 +188,36 @@ class Model:
             self.cache = ModelCache()
 
         # variables
-        self.states = OrderedDict()  # internal states
-        self.states_ext = OrderedDict()  # external states
-        self.algebs = OrderedDict()  # internal algebraic variables
-        self.algebs_ext = OrderedDict()  # external algebraic vars
-        self.vars_decl_order = OrderedDict()  # variable in the order of declaration
+        if not hasattr(self, 'states'):
+            self.states = OrderedDict()  # internal states
+            self.states_ext = OrderedDict()  # external states
+            self.algebs = OrderedDict()  # internal algebraic variables
+            self.algebs_ext = OrderedDict()  # external algebraic vars
+            self.vars_decl_order = OrderedDict()  # variable in the order of declaration
 
-        self.params_ext = OrderedDict()  # external parameters
+        if not hasattr(self, 'params_ext'):
+            self.params_ext = OrderedDict()  # external parameters
 
-        self.discrete = OrderedDict()  # discrete comp.
-        self.blocks = OrderedDict()  # blocks
+            self.discrete = OrderedDict()  # discrete comp.
+            self.blocks = OrderedDict()  # blocks
 
-        self.services = OrderedDict()  # service/temporary variables
-        self.services_var = OrderedDict()  # variable services updated each step/iter
-        self.services_var_seq = OrderedDict()
-        self.services_var_nonseq = OrderedDict()
-        self.services_post = OrderedDict()  # post-initialization storage services
-        self.services_subs = OrderedDict()  # to-be-substituted services
-        self.services_icheck = OrderedDict()  # post-initialization check services
-        self.services_ref = OrderedDict()  # BackRef
-        self.services_fnd = OrderedDict()  # services to find/add devices
-        self.services_ext = OrderedDict()  # external services (to be retrieved)
-        self.services_ops = OrderedDict()  # operational services (for special usages)
+        if not hasattr(self, 'services'):
+            self.services = OrderedDict()  # service/temporary variables
+            self.services_var = OrderedDict()  # variable services updated each step/iter
+            self.services_var_seq = OrderedDict()
+            self.services_var_nonseq = OrderedDict()
+            self.services_post = OrderedDict()  # post-initialization storage services
+            self.services_subs = OrderedDict()  # to-be-substituted services
+            self.services_icheck = OrderedDict()  # post-initialization check services
+            self.services_ref = OrderedDict()  # BackRef
+            self.services_fnd = OrderedDict()  # services to find/add devices
+            self.services_ext = OrderedDict()  # external services (to be retrieved)
+            self.services_ops = OrderedDict()  # operational services (for special usages)
 
-        self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
-                                      ('sys_f', 'f_{sys}'),
-                                      ('sys_mva', 'S_{b,sys}'),
-                                      ))
+            self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
+                                          ('sys_f', 'f_{sys}'),
+                                          ('sys_mva', 'S_{b,sys}'),
+                                          ))
 
         # Model behavior flags
         self.flags = ModelFlags()
@@ -269,15 +272,17 @@ class Model:
         self.cache.add_callback('e_adders', self._e_adders)
         self.cache.add_callback('e_setters', self._e_setters)
 
-        self._input = OrderedDict()  # cached dictionary of inputs
-        self._input_z = OrderedDict()  # discrete flags, storage only.
-        self._rhs_f = OrderedDict()  # RHS of external f
-        self._rhs_g = OrderedDict()  # RHS of external g
+        if not hasattr(self, '_input'):
+            self._input = OrderedDict()  # cached dictionary of inputs
+            self._input_z = OrderedDict()  # discrete flags, storage only.
+            self._rhs_f = OrderedDict()  # RHS of external f
+            self._rhs_g = OrderedDict()  # RHS of external g
 
-        self.f_args = []
-        self.g_args = []  # argument value lists
-        self.j_args = dict()
-        self.s_args = OrderedDict()
+            self.f_args = []
+            self.g_args = []  # argument value lists
+            self.j_args = dict()
+            self.s_args = OrderedDict()
+        
         self.ia_args = OrderedDict()
         self.ii_args = OrderedDict()
         self.ij_args = OrderedDict()
@@ -971,7 +976,11 @@ class Model:
         Evaluate algebraic equations.
         """
         if callable(self.calls.g):
-            g_ret = self.calls.g(*self.g_args)
+            try:
+                g_ret = self.calls.g(*self.g_args)
+            except:
+                g_ret = self.calls.g(*self.g_args[:-4])
+
             for i, var in enumerate(self.cache.algebs_and_ext.values()):
                 if var.e_inplace:
                     var.e += g_ret[i]

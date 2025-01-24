@@ -55,7 +55,7 @@ class Colmena():
             if model.role != True:
                 continue        
             for idx in model.idx.v:
-                self.agents.pushback((model.name, idx))
+                self.agents.pushback((model.class_name, idx))
         
     def define_new_roles(self, t=0):
         dict_results = {}

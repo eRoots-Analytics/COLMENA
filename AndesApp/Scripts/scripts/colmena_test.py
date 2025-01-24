@@ -81,7 +81,7 @@ class Colmena():
             if model not in ['GENROU', 'GENROU_bimode']:
                 continue        
             for idx in model.idx.v:
-                self.agents.pushback((model.name, idx))
+                self.agents.pushback((model.class_name, idx))
         
         edges_id = []
         for i, edge in enumerate(edges):
