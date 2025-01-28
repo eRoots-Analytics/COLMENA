@@ -55,6 +55,10 @@ def build_new_system(system, model_swap = {'REDUAL':['REGCV1','REGCP1']}):
             for model_to in model_swap[model]:
                 for i in range(len(param_dict['u'])):        
                     new_dict = {key: value[i] for key, value in param_dict.items() if isinstance(value, list) or isinstance(value, np.ndarray)}
+                    if i == 0:
+                        new_dict['u'] = 1
+                    else:
+                        new_dict['u'] = 0
                     system_to.add(model_to, new_dict)
         else:
             for i in range(len(param_dict['u'])):        

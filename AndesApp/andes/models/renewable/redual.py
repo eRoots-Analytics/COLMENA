@@ -75,18 +75,62 @@ class REDUAL(REGCV1, REGCP1):
         self.Ipout.e_str = '(1-is_GFM)*(' + self.Ipout.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Ipout)'
         self.Iqout_y.e_str = '(1-is_GFM)*(' + self.Iqout_y.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Iqout_y)'
 
-    def reinitialize(self, idx):
+    def reinitialize(self, idx, steady_state = True):
         #Function that reinitializes the states
         uid = self.idx2uid(idx)
         is_GFM = self.is_GFM.v[uid]
+        a = self.a.v[uid]
+        am = self.am.v[uid]
+        a = self.a.v[uid]
         if is_GFM:
-            udref0 = self.udref0.v[uid]            
-            self.alter(src = 'uqref0', idx = idx, value=0)
+            v = self.Pref
+            if steady_state:
+                Id = self.Id.v[uid]
+                Iq = self.Iq.v[uid]
+                vd = self.vd.v[uid] 
+                vq = self.vq.v[uid]
+            else:
+                Id = self.Pref.v[uid]/v
+                Iq = -self.Qref.v[uid]/v
+                vd = v
+                vq = 0
+            ra = self.ra.v[uid]
+            xs = self.xs.v[uid]
+             
+            vref2 = self.vref2.v[uid] 
+            Kp = self.Kp.v[uid] 
+            udref0 = Id*ra - Iq*xs + vd         
+            uqref0 = Id*xs - Iq*ra + vq   
+    
+            #We set the operating points given the present values      
+            self.alter(src = 'uqref', idx = idx, value=uqref0)
+            self.alter(src = 'uqref0', idx = idx, value=uqref0)
+            self.alter(src = 'udref', idx = idx, value=udref0)
             self.alter(src = 'udref0', idx = idx, value=udref0)
+
+            #We reset state values
+            self.alter(src = 'delta', idx = idx, value=a)
+            self.alter(src = 'dw', idx = idx, value=am)
+            self.alter(src = 'PIvd_xi', idx = idx, value=Id)
+            self.alter(src = 'PIvq_xi', idx = idx, value=Iq)
+            self.alter(src = 'LGId_y', idx = idx, value=0)
+            self.alter(src = 'LGIq_y', idx = idx, value=0)
+            self.alter(src = 'udLag_y', idx = idx, value=udref0)
+            self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
+
         else:
-            Qe0 = self.Qe.v[uid]
+            Qe0 = self.Qe.v[uid]/self.v.v[uid]
+            Pe0 = self.Pe.v[uid]/self.v.v[uid]
+
+            #We set the operating points given the present values      
             self.alter(src = 'Iqcmd', idx = idx, value=-Qe0)
             self.alter(src = 'Iqcmd0', idx = idx, value=-Qe0)
+            self.alter(src = 'Ipcmd', idx = idx, value=Pe0)
+            self.alter(src = 'Ipcmd0', idx = idx, value=Pe0)
+
+            #we set some state differently to smooth the transition
+            self.alter(src = 'S0_y', idx = idx, value=Pe0)
+            self.alter(src = 'S2_y', idx = idx, value=Pe0)
 
         return
         self.to_reinitialize = False
@@ -109,6 +153,7 @@ class REDUAL(REGCV1, REGCP1):
         for var_name, var in self.states_ext.items():
             saved_values[var_name] = deepcopy(var.v)
         for var_name, var in self.algebs.items():
+            continue
             saved_values[var_name] = deepcopy(var.v)
             
 

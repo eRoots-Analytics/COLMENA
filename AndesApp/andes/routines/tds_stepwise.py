@@ -438,7 +438,7 @@ class TDS_stepwise(BaseRoutine):
         self.config.tmax = t_max
         changes_done = False
         self.save_roles = []
-
+        system = self.system
         while self.system.dae.t < self.config.tmax:
             time_start = time.time()
             try:
@@ -456,7 +456,8 @@ class TDS_stepwise(BaseRoutine):
                 self.save_roles.append((role_data))
                 if unique_change is True:
                     changes_done = False
-                self.system.REDUAL.to_reinitialize = (self.system.REDUAL.is_GFM.v[0] == 0)*(was_GFM)
+                if self.system.REDUAL.n > 0:
+                    self.system.REDUAL.to_reinitialize = (self.system.REDUAL.is_GFM.v[0] == 0)*(was_GFM)
                 
         return
     
@@ -714,7 +715,7 @@ class TDS_stepwise(BaseRoutine):
         change_turbine = False
 
         if set_points is None:
-            return {}
+            return []
 
         if set_points == 'REDUAL':
             new_set_point = {}
@@ -989,7 +990,7 @@ class TDS_stepwise(BaseRoutine):
         redual_init = True
         if system.dae.t < 0:
             self.init()
-        elif redual_init and system.REDUAL.to_reinitialize:
+        elif redual_init and system.REDUAL.n>0 and system.REDUAL.to_reinitialize:
             system.REDUAL.reinitialize(idx = 'GENROU_10')
         else:  # resume simulation
             self.init_resume()

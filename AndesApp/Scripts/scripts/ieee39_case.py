@@ -56,8 +56,15 @@ for model, param_dict in system_dict.items():
             model = 'REGCA1'
         system_to.add(model, new_dict)
 
-system_ieee = system        
+system_ieee = system
+system_ieee.Toggle.set(src='u', attr = 'v', idx='Toggler_1', value=1)
+system_ieee.Toggle.set(src='t', attr = 'v', idx='Toggler_1', value=2)
+
 system = system_to
+system.Toggle.set(src='u', attr = 'v', idx='Toggler_1', value=1)
+system.Toggle.set(src='t', attr = 'v', idx='Toggler_1', value=2)
+system.Toggle.set(src='t', attr = 'v', idx='Toggler_1', value=2)
+
 if n_genrou == 0:
     system.Toggle.alter(src='model', idx = 'Toggler_1', value = new_model_name)
     system.Toggle.alter(src='name', idx = 'Toggler_1', value = 'GENROU_1')
@@ -67,13 +74,10 @@ redual = True
 if redual:
     system = aux.build_new_system_legacy(system_ieee, new_model_name='REDUAL')
     system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_10', value=1)
-    system.REDUAL.set(src='D', attr = 'v', idx='GENROU_10', value=10)
-    system.REDUAL.set(src='kv', attr = 'v', idx='GENROU_10', value=0.005)
-    system.REDUAL.set(src='kw', attr = 'v', idx='GENROU_10', value=0.1)
-    system.REDUAL.set(src='M', attr = 'v', idx='GENROU_10', value=10)
-
-    system.Toggle.set(src='u', attr = 'v', idx='Toggler_1', value=1)
-    system.Toggle.set(src='t', attr = 'v', idx='Toggler_1', value=2)
+    #system.REDUAL.set(src='D', attr = 'v', idx='GENROU_10', value=10)
+    #system.REDUAL.set(src='kv', attr = 'v', idx='GENROU_10', value=0.005)
+    #system.REDUAL.set(src='kw', attr = 'v', idx='GENROU_10', value=0.1)
+    #system.REDUAL.set(src='M', attr = 'v', idx='GENROU_10', value=10)
 
     system.REDUAL.prepare()
     system.find_devices()
@@ -104,18 +108,35 @@ if redual:
     t = system.dae.ts.t
     #system.TDS.plt.plot_data(t, vq * Id,xlabel='Time [s]',ylabel='Ipcmd [pu]')
 
-    fig, ax = system.TDS_stepwise.plt.plot(system.Bus.v, a=tuple(range(39)))
-    fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=tuple(range(8)))
+    #fig, ax = system.TDS_stepwise.plt.plot(system.Bus.v, a=tuple(range(39)))
+    #fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a=tuple(range(8)))
 
 double_model = True
 if double_model:
-    system = aux.build_new_system(system_ieee, model_swap={'REDUAL':['REGCV1', 'REGCP1']})
+    system_pre = aux.build_new_system_legacy(system_ieee)
+    system = aux.build_new_system(system_pre, model_swap={'REDUAL':['REGCV1', 'REGCP1']})
+    
+    #system.REGCV1.set(src='D', attr = 'v', idx='GENROU_10', value=10)
+    #system.REGCV1.set(src='kv', attr = 'v', idx='GENROU_10', value=0.005)
+    #system.REGCV1.set(src='kw', attr = 'v', idx='GENROU_10', value=0.1)
+    #system.REGCV1.set(src='M', attr = 'v', idx='GENROU_10', value=10)
+    
     system.find_devices()
     system.setup()
     system.PFlow.run()
-    system.TDS.config.tf = 20
     system.TDS_stepwise.config.criteria = 0
-    set_point_dict = [{'model':'REGCV1', 'src':'u', 'value':1, 'add':False, 'idx':'GENROU_10'}]
-    set_point_dict.append({'model':'REGCP1', 'src':'u', 'value':0, 'add':False, 'idx':'GENROU_10'})
-    system.TDS_stepwise.run_set_points(set_points_dict=set_point_dict)
+    set_point_dict = [{'model':'REGCV1', 'param':'u', 'value':0, 'add':False, 'idx':'GENROU_10'}]
+    set_point_dict.append({'model':'REGCP1', 'param':'u', 'value':1, 'add':False, 'idx':'GENROU_10'})
+    system.TDS_stepwise.run_set_points(set_points_dict=set_point_dict,  t_change = 10, t_max = 20)    
     system.TDS_stepwise.load_plotter()
+    matplotlib.use('TkAgg')
+
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCV1.Pe, a=0)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCV1.Qe, a=0)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCV1.omega, a=0)
+
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.Pe, a=0)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.Qe, a=0)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.v, a=0)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.a, a=0)
+    _ = 0
