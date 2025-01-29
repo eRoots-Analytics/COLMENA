@@ -9,6 +9,7 @@ import sys
 import time
 import ast
 import asyncio
+from copy import deepcopy
 import colmena_test as ct
 from collections import OrderedDict
 
@@ -455,9 +456,9 @@ class TDS_stepwise(BaseRoutine):
                 role_data = []
                 self.save_roles.append((role_data))
                 if unique_change is True:
-                    changes_done = False
+                    changes_done = True
                 if self.system.REDUAL.n > 0:
-                    self.system.REDUAL.to_reinitialize = (self.system.REDUAL.is_GFM.v[0] == 0)*(was_GFM)
+                    system.REDUAL.to_reinitialize = (system.REDUAL.is_GFM.v[0] == 0)*(was_GFM)
                 
         return
     
@@ -706,7 +707,7 @@ class TDS_stepwise(BaseRoutine):
         self.config.shrinkt = 1
         return self.run(t_run = t_run, no_summary= no_summary, verbose = verbose, kwargs=kwargs) 
     
-    def get_set_points(self, set_points = None, line_id = 8, line_toggle = True):
+    def get_set_points(self, set_points = None, line_id = 8, line_toggle = True, idxs = None):
         set_point_changes = []
         line_n = self.system.Line.n
         line_resistance = False
@@ -719,12 +720,17 @@ class TDS_stepwise(BaseRoutine):
 
         if set_points == 'REDUAL':
             new_set_point = {}
+            idxs = ['GENROU_1', 'GENROU_2']
             new_set_point['model'] = 'REDUAL'
             new_set_point['param'] = 'is_GFM'
             new_set_point['value'] = 0
-            new_set_point['idx'] = 'GENROU_10'
             new_set_point['add'] = False
-            set_point_changes.append(new_set_point)
+            new_set_point['t'] = 8
+            if idxs is not None:
+                for i, idx in enumerate(idxs):
+                    idx_val = str('GENROU_') + str(i+1)    
+                    new_set_point['idx'] = idx_val
+                    set_point_changes.append(new_set_point)
 
         if set_points == 'intermittent':
             new_set_point = {}
@@ -733,6 +739,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = -0.1
             new_set_point['idx'] = 1
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
 
         elif set_points == 'turbine':
@@ -742,6 +749,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.1
             new_set_point['idx'] = 1
             new_set_point['add'] = True
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
         
         elif set_points == 'fload':
@@ -751,6 +759,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 50
             new_set_point['idx'] = 'FLoad_1'
             new_set_point['add'] = True
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
         
         elif set_points == 'load_p0':
@@ -760,6 +769,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 1
             new_set_point['idx'] = 'PQ_1'
             new_set_point['add'] = True
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
             new_set_point = {}
             new_set_point['model'] = 'PQ'
@@ -767,6 +777,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 15.7
             new_set_point['idx'] = 'PQ_1'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
             new_set_point = {}
             new_set_point['model'] = 'PQ'
@@ -774,6 +785,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.5
             new_set_point['idx'] = 'PQ_1'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             #set_point_changes.append(new_set_point)
             new_set_point = {}
             new_set_point['model'] = 'PQ'
@@ -781,6 +793,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0
             new_set_point['idx'] = 'PQ_1'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             #set_point_changes.append(new_set_point)
 
         elif set_points == 'droop':
@@ -790,6 +803,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.1
             new_set_point['idx'] = 1
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
 
         elif set_points == 'converter':
@@ -799,6 +813,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.1
             new_set_point['idx'] = 1
             new_set_point['add'] = True
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
         
         elif set_points == 'load':
@@ -808,6 +823,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.5
             new_set_point['idx'] = 'PQ_1'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
 
         elif set_points == 'pref':
@@ -817,6 +833,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0.1
             new_set_point['idx'] = 1
             new_set_point['add'] = True
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
 
         elif set_points == 'ZIP':
@@ -826,6 +843,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 10
             new_set_point['idx'] = 'ZIP_1'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
 
         elif set_points == 'motor':
@@ -835,6 +853,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 10
             new_set_point['idx'] = 'ZIP_1'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
 
         elif line_toggle:
@@ -844,6 +863,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 5
             new_set_point['idx'] = 1
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
             return set_point_changes
         
@@ -854,6 +874,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 1e9
             new_set_point['idx'] = 'Line_8'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
             new_set_point = {}
             new_set_point['model'] = 'Line'
@@ -861,6 +882,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 1e9
             new_set_point['idx'] = 'Line_8'
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
         for i in range(line_n):
             if self.system.dae.t < 5 or line_id!=5:
@@ -874,18 +896,21 @@ class TDS_stepwise(BaseRoutine):
                 new_set_point['value'] = 0
                 new_set_point['idx'] = i
                 new_set_point['add'] = False
+                new_set_point['t'] = 5
             elif self.system.dae.t > 5:
                 new_set_point = {}
                 new_set_point['model'] = 'Line'
                 new_set_point['param'] = 'u'
                 new_set_point['value'] = 0
                 new_set_point['idx'] = i
+                new_set_point['t'] = 5
                 new_set_point['add'] = False
             elif self.system.dae.t > 10:
                 new_set_point['model'] = 'Line'
                 new_set_point['param'] = 'u'
                 new_set_point['value'] = 1
                 new_set_point['idx'] = i
+                new_set_point['t'] = 5
                 new_set_point['add'] = False
             if 'new_set_point' in locals():        
                 set_point_changes.append(new_set_point)
@@ -896,6 +921,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['value'] = 0
             new_set_point['idx'] = i
             new_set_point['add'] = False
+            new_set_point['t'] = 5
             set_point_changes.append(new_set_point)
         return set_point_changes
             
@@ -909,7 +935,11 @@ class TDS_stepwise(BaseRoutine):
             value = set_point['value']
             idx = set_point['idx']
             add = set_point['add']
+            t_change = set_point['t']
             
+            if self.system.dae.t < t_change:
+                continue
+
             model = getattr(self.system, model_name)
             if model.n == 0:
                 return
@@ -991,7 +1021,8 @@ class TDS_stepwise(BaseRoutine):
         if system.dae.t < 0:
             self.init()
         elif redual_init and system.REDUAL.n>0 and system.REDUAL.to_reinitialize:
-            system.REDUAL.reinitialize(idx = 'GENROU_10')
+            redual_idx = system.REDUAL.idx.v[0]
+            system.REDUAL.reinitialize(idx = redual_idx)
         else:  # resume simulation
             self.init_resume()
 

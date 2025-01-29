@@ -49,7 +49,7 @@ class ErootsUseCase(Service):
     @Metric('frequency')
     @Context(class_ref=GridAreas, name="grid_areas")
     @Channel('behaviorChange', scope= ' ')
-    @Channel('referenceValue', scope = ' ')
+    @Channel('estimationChannel', scope = ' ')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.t_start = time.time()                
@@ -144,13 +144,45 @@ class ErootsUseCase(Service):
             self.idx = data.get('device_idx', None)
             self.model_name = data.get('model_name', None)
             self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+            self.kpi_exist = False
 
-        @Persistent(it = 10)    
+        @Persistent(it = 20)    
         def behavior(self):
+            responseTimeSync = requests.get(andes_url + '/device_sync')
+            responseDict = responseTimeSync.json()
+            if responseDict['time'] < 10 and not self.kpi_exist:
+                return
             roleChangeDict = self.device_dict
             roleChangeDict['param'] = 'is_GFM'
             roleChangeDict['value'] = 1
             responseAndes = requests.get(andes_url + '/device_role_change', params = roleChangeDict)
             return responseAndes
+        
+    class EstimationRole(Role):
+        @Metric('frequency')
+        @Channel('estimationChannel')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+
+            #We initialize the initial estimation
+            self.neighbours = requests.get(andes_url + '/neighbours', params = self.device_dict)
+            self.second_neighbours = requests.get(andes_url + '/second_neighbours', params = self.device_dict)
+            
+
+        #function that updates the estimation 
+        def update_data(new_data):
+            return
+
+        @Async(new_data ='estimationChannel')
+        def behavior(self, new_data):
+            role
+        
+    
 
         

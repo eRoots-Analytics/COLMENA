@@ -228,9 +228,9 @@ def specific_device_sync(all_devices = False):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/sync_time', methods=['GET'])
-def sync_time(t):
+def sync_time():
     app_t = system.TDS.dae.t
-    return app_t
+    return jsonify({"time": app_t}) 
 
 @app.route('/run', methods=['GET'])
 def run():
@@ -251,15 +251,16 @@ def run():
 def run_real_time():
     while not json_storage['start']:
         _=0
-    t_now = time.time()
-    t_run = 0
+    t_0 = time.time()
+    t_run = float(request.args.get('t_run', 30))  
+    delta_t = float(request.args.get('delta_t', 30))  
     try:
         while system.dae.t <= t_run:
-            if time.time() - t_now >= delta_t: 
+            if time.time() - t_0 >= delta_t: 
                 system.TDS_stepwise.run_individual_batch(delta_t)
                 print(f't_run is {t_run}')
                 print(f't_dae is {system.dae.t}')
-                t_now = time.time()
+                t_0 = time.time()
         return jsonify({"Message": 'Success', "Time":system.dae.t}), 200
     except Exception as e:
         traceback.print_exc()
@@ -292,11 +293,13 @@ if __name__ == '__main__':
     app.run(debug=True)
     andes_url = 'http://127.0.0.1:5000'
     andes_directory = ad.get_case("kundur/kundur_full.xlsx")
+    andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
     andes_dict = {"case_file":andes_directory}
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
-    
+    responseSimulation = requests.get(andes_url + '/run_real_time', params = {'model_name':'GENROU', 'var_name':'omega'})
     responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'GENROU', 'var_name':'omega'})
+    
     #responsePlot = 600
     if not isinstance(responsePlot, int) and responsePlot.status_code == 200:
         img = Image.open(BytesIO(responsePlot.content))

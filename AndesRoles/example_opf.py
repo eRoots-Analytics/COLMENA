@@ -33,87 +33,106 @@ class ErootsPowerCaseDecentralised(Service):
         self.t_start = time.time()
         self.h = 0.03
     
-    class AndesTimeSync(Role):
+    class updateEstimation(Role):
+        @Metric('frequency')
+        @Channel('estimationChannel')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.andes_url = andes_url
-            self.t_start = time.time()
-            self.t_run = 0.1
-            
-        @Persistent()
-        def behavior(self):
-            if (time.time() - self.t_start ) >= self.t_run:
-                responseRun = requests.get(andes_url + '/run', params = {'t_run':self.t_run})
-                print(responseRun.status_code)
-                
-    class BasicRole(Role):
-        @Channel('frequency')
-        @Channel('behaviorChange')
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            #WE FIRST INITIALIZE THE ROLE PARAMETERS 
             with open('data.json', 'r') as json_file:
                 data = json.load(json_file)
             self.andes_url = data.get('andes_url', None)
             self.idx = data.get('device_idx', None)
             self.model_name = data.get('model_name', None)
             self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
-            self.t_start = time.time()
+
+            #We initialize the initial estimation
+            self.neighbours = requests.get(andes_url + '/neighbours', params = self.device_dict)
+            self.second_neighbours = requests.get(andes_url + '/second_neighbours', params = self.device_dict)
+
+            #we read the estimator
+            with open('estimator.json', 'r') as json_file:
+                self.estimator = json.load(json_file)
+
             
-            #We initialize the variables once
-            responseAndes = requests.get(andes_url + '/device_sync', params=self.device_dict)
-            self.variables = responseAndes.json()
+        #function that updates the estimation 
+        def update_data(self, new_data):
+            for key, val in new_data.items():
+                a = val.a
+                v = val.v
+                estimator_model = getattr(self.estimator, key)
+                estimator_a = estimator_model.a
+                estimator_v = estimator_model.v
+                estimator_model.v += estimator_v + self.alpha*(estimator_v - v)
+                estimator_model.a += estimator_a + self.alpha*(estimator_a - a)
+            return
+
+        @Async(new_data ='estimationChannel')
+        def behavior(self, new_data):
+            self.update_data(new_data)
+            # Write back the updated data
+            with open('estimator.json', 'w') as json_file:
+                json.dump(self.estimator, json_file, indent=4)
+            return
         
-        def sync2Andes(self):
-            responseAndes = requests.get(andes_url + '/device_sync', params=self.device_dict)
-            self.variables = responseAndes.json()
-            print(responseAndes.status_code)
-            return responseAndes
-        
-        def change2Andes(self, param, value):
-            roleChangeDict = self.device_dict
-            roleChangeDict['param'] = param
-            roleChangeDict['value'] = value
-            responseAndes = requests.get(andes_url + '/device_role_change', params = self.roleChangeDict)
-            print(responseAndes.status_code)
-            return responseAndes
-        
-        def publish_metric(self, param):
-            value = self.variables[param]
-            self.frequency.publish(value)
-        
-        @Persistent()
-        def behavior(self):
-            responseAndes = self.sync2Andes()
-            self.publish_metric('omega')
-    
-    class BehaviorChangeRole(Role):
-        @Channel('behaviorChange', scope= " ")
+    class shareEstimation(Role):
+        @Metric('frequency')
+        @Channel('estimationChannel')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            #WE FIRST INITIALIZE THE ROLE PARAMETERS 
             with open('data.json', 'r') as json_file:
                 data = json.load(json_file)
             self.andes_url = data.get('andes_url', None)
             self.idx = data.get('device_idx', None)
             self.model_name = data.get('model_name', None)
-            self.device_dict = {'model_name': self.model_name, 'device_idx': self.idx}
-            self.t_start = time.time()
-            
-        def change2Andes(self, behaviorDict):
-            #the role change includes the model_name if not precised
-            if behaviorDict['model_name'] is None:
-                behaviorDict.uodate(self.device_dict)
-            responseAndes = requests.get(andes_url + '/device_role_change', params = behaviorDict)
-            print("andes_response is", responseAndes.status_code)
-            return responseAndes
-        
-        @Async(new_behavior = 'behaviorChange')
-        def behavior(self, behaviorDict):
-            print(f"new_ehavior is {behaviorDict}")
-            self.change2Andes(behaviorDict)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
 
-    class meritOrderRole(Role):
+            #We initialize the initial estimation
+            self.neighbours = requests.get(andes_url + '/neighbours', params = self.device_dict)
+            self.second_neighbours = requests.get(andes_url + '/second_neighbours', params = self.device_dict)
+            
+            self.estimator = {}
+            for key in self.neighbours:
+                name = key['name']
+                responseAndes = requests.get(andes_url + '/specific_sync_device', params = self.device_dict)
+                bus_data = responseAndes.json()
+                self.estimator[name] = {'a':0, 'v':1}
+
+            # Write back the updated data
+            with open('estimator.json', 'w') as json_file:
+                json.dump(self.estimator, json_file, indent=4)
+
+
+        @Persistent()
+        def behavior(self):
+            with open('estimator.json', 'r') as json_file:
+                estimator = json.load(json_file)
+            #for loop not needed
+            for neighbour in self.neighbours:
+                self.estimationChannel.publish(estimator, neighbour)  
+            return
         
-        def behavior():
+    class performLocalMPC(Role):
+        @Metric('frequency')
+        @Channel('estimationChannel')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+        
+        def define_mpc(self):
+            f_problem = 0
+            return f_problem
+
+        @Persistent()
+        def behavior(self):
+
+            #We read the estimation data needed
+            with open('estimator.json', 'r') as json_file:
+                estimator_data = json.load(json_file)
+            
+
             return

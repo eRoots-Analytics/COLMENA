@@ -72,8 +72,8 @@ class REDUAL(REGCV1, REGCP1):
                 v_eq_new = '(1-is_GFM)*(' + not_none(v_eq_GFL) + ') + (is_GFM)*(' + not_none(v_eq_GFM) + ')' 
                 setattr(var, 'v_str', v_eq_new)
 
-        self.Ipout.e_str = '(1-is_GFM)*(' + self.Ipout.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Ipout)'
-        self.Iqout_y.e_str = '(1-is_GFM)*(' + self.Iqout_y.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Iqout_y)'
+        #self.Ipout.e_str = '(1-is_GFM)*(' + self.Ipout.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Ipout)'
+        #self.Iqout_y.e_str = '(1-is_GFM)*(' + self.Iqout_y.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Iqout_y)'
 
     def reinitialize(self, idx, steady_state = True):
         #Function that reinitializes the states

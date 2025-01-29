@@ -247,10 +247,11 @@ class Model:
                               adjust_upper=(0, 1),
                               )
 
-        self.calls = ModelCall()  # callback and LaTeX string storage
-        self.triplets = JacTriplet()  # Jacobian triplet storage
-        self.syms = SymProcessor(self)  # symbolic processor instance
-        self.docum = Documenter(self)
+        if not hasattr(self, 'calls'):
+            self.calls = ModelCall()  # callback and LaTeX string storage
+            self.triplets = JacTriplet()  # Jacobian triplet storage
+            self.syms = SymProcessor(self)  # symbolic processor instance
+            self.docum = Documenter(self)
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
