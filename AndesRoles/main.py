@@ -1,4 +1,4 @@
-from example_eroots import ErootsUseCase
+from example_test import ErootsUseCase
 from typing import List, TYPE_CHECKING
 from threading import Thread
 from PIL import Image

@@ -6,6 +6,9 @@ import time
 import traceback
 import cvxpy as cp
 import traceback
+import sys
+sys.path.append('/home/pablo/Desktop/eroots/COLMENA/AndesApp/Scripts/scripts')
+import aux_function as aux
 import queue
 import os
 from colmena import (
@@ -41,52 +44,38 @@ class GridAreas(Context):
                 if idx in area_info[model_name]:
                     return area
         return False
+    
+class GridLines(Context):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        responseAndesLines = requests.get(andes_url + '/line_pairings')
+        responseAndesArea = requests.get(andes_url + '/area_structure')
+        self.line_pairings = responseAndesLines.json()
+        self.areas = responseAndesArea.json()
+        self.structure = {}
+
+    def locate(self, device):
+        device_bus = device.Bus
+        res = []
+        for bus_from, bus_to in self.line_pairings.items():
+            if bus_from == device_bus or bus_to == device_bus:
+                res.append(bus_from + 'to' + bus_to)
+        return res
 
 class ErootsUseCase(Service):
     @Metric('frequency')
     @Context(class_ref=GridAreas, name="grid_areas")
     @Channel('behaviorChange', scope= ' ')
-    @Channel('referenceValue', scope = ' ')
+    @Channel('estimationChannel', scope = ' ')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.t_start = time.time()
-    
-    class AndesTimeSync(Role):
-        @Metric('frequency')
-        @Requirements('GENERATOR')
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.andes_url = andes_url
-            self.t_start = time.time()
-            self.t_andes = 0
-            self.t_run = 0.1
-            self.t_max = 20
-            
-        @Persistent()
-        def behavior(self):
-            try:
-                insync = False
-                t_role = time.time() - self.t_start
-                if insync:
-                    responseRun = requests.get(andes_url + '/run', params = {'t_run':self.t_run})
-                    self.t_andes = responseRun.json()['Time']
-                    print('Andes is running code:', responseRun.status_code)
-                elif self.t_andes + self.t_run <= t_role and self.t_andes < self.t_max:
-                    responseRun = requests.get(andes_url + '/run', params = {'t_run':self.t_run})
-                    self.t_andes = responseRun.json()['Time']
-                    print('Andes is running code:', responseRun.status_code, "Andes time is", self.t_andes)
-                else:
-                    _ = 0
-                    #print('Andes is not running and time is', self.t_andes)
-            except Exception as e:
-                print(e)
-                traceback.print_exc()
+        self.t_start = time.time()                
                 
-                
-    class BasicRole1(Role):
+    class MonitoringRole(Role):
         @Metric('frequency')
         @Channel('behaviorChange')
         @Requirements('GENERATOR')
+        @KPI('mean(frequency)[1]')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS 
@@ -139,41 +128,11 @@ class ErootsUseCase(Service):
             if change and not verbose:
                 print('Parameter M is =', self.M_value)
                 print('Omega is', value)
-    
-    class BehaviorChangeRole(Role):
-        @Channel('behaviorChange')
-        @Requirements('GENERATOR')
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            #WE FIRST INITIALIZE THE ROLE PARAMETERS 
-            with open(json_path, 'r') as json_file:
-                data = json.load(json_file)
-            self.andes_url = data.get('andes_url', None)
-            self.idx = data.get('device_idx', None)
-            self.model_name = data.get('model_name', None)
-            self.device_dict = {'model_name': self.model_name, 'device_idx': self.idx}
-            self.t_start = time.time()
-            
-        def change2Andes(self, param, value):
-            roleChangeDict = self.device_dict
-            roleChangeDict['param'] = param
-            roleChangeDict['value'] = value
-            responseAndes = requests.post(andes_url + '/device_role_change', json = roleChangeDict)
-            print(f'Role Change performed at {time.time() - self.t_start} COLMENA time')
-            return responseAndes
-        
-        @Async(new_behavior = 'behaviorChange')
-        def behavior(self, new_behavior):
-            print(f"new_behavior is {new_behavior}")
-            param = new_behavior['param']
-            value = new_behavior['value']
-            self.change2Andes(param, value)
             
     class SecondaryPowerResponse(Role):
         @Metric('frequency')
-        @Channel('behaviorChange')
         @Requirements('GENERATOR')
-        #@KPI('(mean(deriv(frequency))< 0.001 && mean(frequency)[1]')
+        @KPI('(mean(abs(deriv(frequency)))< 0.001 && mean(frequency)[1]')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             with open('data.json', 'r') as json_file:
@@ -181,26 +140,69 @@ class ErootsUseCase(Service):
             self.andes_url = data.get('andes_url', None)
             self.idx = data.get('device_idx', None)
             self.model_name = data.get('model_name', None)
-            self.Ki = data.get('controller_gain', None)
-            self.delta_p_ref = 0 
-            self.h = 0.001
-            self.p_ref = 1
-            self.data = self.behavior
-            
-        @Persistent()
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+            controller_dict =  {'dt':0.1, 'Kp':0.1, 'Ki':2, 'Uref':1, 'idx':self.idx}
+            self.PIcontroller = aux.PIcontroller(**controller_dict)
+
+        @Persistent(it = 10)    
         def behavior(self):
-            eps = 0.003
-            frequency = self.frequency.read()
-            behaviorChangeDict = {}
-            if frequency > 1 + eps:
-                power_add = -self.h
-            elif frequency < 1 - eps:
-                power_add = -self.h
-            else:
-                power_add = 0  
-            behaviorChangeDict['value'] = power_add
-            behaviorChangeDict['add'] = True
-            behaviorChangeDict['model_name'] = 'TGOV1'
-            behaviorChangeDict['var_name'] = 'pref'
-            self.behaviorChange.publish(behaviorChangeDict)
+            set_points = self.PIcontroller.get_set_point(input)
+            roleChangeDict = set_points.update(self.device_dict)
+            responseAndes = requests.get(andes_url + '/device_role_change', params = roleChangeDict)
+            return responseAndes
+    
+    class GridFormingRole(Role):
+        @Metric('frequency')
+        @KPI('mean(frequency)[1]')
+        @Requirements('GFM')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+            self.kpi_exist = False
+
+        @Persistent(it = 20)    
+        def behavior(self):
+            responseTimeSync = requests.get(andes_url + '/device_sync')
+            responseDict = responseTimeSync.json()
+            if responseDict['time'] < 10 and not self.kpi_exist:
+                return
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = 'is_GFM'
+            roleChangeDict['value'] = 1
+            responseAndes = requests.get(andes_url + '/device_role_change', params = roleChangeDict)
+            return responseAndes
+        
+    class EstimationRole(Role):
+        @Metric('frequency')
+        @KPI('mean(frequency)[1]')
+        @Channel('estimationChannel')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            with open('data.json', 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+
+            #We initialize the initial estimation
+            self.neighbours = requests.get(andes_url + '/neighbours', params = self.device_dict)
+            self.second_neighbours = requests.get(andes_url + '/second_neighbours', params = self.device_dict)
             
+
+        #function that updates the estimation 
+        def update_data(new_data):
+            return
+
+        @Async(new_data ='estimationChannel')
+        def behavior(self, new_data):
+            role
+        
+    
+
+        

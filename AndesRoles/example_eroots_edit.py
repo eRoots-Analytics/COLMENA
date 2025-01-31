@@ -44,6 +44,23 @@ class GridAreas(Context):
                 if idx in area_info[model_name]:
                     return area
         return False
+    
+class GridLines(Context):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        responseAndesLines = requests.get(andes_url + '/line_pairings')
+        responseAndesArea = requests.get(andes_url + '/area_structure')
+        self.line_pairings = responseAndesLines.json()
+        self.areas = responseAndesArea.json()
+        self.structure = {}
+
+    def locate(self, device):
+        device_bus = device.Bus
+        res = []
+        for bus_from, bus_to in self.line_pairings.items():
+            if bus_from == device_bus or bus_to == device_bus:
+                res.append(bus_from + 'to' + bus_to)
+        return res
 
 class ErootsUseCase(Service):
     @Metric('frequency')
@@ -58,6 +75,7 @@ class ErootsUseCase(Service):
         @Metric('frequency')
         @Channel('behaviorChange')
         @Requirements('GENERATOR')
+        @KPI('mean(frequency)[1]')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS 
@@ -96,7 +114,7 @@ class ErootsUseCase(Service):
             verbose = True
             responseAndes = self.sync2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
-            value = self.publish_metric('omega')
+            value = self.publish_metric('frequency')
             change = False
             if value > 1.003:
                 print(f'here the frequency is {value}')
@@ -135,6 +153,7 @@ class ErootsUseCase(Service):
     
     class GridFormingRole(Role):
         @Metric('frequency')
+        @KPI('mean(frequency)[1]')
         @Requirements('GFM')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -160,6 +179,7 @@ class ErootsUseCase(Service):
         
     class EstimationRole(Role):
         @Metric('frequency')
+        @KPI('mean(frequency)[1]')
         @Channel('estimationChannel')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -181,7 +201,7 @@ class ErootsUseCase(Service):
 
         @Async(new_data ='estimationChannel')
         def behavior(self, new_data):
-            role
+            return
         
     
 

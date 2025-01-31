@@ -20,8 +20,9 @@
 import threading
 from typing import Callable, TYPE_CHECKING
 from functools import wraps
-from colmena.utils.exceptions import WrongFunctionForDecoratorException
-from colmena.utils.logger import Logger
+
+from colmena.exceptions import WrongFunctionForDecoratorException
+from colmena.logger import Logger
 
 if TYPE_CHECKING:
     import colmena
@@ -53,6 +54,7 @@ class Async:
                             name,
                             getattr(self_, channel),
                             self_._num_executions,
+                            self_
                         ),
                     )
                     process.start()
@@ -73,22 +75,23 @@ class Async:
             name: str,
             channel: "colmena.ChannelInterface",
             num_executions: "colmena.MetricInterface",
+            role: "colmena.Role",
     ):
         self.__logger.debug("Running async")
-        self.call_async(channel.receive(), func, name, num_executions)
+        self.call_async(channel.receive(), func, name, num_executions, role)
 
-    @staticmethod
-    def call_async(
+    def call_async(self,
             sub,
             func: Callable,
             name: str,
             num_executions: "colmena.MetricInterface",
+            role
     ):
-        while True:
-            for sample in sub.receive():
-                message = sample
-                func({name: message})
+        while role.running:
+            for message in sub.receive():
+                func({name: message.value})
                 num_executions.publish(1)
+                sub.ack(message)
 
 
 class Persistent:
@@ -109,7 +112,7 @@ class Persistent:
             def logic(self_, *args, **kwargs):
                 process = threading.Thread(
                     target=self._behavior,
-                    args=(lambda: func(self_, *args, **kwargs), self_._num_executions),
+                    args=(lambda: func(self_, *args, **kwargs), self_._num_executions, self_),
                 )
                 process.start()
                 try:
@@ -123,10 +126,10 @@ class Persistent:
             func_name=func.__name__, dec_name="Persistent"
         )
 
-    def _behavior(self, func: Callable, num_executions: "colmena.MetricInterface"):
+    def _behavior(self, func: Callable, num_executions: "colmena.MetricInterface", role: "colmena.Role"):
         self.__logger.debug("Running persistent")
         if self.__it is None:
-            while True:
+            while role.running:
                 self.call_persistent(func, num_executions)
         else:
             for _ in range(self.__it):

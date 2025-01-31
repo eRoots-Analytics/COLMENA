@@ -162,12 +162,18 @@ if multiple_devices:
     system.PFlow.run()
     system.TDS.config.tf = 20
     system.TDS_stepwise.config.criteria = 0
-    pref_ini_1 = 4
-    pref_ini_2 = 3
-    set_point_dict = [{'model':'REDUAL', 'param':'gammap', 'value':0.8, 'add':False, 'idx':'GENROU_1', 't': 5}]
-    set_point_dict += [{'model':'REDUAL', 'param':'gammap', 'value':0.8, 'add':False, 'idx':'GENROU_2', 't': 5}]
-    set_point_dict += [{'model':'REDUAL', 'param':'Pref', 'value':pref_ini_1, 'add':False, 'idx':'GENROU_1', 't': 5}]
-    set_point_dict += [{'model':'REDUAL', 'param':'Pref', 'value':pref_ini_2, 'add':False, 'idx':'GENROU_2', 't': 5}]
+    pref_ini_1 = 5
+    pref_ini_2 = 5
+    set_point_dict = []
+    #set_point_dict += [{'model':'REDUAL', 'param':'gammap', 'value':0.8, 'add':False, 'idx':'GENROU_1', 't': 5}]
+    #set_point_dict += [{'model':'REDUAL', 'param':'gammap', 'value':0.8, 'add':False, 'idx':'GENROU_2', 't': 5}]
+    #set_point_dict += [{'model':'REDUAL', 'param':'Pref', 'value':pref_ini_1, 'add':False, 'idx':'GENROU_1', 't': 5}]
+    #set_point_dict += [{'model':'REDUAL', 'param':'Pref', 'value':pref_ini_2, 'add':False, 'idx':'GENROU_2', 't': 5}]
+
+    p0_new = 5
+    set_point_dict += [{'model':'PQ', 'param':'p0', 'value':p0_new, 'add':False, 'idx':'PQ_1', 't': 5}]
+    set_point_dict += [{'model':'PQ', 'param':'p0', 'value':p0_new, 'add':False, 'idx':'PQ_2', 't': 6}]
+
 
     system.REDUAL.to_reinitialize = False
     #system.TDS_stepwise.config.tol = 0.005

@@ -10,6 +10,7 @@ import os, sys, io
 import time
 import numpy as np
 import traceback
+import aux_function as aux
 import matplotlib.pyplot as plt
 current_directory = os.path.dirname(os.path.abspath(__file__))
 two_levels_up = os.path.dirname(os.path.dirname(current_directory))
@@ -30,11 +31,13 @@ login_form_html = """
 # In-memory storage for received JSON data (list of dictionaries)
 json_storage = []
 delta_t = 0.1
+available_devices ={'device_1':{'model':'REDUAL', 'idx':'GENROU_1', 'assigned':False},
+                    'device_2':{'model':'REDUAL', 'idx':'GENROU_2', 'assigned':False}}
+
 
 @app.route('/')
 def index():
     return 'index'
-
 
 # Route to load the simulation case
 @app.route('/load_simulation', methods=['POST'])
@@ -43,14 +46,30 @@ def load_simulation():
     global system
     try:
         # Get the case file path from the request
-        case_file = request.json.get('case_file')
+        
 
         # Load the Andes simulation (but don't run it yet)
-        system = ad.load(case_file, setup=True)
+        system = ad.load(get_case('ieee39/ieee39_full.xlsx'), setup=True)
+        system = aux.build_new_system_legacy(system, new_model_name = 'REDUAL', n_redual = 1)
         system.PFlow.run()
         system.TDS_stepwise.init()
         loaded_system = (system.Bus.n > 0)
-        return jsonify({"message": f"Simulation {case_file} loaded successfully"}), 200
+        return jsonify({"message": f"Simulation loaded successfully"}), 200
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/assign_device', methods=['GET'])
+def assign_device():
+    global loaded_system
+    global system
+    try:
+        # Get the case file path from the request
+        for device, device_dict in available_devices.items():
+            response = device_dict
+            device_dict['assigned'] = False
+        return jsonify(response), 200
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -67,11 +86,25 @@ def run_simulation():
         # Run the loaded simulation
         system.PFlow.run()
         sim_output = system.PFlow.run()
-
         # Return success and results (e.g., output directory or status)
         return jsonify({"message": "Simulation ran successfully", "output": str(sim_output)}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# Route to run the previously loaded simulation
+@app.route('/line_pairings', methods=['GET'])
+def line_pairings():
+    line_pairings = {}
+    try:
+        for i, bus_from in enumerate(system.Lines.bus1.v):
+            bus_to = system.Lines.bus2.v[i]
+            line_pairings[bus_to] = bus_from      
+
+        return jsonify(line_pairings), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/run_simulation_online', methods=['POST'])
 def run_simulation_online():
@@ -89,35 +122,6 @@ def run_simulation_online():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/upload_json', methods=['POST'])
-def upload_json():
-    global andes_dir
-    try:
-        data = request.get_json()
-        if data is None:
-            return jsonify({"error": "No JSON data received!"}), 400
-
-        #Store data in JSON storage
-        andes_dir = len(json_storage)
-        json_storage.append(data)
-
-        # Store the received JSON in the database
-        json_entry = Data(json_data=str(data))
-        db.session.add(json_entry)
-        db.session.commit()
-
-        print(f"DEBUG: Received JSON: {data}")
-        return jsonify({"message": "JSON received successfully!", "data": data}), 200
-    
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Route to retrieve all stored JSON data
-@app.route('/show_db_data', methods=['GET'])
-def show_db_data():
-    all_data = Data.query.all()
-    result = [{'id': entry.id, 'json_data': entry.json_data} for entry in all_data]
-    return jsonify(result)
 
 @app.route('/device_role_change', methods=['POST'])
 def device_role_change():
@@ -142,7 +146,7 @@ def device_role_change():
         return jsonify({"error": str(e)}), 500
     
 @app.route('/set_point_change', methods=['POST'])
-def device_role_change():
+def set_point_change():
     #method to post the new device role in the app
     try:
         set_points_data = request.get_json()
@@ -165,7 +169,6 @@ def device_sync(all_devices = False):
         response = {}
 
         idx = data['idx']
-        idx = int(idx)
         model_name = data['model_name']
         model = getattr(system, model_name)
         uid = model.idx2uid(idx)
@@ -201,6 +204,7 @@ def device_sync(all_devices = False):
         return jsonify(response), 200
     except Exception as e:
         print(e)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/specific_device_sync', methods=['GET'])
@@ -275,7 +279,7 @@ def plot():
         model = getattr(system, model_name)
         var = getattr(model, var_name)
         system.TDS_stepwise.load_plotter()
-        fig, ax = system.TDS_stepwise.plt.plot(var, a=(0,1,2,3))
+        fig, ax = system.TDS_stepwise.plt.plot(var, a=(0))
         # Save the plot to a BytesIO object rather than displaying it
         img = io.BytesIO()
         fig.savefig(img, format='png')
@@ -297,14 +301,11 @@ if __name__ == '__main__':
     andes_dict = {"case_file":andes_directory}
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
-    responseSimulation = requests.get(andes_url + '/run_real_time', params = {'model_name':'GENROU', 'var_name':'omega'})
-    responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'GENROU', 'var_name':'omega'})
+    """responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'GENROU', 'var_name':'omega'})
     
-    #responsePlot = 600
     if not isinstance(responsePlot, int) and responsePlot.status_code == 200:
         img = Image.open(BytesIO(responsePlot.content))
-        # Save or display the image as needed
         img.show()  # To display it directly
         img.save("plot.png")  # To save it to a file
     elif not isinstance(responsePlot, int):
-        print(f"Error: {responsePlot.status_code} - {responsePlot.json().get('error')}")
+        print(f"Error: {responsePlot.status_code} - {responsePlot.json().get('error')}")"""

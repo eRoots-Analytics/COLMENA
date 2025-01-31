@@ -5,42 +5,48 @@
     "dockerContextDefinitions": [
         {
             "id": "grid_areas",
-            "imageId": "pablodejuan/colmena-grid_areas"
+            "imageId": "colmena-grid_areas"
         }
     ],
     "kpis": [],
     "dockerRoleDefinitions": [
         {
-            "id": "AndesTimeSync",
-            "imageId": "pablodejuan/colmena-andestimesync",
+            "id": "MonitoringRole",
+            "imageId": "colmena-monitoringrole",
             "hardwareRequirements": [
                 "GENERATOR"
             ],
-            "kpis": []
-        },
-        {
-            "id": "BasicRole1",
-            "imageId": "pablodejuan/colmena-basicrole1",
-            "hardwareRequirements": [
-                "GENERATOR"
-            ],
-            "kpis": []
-        },
-        {
-            "id": "BehaviorChangeRole",
-            "imageId": "pablodejuan/colmena-behaviorchangerole",
-            "hardwareRequirements": [
-                "GENERATOR"
-            ],
-            "kpis": []
+            "kpis": [
+                "mean(frequency)[1]"
+            ]
         },
         {
             "id": "SecondaryPowerResponse",
-            "imageId": "pablodejuan/colmena-secondarypowerresponse",
+            "imageId": "colmena-secondarypowerresponse",
             "hardwareRequirements": [
                 "GENERATOR"
             ],
-            "kpis": []
+            "kpis": [
+                "(mean(abs(deriv(frequency)))< 0.001 && mean(frequency)[1]"
+            ]
+        },
+        {
+            "id": "GridFormingRole",
+            "imageId": "colmena-gridformingrole",
+            "hardwareRequirements": [
+                "GFM"
+            ],
+            "kpis": [
+                "mean(frequency)[1]"
+            ]
+        },
+        {
+            "id": "EstimationRole",
+            "imageId": "colmena-estimationrole",
+            "hardwareRequirements": [],
+            "kpis": [
+                "mean(frequency)[1]"
+            ]
         }
     ]
 }

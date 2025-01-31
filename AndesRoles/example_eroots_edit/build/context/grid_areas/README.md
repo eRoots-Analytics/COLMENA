@@ -14,10 +14,12 @@ The repository is organized into the following directories and files:
 
 ### Directories
 - **colmena**: Contains the python library with the programming model and abstractions.
+- **examples**: Example applications used for testing.
 - **scripts**: Scripts to create a COLMENA service bundle from the application source code.
-- **test**: Tests and example applications used for testing.
+- **test**: Scripts and configuration files used for testing.
 ### Files
 - **.gitignore**: Specifies files and directories to be ignored by Git.
+- **changeLog**: Change highlights associated with official releases.
 - **CODE_OF_CONDUCT.md**: Outlines the expected behavior and guidelines for participants within the project's community. 
 - **CONTRIBUTING.md**: Overview of the repository, setup instructions, and basic usage examples.
 - **Dockerfile**: File used to create a Docker image for the deployment tool.
@@ -112,12 +114,11 @@ To get started with the COLMENA programming model, follow these steps:
 
 4. Build the service:
     ``` bash
-    python3 -m colmena_build \
+    python3 -m scripts/colmena_build \
         --colmena_path="<this_repository_root>" \
         --service_code_path="<path_to_the_service_root>" \
         --module_name="<service_modulename>" \
-        --service_name="<service_classname>" \
-        --username=<dockerhub_user>
+        --service_name="<service_classname>" 
     ```
     The outcome of the building process will be left at <path_to_the_service_root>/<service_modulename>/build.
 
@@ -133,8 +134,7 @@ Alternatively, the service can also be created using docker:
 		-v <path-to-application>:/app \
 		colmenaswarm/programming-model:latest \
 		--module_name=<service_modulename> \
-		--service_name=<service_classname> \
-        --username=<dockerhub_user>
+		--service_name=<service_classname> 
 	```
 
 ## Testing
