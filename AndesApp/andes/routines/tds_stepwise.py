@@ -487,8 +487,18 @@ class TDS_stepwise(BaseRoutine):
                 change_done = True
         return
 
-    def init_PIcontrollers(self, model, dt = 0.1, Ki =-0.1, Kp=-0.1, add =False, target_var=None, initial_output = None, reference = None, active_filter=False):
+    def init_PIcontrollers(self, model, **kwargs):
         only_one = False
+
+        dt = kwargs.get("dt", 0.1)
+        Ki = kwargs.get("Ki", -0.1)
+        Kp = kwargs.get("Kp", -0.1)
+        add = kwargs.get("add", False)
+        target_var = kwargs.get("target_var", None)
+        initial_output = kwargs.get("initial_output", None)
+        active_filter = kwargs.get("active_filter", None)
+        reference = kwargs.get("reference", None)
+
         if not hasattr(model, 'PIcontroller'):
             model.PIcontroller = []
         model_name = type(model).__name__
@@ -498,10 +508,9 @@ class TDS_stepwise(BaseRoutine):
                 reference_value = reference.v[i]
             else:
                 reference_value = 1
-            if i!=3 and only_one:
-                continue
-            Lmin = -0.5
-            Lmax = 0.5
+
+            Lmin = -10
+            Lmax = 10
             PIparams= {'dt':dt, 'Kp':Kp, 'Ki':Ki, 'Uref':1, 'idx':idx, 'model_name':model_name, 'model_var':model, 'add':add,
                        "target_var":target_var, 'reference':reference_value, 'active_filter':active_filter, 'Lmin':Lmin, 'Lmax':Lmax}
             if initial_output is not None:
@@ -581,11 +590,11 @@ class TDS_stepwise(BaseRoutine):
             is_genrou = True
             self.init_PIcontrollers(model, target_var= 'paux')
         elif model.__class__.__name__ == "REDUAL":
-            self.init_PIcontrollers(model, target_var= 'vref_aux', dt=batch_size, Ki=0, Kp=0, reference = model.vd0, active_filter=False)
+            self.init_PIcontrollers(model, target_var= 'vref_aux', dt=batch_size, Ki=0.8, Kp=0.1, active_filter=True, reference = model.vd0)
             #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=0.05, Kp=0.1, initial_output = model.Pref, add=True,
             #                        reference = model.vd0)
             
-            #self.init_PIcontrollers(model, target_var= 'dwref_aux', dt=batch_size, Ki=0.8, Kp=0.1, active_filter=False)
+            #self.init_PIcontrollers(model, target_var= 'wref_aux', dt=batch_size, Ki=0, Kp=0.1, active_filter=False)
             #self.init_PIcontrollers(model, target_var= 'paux_bis', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = None)
             #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = model.Pref)
             #self.init_PIcontrollers(model, target_var= 'Qref', dt=batch_size, Ki=1, Kp=3, add=True)
@@ -635,6 +644,8 @@ class TDS_stepwise(BaseRoutine):
                             feedback = False
                         elif is_genrou is True:
                             ctrl_input = ctrl_input_omega
+                        elif controller.target_var == 'wref_aux':
+                            ctrl_input = np.mean(system.GENROU.omega.v)
                         elif model.__class__.__name__ == 'REDUAL':
                             ctrl_input = ctrl_input_omega
                             ctrl_input = ctrl_input_v

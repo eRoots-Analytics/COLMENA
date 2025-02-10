@@ -234,7 +234,7 @@ if multiple_devices:
     #system.TDS_stepwise.config.g_scale = 0
     #system.TDS_stepwise.run_set_points(set_points_dict = set_point_dict,  t_change = 4, t_max =7.1)    
     system.TDS_stepwise.run_secondary_response(model = system.REDUAL, set_points_dict = set_point_dict, 
-                                               t_max = 3, batch_size = 0.1)    
+                                               t_max = 10, batch_size = 0.2)    
     system.TDS_stepwise.load_plotter()
 
     matplotlib.use('TkAgg')
@@ -242,6 +242,7 @@ if multiple_devices:
     ngenrou_tuple = tuple(range(10-n_redual))
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Qe, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.omega, a = n_tuple)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.vref2, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pe, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pref2, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.udref, a = n_tuple)
@@ -249,4 +250,25 @@ if multiple_devices:
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.a, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.PQ.v, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a = ngenrou_tuple)
+    _ = 0
+
+    plt.clf()
+    for controller in system.REDUAL.PIcontroller:
+        values = controller.history  # Assuming this is a list of numeric values
+
+        # Generate a time axis (you might need to adjust this)
+        time = list(range(len(values)))
+
+        if not time or not values or len(time) != len(values): # Check if the data is valid
+            print(f"Warning: Invalid data for controller: {controller}")
+            continue
+        plt.plot(time, values, label=f"Controller {controller.idx}") # Add a label to each plot
+        
+    plt.xlabel("Time")  # X-axis label
+    plt.ylabel("Values")  # Y-axis label
+    plt.title("Controller History")  # Plot title
+    plt.legend()  # Show the legend (to differentiate controllers)
+    plt.grid(True)  # Add a grid for better readability
+    plt.tight_layout() # Adjust layout to prevent labels from overlapping
+    plt.show()
     _ = 0

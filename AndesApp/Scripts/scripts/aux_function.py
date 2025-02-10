@@ -256,10 +256,9 @@ class PIcontroller:
         self.dt = kwargs.get("dt", 0.01)
         self.Kp = kwargs.get("Kp", 0.1)  # Proportional gain
         self.Ki = kwargs.get("Ki", 0.1)  # Integral gain
-        self.Lmin = kwargs.get("Lmin", -10.0)  # Minimum limit
-        self.Lmax = kwargs.get("Lmax", 10.0)  # Maximum limit
-        self.reference = kwargs.get("ref", 1.0)  
-        self.reference = 1
+        self.Lmin = kwargs.get("Lmin", -0.6)  # Minimum limit
+        self.Lmax = kwargs.get("Lmax", 0.6)  # Maximum limit
+        self.reference = kwargs.get("reference", 1.0)  
         self.initial_output = kwargs.get("initial_output", 0)  
         self.is_delta = kwargs.get("ref", True)  
         self.add = kwargs.get("add", False)
@@ -267,7 +266,9 @@ class PIcontroller:
         self.model_var = kwargs.get("model_var", None)  
         self.target_var = kwargs.get("target_var", 'paux0')  
         self.active_filter = kwargs.get("active_filter", False)  
+        self.omega_low = kwargs.get("omega_low", 1)  
         self.idx = kwargs.get("idx", 1)  
+        self.history = []
 
         # Transfer function for the PI controller: H(s) = Kp + Ki/s
         num = [self.Kp, self.Ki]
@@ -275,7 +276,7 @@ class PIcontroller:
         self.pi_tf = ctrl.TransferFunction(num, den)
 
         # **Lag Filter Parameters**
-        self.tau = kwargs.get("tau", 0.2)  # Lag time constant
+        self.tau = kwargs.get("tau", 0.1)  # Lag time constant
         self.alpha = self.tau / (self.tau + self.dt)
         self.filtered_input = 0.0  # Initial value for filtered signal
 
@@ -294,8 +295,16 @@ class PIcontroller:
         self.pi_tf = ctrl.c2d(self.pi_tf, self.dt, method='zoh')
         self.pi_ss = ctrl.tf2ss(self.pi_tf)
 
+        #we create the low-pass filter:
+        omega_c = 2 * np.pi * self.omega_low
+        self.sys_c = ctrl.tf(omega_c, [1, omega_c])
+        self.sys_d = ctrl.c2d(self.sys_c, self.dt, method='zoh')
+        self.filter_ss = ctrl.tf2ss(self.sys_d) # Convert filter to state space.
+
+        #self.pi_ss = ctrl.series(self.pi_ss,self.filter_ss)
         # Initialize states for the state-space representation
         self.x0 = np.zeros(self.pi_ss.A.shape[0])
+        #self.x0 = self.x0.reshape(-1,1)
 
     def apply(self, input, feedback = False):
         """
@@ -310,17 +319,15 @@ class PIcontroller:
 
         """
 
-        self.filtered_input = self.alpha * self.filtered_input + (1 - self.alpha) * input
-        if self.active_filter:
-            input = self.filtered_input
-            input = self.limiter(input)
+
         if feedback:
             error = self.reference - input
         else:
             error = input
         
         error = self.limiter(error)
-
+        #error = self.alpha*self.filtered_input + (1-self.alpha)*error
+        self.filtered_input = error 
         # Simulate one step using the discrete-time transfer function
         #error = self.limiter(error)
         self.pi_tf
@@ -374,6 +381,7 @@ class PIcontroller:
         if self.add:
             new_set_point['value'] += self.initial_output
         res.append(new_set_point)
+        self.history.append(new_set_point['value'])
         return res
 
 class Stabilizer():
