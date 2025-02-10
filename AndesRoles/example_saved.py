@@ -395,3 +395,49 @@ class ExampleSaved(Service):
             behaviorChangeDict['model_name'] = 'TGOV1'
             behaviorChangeDict['var_name'] = 'pref'
             self.behaviorChange.publish(behaviorChangeDict)
+
+        class MonitoringRole(Role):
+        @Metric('frequency')
+        @Channel('behaviorChange')
+        @Requirements('GENERATOR')
+        @KPI('frequency > 1')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            #WE FIRST INITIALIZE THE ROLE PARAMETERS 
+            data = {'model_name':'REDUAL', 'idx':"GENROU_1"}
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+            self.t_start = time.time()
+            self.M_value = 1
+            
+            #We initialize the variables once
+            responseAndes = requests.get(andes_url + '/device_sync', params=self.device_dict)
+            self.variables = responseAndes.json()
+        
+        def sync2Andes(self):
+            responseAndes = requests.get(andes_url + '/device_sync', params=self.device_dict)
+            self.variables = responseAndes.json()
+            return responseAndes
+        
+        def change2Andes(self, param, value):
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = param
+            roleChangeDict['value'] = value
+            responseAndes = requests.get(andes_url + '/device_role_change', params = self.roleChangeDict)
+            return responseAndes
+        
+        def publish_metric(self, param):
+            value = self.variables[param]
+            self.frequency.publish(value)
+            return value
+        
+        @Persistent()
+        def behavior(self):
+            return
+            verbose = True
+            responseAndes = self.sync2Andes()
+            print(f"role 1 synced at {time.time() - self.t_start}")
+            value = self.publish_metric('omega')
+            

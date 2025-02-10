@@ -1,6 +1,7 @@
 import openpyxl
 import numpy as np
 from GridCalEngine import Bus
+from copy import deepcopy
 import matplotlib.pyplot as plt
 import os, sys
 import control as ctrl
@@ -258,15 +259,25 @@ class PIcontroller:
         self.Lmin = kwargs.get("Lmin", -10.0)  # Minimum limit
         self.Lmax = kwargs.get("Lmax", 10.0)  # Maximum limit
         self.reference = kwargs.get("ref", 1.0)  
+        self.reference = 1
+        self.initial_output = kwargs.get("initial_output", 0)  
         self.is_delta = kwargs.get("ref", True)  
-        self.model = kwargs.get("model", 'GENROU')  
+        self.add = kwargs.get("add", False)
+        self.model = kwargs.get("model_name", 'GENROU')  
+        self.model_var = kwargs.get("model_var", None)  
         self.target_var = kwargs.get("target_var", 'paux0')  
+        self.active_filter = kwargs.get("active_filter", False)  
         self.idx = kwargs.get("idx", 1)  
 
         # Transfer function for the PI controller: H(s) = Kp + Ki/s
         num = [self.Kp, self.Ki]
         den = [1, 0]  # s in the denominator
         self.pi_tf = ctrl.TransferFunction(num, den)
+
+        # **Lag Filter Parameters**
+        self.tau = kwargs.get("tau", 0.2)  # Lag time constant
+        self.alpha = self.tau / (self.tau + self.dt)
+        self.filtered_input = 0.0  # Initial value for filtered signal
 
         # Initialize limiter function
         def limiter_min_max(input):
@@ -296,14 +307,22 @@ class PIcontroller:
 
         Returns:
         - output_value (float): The controller's output.
+
         """
-        # Calculate the error between the setpoint and the measurement
+
+        self.filtered_input = self.alpha * self.filtered_input + (1 - self.alpha) * input
+        if self.active_filter:
+            input = self.filtered_input
+            input = self.limiter(input)
         if feedback:
             error = self.reference - input
         else:
             error = input
+        
+        error = self.limiter(error)
 
         # Simulate one step using the discrete-time transfer function
+        #error = self.limiter(error)
         self.pi_tf
         response= ctrl.forced_response(
             self.pi_tf,
@@ -337,7 +356,23 @@ class PIcontroller:
             new_set_point['model'] = self.model
             new_set_point['param'] = self.target_var
             new_set_point['value'] = output + self.reference*(1-self.is_delta)
-        res.append(new_set_point)
+
+        if self.add:
+            new_set_point['value'] += self.initial_output
+        
+        if self.model == 'REDUAL' and self.target_var == 'uref':
+            new_set_point['model'] = self.model
+            model = self.model_var
+            uid = model.idx2uid(self.idx)
+            new_set_point['param'] = 'udref'
+            new_set_point['value'] = (output + self.initial_output)*np.cos(model.a.v[uid] - model.delta.v[uid])
+            res.append(new_set_point)
+            new_set_point_bis = deepcopy(new_set_point)
+            new_set_point['param'] = 'uqref'
+            new_set_point['value'] = (output + self.initial_output)*np.sin(model.a.v[uid] - model.delta.v[uid])
+
+        if self.add:
+            new_set_point['value'] += self.initial_output
         res.append(new_set_point)
         return res
 

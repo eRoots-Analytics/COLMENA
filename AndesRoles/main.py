@@ -17,7 +17,7 @@ sys.path.insert(0, two_levels_up)
 sys.path.insert(0, two_levels_up + '/AndesApp')
 
 from AndesApp import andes as ad
-andes_directory = ad.get_case("kundur/kundur_full.xlsx")
+andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
 andes_dict = {"case_file":andes_directory}
 
 from scripts.colmena_build import (
@@ -33,13 +33,13 @@ def aux_role(role):
 
 if __name__ == "__main__":
     andes_url = 'http://127.0.0.1:5000'
-    kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
+    kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'REDUAL'} 
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
     
     test_example = TestExamples()
     test_example.execute_roles_in_service(service_class = ErootsUseCase)
     
-    responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'GENROU', 'var_name':'omega'})
+    responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'REDUAL', 'var_name':'omega'})
     #responsePlot = 600
     if not isinstance(responsePlot, int) and responsePlot.status_code == 200:
         img = Image.open(BytesIO(responsePlot.content))

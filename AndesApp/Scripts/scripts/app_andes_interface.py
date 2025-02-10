@@ -51,12 +51,19 @@ def load_simulation():
         # Load the Andes simulation (but don't run it yet)
         system = ad.load(get_case('ieee39/ieee39_full.xlsx'), setup=True)
         system = aux.build_new_system_legacy(system, new_model_name = 'REDUAL', n_redual = 1)
+        system.find_devices()
+        system.REDUAL.prepare()
+        system.setup()
+        system.TDS_stepwise.config.criteria = 0
+
+        for i in range(system.IEEEST.n):
+            idx = system.IEEEST.idx.v[i]
+            system.IEEEST.set(src='u', attr = 'v', idx=idx, value=0)
         system.PFlow.run()
         system.TDS_stepwise.init()
-        loaded_system = (system.Bus.n > 0)
         return jsonify({"message": f"Simulation loaded successfully"}), 200
     except Exception as e:
-        print(e)
+        print("error in loading the grid")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
@@ -200,10 +207,10 @@ def device_sync(all_devices = False):
             response[var_name] = var_value
 
         #Since this is used at the very beginning to initialize the agents we can now start the simulation 
-        json_storage['start'] = True
         return jsonify(response), 200
     except Exception as e:
         print(e)
+        print( f"variable is {var_name} with n = {len(var.v)}")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 

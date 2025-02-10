@@ -443,7 +443,7 @@ class TDS_stepwise(BaseRoutine):
         while self.system.dae.t < self.config.tmax:
             time_start = time.time()
             try:
-                was_GFM = (self.system.REDUAL.is_GFM.v[0] == 1)
+                was_GFM = np.array(self.system.REDUAL.is_GFM.v) == 1
             except:
                 _ = 0
 
@@ -458,8 +458,8 @@ class TDS_stepwise(BaseRoutine):
                 if unique_change is True:
                     changes_done = True
                 if self.system.REDUAL.n > 0:
-                    system.REDUAL.to_reinitialize = (system.REDUAL.is_GFM.v[0] == 0)*(was_GFM)
-                
+                    is_GFM = (system.REDUAL.is_GFM.v == 0) 
+                    system.REDUAL.to_reinitialize = (is_GFM != was_GFM)
         return
     
     def run_topology_change(self, remove_changes =[], add_changes = [], batch_size = 0.5, tmax = 20, verbose = False):
@@ -487,15 +487,25 @@ class TDS_stepwise(BaseRoutine):
                 change_done = True
         return
 
-    def init_PIcontrollers(self, model, dt = 0.1, Ki =-0.1, Kp=-0.1, target_var=None):
+    def init_PIcontrollers(self, model, dt = 0.1, Ki =-0.1, Kp=-0.1, add =False, target_var=None, initial_output = None, reference = None, active_filter=False):
+        only_one = False
         if not hasattr(model, 'PIcontroller'):
             model.PIcontroller = []
         model_name = type(model).__name__
         for i in range(model.n):
-            idx = i+1
-            PIparams= {'dt':0.1, 'Kp':Ki, 'Ki':Kp, 'Uref':1, 'idx':idx, 'model':model_name}
-            if target_var is not None:
-                PIparams['target_var'] = target_var
+            idx = model.idx.v[i]
+            if reference is not None:
+                reference_value = reference.v[i]
+            else:
+                reference_value = 1
+            if i!=3 and only_one:
+                continue
+            Lmin = -0.5
+            Lmax = 0.5
+            PIparams= {'dt':dt, 'Kp':Kp, 'Ki':Ki, 'Uref':1, 'idx':idx, 'model_name':model_name, 'model_var':model, 'add':add,
+                       "target_var":target_var, 'reference':reference_value, 'active_filter':active_filter, 'Lmin':Lmin, 'Lmax':Lmax}
+            if initial_output is not None:
+                PIparams['initial_output'] = initial_output.v[i]
             model.PIcontroller.append(aux.PIcontroller(**PIparams))
         return
     
@@ -553,29 +563,66 @@ class TDS_stepwise(BaseRoutine):
             phases.append(phase_neighbor)
 
 
-    def run_secondary_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 20, verbose = False):
-        self.config.tmax = tmax
+    def run_secondary_response(self, model = None, set_points = None, set_points_dict = [], batch_size = 0.5, controller_control = True, t_max = 20, verbose = False):
+        self.config.tmax = t_max
+        t_change = 5
+        unique_change = False
+        apply_set_points = True
+        changes_done = False
+        system = self.system
         self.save_roles = []
+        new_target_ref1 = 'paux'
+        new_target_ref2 = 'qaux'
+
+        self.init()
+
         if model is None:
             model = self.system.GENROU
             is_genrou = True
             self.init_PIcontrollers(model, target_var= 'paux')
+        elif model.__class__.__name__ == "REDUAL":
+            self.init_PIcontrollers(model, target_var= 'vref_aux', dt=batch_size, Ki=0, Kp=0, reference = model.vd0, active_filter=False)
+            #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=0.05, Kp=0.1, initial_output = model.Pref, add=True,
+            #                        reference = model.vd0)
+            
+            #self.init_PIcontrollers(model, target_var= 'dwref_aux', dt=batch_size, Ki=0.8, Kp=0.1, active_filter=False)
+            #self.init_PIcontrollers(model, target_var= 'paux_bis', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = None)
+            #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = model.Pref)
+            #self.init_PIcontrollers(model, target_var= 'Qref', dt=batch_size, Ki=1, Kp=3, add=True)
+            #self.init_PIcontrollers(model, target_var= 'qaux_bis', dt=batch_size, Ki=0.5, Kp=-0.5)
+            is_genrou = False
         else:
             new_target_ref1 = 'paux'
             new_target_ref2 = 'qaux'
-            self.init_PIcontrollers(model, target_var= new_target_ref1, dt=batch_size, Ki=0.5, Kp=-0.1)
-            self.init_PIcontrollers(model, target_var= new_target_ref2, dt=batch_size, Ki=-0.5, Kp=-0.2)
+            self.init_PIcontrollers(model, target_var= 'paux', dt=batch_size, Ki=0.5, Kp=0.5)
+            #self.init_PIcontrollers(model, target_var= 'qaux', dt=batch_size, Ki=0.5, Kp=-0.5)
         change_done = False
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
             
+            if changes_done is False and self.system.dae.t > t_change and apply_set_points:
+                new_set_points = self.get_set_points(set_points)
+                new_set_points += set_points_dict
+                self.set_set_points(new_set_points)
+                role_data = []
+                self.save_roles.append((role_data))
+                if unique_change is True:
+                    changes_done = True
+                if self.system.REDUAL.n > 0:
+                    is_GFM = (system.REDUAL.is_GFM.v == 0) 
+                    system.REDUAL.to_reinitialize = (is_GFM)*0
+
             #We execute the controllers
             for controller in model.PIcontroller:
                 idx = controller.idx
                 uid = model.idx2uid(idx)
-                if True and self.secondary_response_condition(idx) and self.system.dae.t > 0.5:
+                if True and self.system.dae.t > 0.5:
                     if controller_control:
-                        ctrl_input_omega = model.omega.v[uid]
+                        try:
+                            ctrl_input_omega = model.omega.v[uid]
+                            ctrl_input_omega = np.mean(model.omega.v)
+                        except:
+                            ctrl_input_omega = model.omega.v[uid]
                         ctrl_input_phase = model.a.v[uid]
                         ctrl_input_v = model.v.v[uid]
                         phase_diff = self.compute_phase_difference(idx, model)
@@ -583,22 +630,22 @@ class TDS_stepwise(BaseRoutine):
                         ctrl_input = phase_diff
                         if controller.target_var == new_target_ref1:
                             ctrl_input = ctrl_input_omega
-                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                            self.set_set_points(new_set_point)
-                        elif controller.target_var == new_target_ref2:
+                        elif controller.target_var in ['qaux_bis', 'qaux', 'Qref', 'Qref2']:
                             ctrl_input = -ctrl_input_v + 1
-                            new_set_point = controller.get_set_point(ctrl_input, feedback = False)
-                            self.set_set_points(new_set_point)
+                            feedback = False
                         elif is_genrou is True:
                             ctrl_input = ctrl_input_omega
-                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                            self.set_set_points(new_set_point)
-                    else:
-                        new_set_point = self.secondary_response_role(idx)
+                        elif model.__class__.__name__ == 'REDUAL':
+                            ctrl_input = ctrl_input_omega
+                            ctrl_input = ctrl_input_v
+                            ctrl_input = np.mean(self.system.Bus.v.v)
+                        else:
+                            new_set_point = self.secondary_response_role(idx)
+                        new_set_point = controller.get_set_point(ctrl_input, feedback = True)
                         self.set_set_points(new_set_point)
         return
     
-    def run_active_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 20, verbose = False):
+    def run_active_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 10, verbose = False):
         #We run the inverter response
         self.config.tmax = tmax
         self.system.GENROU.controller = []
@@ -725,7 +772,7 @@ class TDS_stepwise(BaseRoutine):
             new_set_point['param'] = 'is_GFM'
             new_set_point['value'] = 0
             new_set_point['add'] = False
-            new_set_point['t'] = 8
+            new_set_point['t'] = 14
             if idxs is not None:
                 for i, idx in enumerate(idxs):
                     idx_val = str('GENROU_') + str(i+1)    
@@ -935,9 +982,13 @@ class TDS_stepwise(BaseRoutine):
             value = set_point['value']
             idx = set_point['idx']
             add = set_point['add']
-            t_change = set_point['t']
+            if 't' in set_point.keys():
+                t_change = set_point['t']
+            else:
+                t_change = self.system.dae.t
+
             
-            if self.system.dae.t < t_change:
+            if not (t_change-1<self.system.dae.t<t_change+1):
                 continue
 
             model = getattr(self.system, model_name)
@@ -1020,9 +1071,12 @@ class TDS_stepwise(BaseRoutine):
         redual_init = True
         if system.dae.t < 0:
             self.init()
-        elif redual_init and system.REDUAL.n>0 and system.REDUAL.to_reinitialize:
-            redual_idx = system.REDUAL.idx.v[0]
-            system.REDUAL.reinitialize(idx = redual_idx)
+        elif redual_init and system.REDUAL.n>1:
+            if isinstance(system.REDUAL.to_reinitialize, np.ndarray):
+                for i in range(system.REDUAL.n):
+                    if system.REDUAL.to_reinitialize[i]: 
+                        redual_idx = system.REDUAL.idx.v[0]
+                        system.REDUAL.reinitialize(idx = redual_idx)
         else:  # resume simulation
             self.init_resume()
 

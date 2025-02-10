@@ -58,7 +58,6 @@ class ErootsUseCase(Service):
         @Metric('frequency')
         @Channel('behaviorChange')
         @Requirements('GENERATOR')
-        @KPI('erootsusecase/frequency[1s]>1')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS 

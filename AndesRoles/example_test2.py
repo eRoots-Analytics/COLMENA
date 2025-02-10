@@ -54,22 +54,56 @@ class ErootsUseCase(Service):
         super().__init__(*args, **kwargs)
         self.t_start = time.time()                
                 
+    class ErootsUseCase(Service):
+    @Metric('frequency')
+    @Context(class_ref=GridAreas, name="grid_areas")
+    @Channel('behaviorChange', scope= ' ')
+    @Channel('estimationChannel', scope = ' ')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.t_start = time.time()                
+                
     class MonitoringRole(Role):
         @Metric('frequency')
         @Channel('behaviorChange')
         @Requirements('GENERATOR')
-        @KPI('erootsusecase/frequency[1s]>1')
+        @KPI('mean(frequency)[1]')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS 
-            self.data = {'model_name':'REDUAL', 'idx':"GENROU_1"}
-            self.andes_url = 'http://localhost:5000'
+            with open(json_path, 'r') as json_file:
+                data = json.load(json_file)
+            self.andes_url = data.get('andes_url', None)
+            self.idx = data.get('device_idx', None)
+            self.model_name = data.get('model_name', None)
+            self.device_dict = {'model_name': self.model_name, 'idx': self.idx}
+            self.t_start = time.time()
+            self.M_value = 1
+            
+            #We initialize the variables once
+            responseAndes = requests.get(andes_url + '/device_sync', params=self.device_dict)
+            self.variables = responseAndes.json()
+        
+        def sync2Andes(self):
+            responseAndes = requests.get(andes_url + '/device_sync', params=self.device_dict)
+            self.variables = responseAndes.json()
+            return responseAndes
+        
+        def change2Andes(self, param, value):
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = param
+            roleChangeDict['value'] = value
+            responseAndes = requests.get(andes_url + '/device_role_change', params = self.roleChangeDict)
+            return responseAndes
+        
+        def publish_metric(self, param):
+            value = self.variables[param]
+            self.frequency.publish(value)
+            return value
         
         @Persistent()
         def behavior(self):
-            return
             verbose = True
             responseAndes = self.sync2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
             value = self.publish_metric('omega')
-            

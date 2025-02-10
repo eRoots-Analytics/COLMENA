@@ -35,6 +35,19 @@ class REDUAL(REGCV1, REGCP1):
         self.common_vars_names = list(set(list(common_states) + list(common_algebs)))
         self.is_GFM = NumParam(name = 'is_GFM', default=0)
 
+        self.vref_aux = NumParam(default = 0) 
+        self.wref_aux = NumParam(default = 0) 
+        self.dwref_aux = NumParam(default = 0) 
+
+        self.vref2.e_str = self.vref2.e_str + '+vref_aux'
+        self.omega.e_str = self.omega.e_str + '+wref_aux'
+        self.dw.e_str = self.dw.e_str.replace('dw', '*(dw-dwref_aux)')
+
+        #self.dw.e_str = self.dw.e_str + '+1*paux_bis'
+        #self.Pe.e_str = self.Pe.e_str + '+1*paux_bis'
+        #self.a.e_str = self.a.e_str + '+1*paux_bis'
+        #self.Pref2.e_str = self.Pref2.e_str + '+ 1*paux_bis'
+        #self.dw.e_str = self.dw.e_str + '+ 10000*paux_bis'
         #We change the equations for algebraic variables
         self.to_reinitialize =False
         #We change the equations for state variables
@@ -77,6 +90,7 @@ class REDUAL(REGCV1, REGCP1):
 
     def reinitialize(self, idx, steady_state = True):
         #Function that reinitializes the states
+        return
         uid = self.idx2uid(idx)
         is_GFM = self.is_GFM.v[uid]
         a = self.a.v[uid]
@@ -98,7 +112,7 @@ class REDUAL(REGCV1, REGCP1):
             xs = self.xs.v[uid]
              
             vref2 = self.vref2.v[uid] 
-            Kp = self.Kp.v[uid] 
+            #Kp = self.Kp.v[uid] 
             udref0 = Id*ra - Iq*xs + vd         
             uqref0 = Id*xs - Iq*ra + vq   
     
@@ -113,8 +127,6 @@ class REDUAL(REGCV1, REGCP1):
             self.alter(src = 'dw', idx = idx, value=am)
             self.alter(src = 'PIvd_xi', idx = idx, value=Id)
             self.alter(src = 'PIvq_xi', idx = idx, value=Iq)
-            self.alter(src = 'LGId_y', idx = idx, value=0)
-            self.alter(src = 'LGIq_y', idx = idx, value=0)
             self.alter(src = 'udLag_y', idx = idx, value=udref0)
             self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
 

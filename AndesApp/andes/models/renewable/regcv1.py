@@ -381,5 +381,5 @@ class REGCV1(REGCV1Data, VSGOuterPIData, VSGInnerPIData,
         VSGInnerPIModel.__init__(self)
         self.paux = NumParam(default=0)
         self.qaux = NumParam(default=0)
-        self.Pe.e_str = self.Pe.e_str + '- paux'
-        self.Qe.e_str = self.Qe.e_str + '- qaux'
+        self.Pe.e_str = self.Pe.e_str + '+ 0*paux'
+        self.Qe.e_str = self.Qe.e_str + '+ 0*qaux'

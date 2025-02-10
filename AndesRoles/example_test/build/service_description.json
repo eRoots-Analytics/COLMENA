@@ -1,0 +1,22 @@
+{
+    "id": {
+        "value": "ErootsUseCase"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_areas",
+            "imageId": "colmena-grid_areas"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "MonitoringRole",
+            "imageId": "colmena-monitoringrole",
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
+            "kpis": []
+        }
+    ]
+}
