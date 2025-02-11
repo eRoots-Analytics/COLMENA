@@ -504,6 +504,11 @@ class TDS_stepwise(BaseRoutine):
         model_name = type(model).__name__
         for i in range(model.n):
             idx = model.idx.v[i]
+            if model_name == 'GENROU':
+                idx = self.system.TGOV1N.idx.v[i]
+                model_name = 'TGOV1N'
+                model = self.system.TGOV1N
+                model.PIcontroller = []
             if reference is not None:
                 reference_value = reference.v[i]
             else:
@@ -572,9 +577,9 @@ class TDS_stepwise(BaseRoutine):
             phases.append(phase_neighbor)
 
 
-    def run_secondary_response(self, model = None, set_points = None, set_points_dict = [], batch_size = 0.5, controller_control = True, t_max = 20, verbose = False):
+    def run_secondary_response(self, models = [], model_input = None, set_points = None, set_points_dict = [], batch_size = 0.5, controller_control = True, t_max = 20, verbose = False):
         self.config.tmax = t_max
-        t_change = 5
+        t_change = 0
         unique_change = False
         apply_set_points = True
         changes_done = False
@@ -584,27 +589,27 @@ class TDS_stepwise(BaseRoutine):
         new_target_ref2 = 'qaux'
 
         self.init()
+        for model in models:
+            generator_optimizer = (model.__class__.__name__ in ['GENROU', 'TGOV1N'])
+            if model is None or generator_optimizer:
+                is_genrou = True
+                self.init_PIcontrollers(model,  dt=batch_size, Ki=1, Kp = 1, target_var= 'paux0')
+            elif model.__class__.__name__ == "REDUAL":
+                self.init_PIcontrollers(model, target_var= 'vref_aux', dt=batch_size, Ki=0.5, Kp=0.5, active_filter=True, reference = model.v)
+                #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=0.05, Kp=0.1, initial_output = model.Pref, add=True,
+                #                        reference = model.vd0)
 
-        if model is None:
-            model = self.system.GENROU
-            is_genrou = True
-            self.init_PIcontrollers(model, target_var= 'paux')
-        elif model.__class__.__name__ == "REDUAL":
-            self.init_PIcontrollers(model, target_var= 'vref_aux', dt=batch_size, Ki=0.8, Kp=0.1, active_filter=True, reference = model.vd0)
-            #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=0.05, Kp=0.1, initial_output = model.Pref, add=True,
-            #                        reference = model.vd0)
-            
-            #self.init_PIcontrollers(model, target_var= 'wref_aux', dt=batch_size, Ki=0, Kp=0.1, active_filter=False)
-            #self.init_PIcontrollers(model, target_var= 'paux_bis', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = None)
-            #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = model.Pref)
-            #self.init_PIcontrollers(model, target_var= 'Qref', dt=batch_size, Ki=1, Kp=3, add=True)
-            #self.init_PIcontrollers(model, target_var= 'qaux_bis', dt=batch_size, Ki=0.5, Kp=-0.5)
-            is_genrou = False
-        else:
-            new_target_ref1 = 'paux'
-            new_target_ref2 = 'qaux'
-            self.init_PIcontrollers(model, target_var= 'paux', dt=batch_size, Ki=0.5, Kp=0.5)
-            #self.init_PIcontrollers(model, target_var= 'qaux', dt=batch_size, Ki=0.5, Kp=-0.5)
+                #self.init_PIcontrollers(model, target_var= 'wref_aux', dt=batch_size, Ki=0, Kp=0.1, active_filter=False)
+                #self.init_PIcontrollers(model, target_var= 'paux_bis', dt=batch_size, Ki=-0.5, Kp=-0.5, initial_output = None)
+                #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = model.Pref)
+                #self.init_PIcontrollers(model, target_var= 'Qref', dt=batch_size, Ki=1, Kp=3, add=True)
+                #self.init_PIcontrollers(model, target_var= 'qaux_bis', dt=batch_size, Ki=0.5, Kp=-0.5)
+                is_genrou = False
+            else:
+                new_target_ref1 = 'paux'
+                new_target_ref2 = 'qaux'
+                self.init_PIcontrollers(model, target_var= 'paux', dt=batch_size, Ki=0.5, Kp=0.5)
+                #self.init_PIcontrollers(model, target_var= 'qaux', dt=batch_size, Ki=0.5, Kp=-0.5)
         change_done = False
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
@@ -622,38 +627,51 @@ class TDS_stepwise(BaseRoutine):
                     system.REDUAL.to_reinitialize = (is_GFM)*0
 
             #We execute the controllers
-            for controller in model.PIcontroller:
-                idx = controller.idx
-                uid = model.idx2uid(idx)
-                if True and self.system.dae.t > 0.5:
-                    if controller_control:
-                        try:
-                            ctrl_input_omega = model.omega.v[uid]
-                            ctrl_input_omega = np.mean(model.omega.v)
-                        except:
-                            ctrl_input_omega = model.omega.v[uid]
-                        ctrl_input_phase = model.a.v[uid]
-                        ctrl_input_v = model.v.v[uid]
-                        phase_diff = self.compute_phase_difference(idx, model)
-                        
-                        ctrl_input = phase_diff
-                        if controller.target_var == new_target_ref1:
-                            ctrl_input = ctrl_input_omega
-                        elif controller.target_var in ['qaux_bis', 'qaux', 'Qref', 'Qref2']:
-                            ctrl_input = -ctrl_input_v + 1
-                            feedback = False
-                        elif is_genrou is True:
-                            ctrl_input = ctrl_input_omega
-                        elif controller.target_var == 'wref_aux':
-                            ctrl_input = np.mean(system.GENROU.omega.v)
-                        elif model.__class__.__name__ == 'REDUAL':
-                            ctrl_input = ctrl_input_omega
-                            ctrl_input = ctrl_input_v
-                            ctrl_input = np.mean(self.system.Bus.v.v)
-                        else:
-                            new_set_point = self.secondary_response_role(idx)
-                        new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                        self.set_set_points(new_set_point)
+            for model in models:
+                if not hasattr(model, 'PIcontroller'):
+                    continue
+                for controller in model.PIcontroller:
+                    idx = controller.idx
+                    uid = model.idx2uid(idx)
+                    if True and self.system.dae.t > 0.5:
+                        if controller_control:
+                            try:
+                                ctrl_input_omega = model.omega.v[uid]
+                                ctrl_input_omega = np.mean(model.omega.v)
+                                ctrl_input_v = model.v.v[uid]
+                                ctrl_input_phase = model.a.v[uid]
+
+                            except:
+                                bus_idx = system.Bus.idx.v[uid]
+                                bus_uid = system.Bus.idx2uid(bus_idx)
+                                ctrl_input_omega = model_input.omega.v[uid]
+                                ctrl_input_v = system.Bus.v.v[bus_uid]
+                                ctrl_input_phase = system.Bus.a.v[bus_uid]
+
+                            #ctrl_input_v = model.v.v[uid]
+                            #phase_diff = self.compute_phase_difference(idx, model)
+
+                            #ctrl_input = phase_diff
+                            if controller.target_var == new_target_ref1:
+                                ctrl_input = ctrl_input_omega
+                            elif controller.target_var in ['qaux_bis', 'qaux', 'Qref', 'Qref2']:
+                                ctrl_input = -ctrl_input_v + 1
+                                feedback = False
+                            elif is_genrou is True:
+                                ctrl_input = ctrl_input_omega
+                            elif controller.target_var == 'wref_aux':
+                                ctrl_input = np.mean(system.GENROU.omega.v)
+                            elif model.__class__.__name__ == 'REDUAL':
+                                ctrl_input = ctrl_input_omega
+                                ctrl_input = ctrl_input_v
+                                ctrl_input = np.mean(self.system.Bus.v.v)
+                                ctrl_input = ctrl_input_v
+
+                            else:
+                                new_set_point = self.secondary_response_role(idx)
+                                ctrl_input = ctrl_input_omega
+                            new_set_point = controller.get_set_point(ctrl_input, feedback = True)
+                            self.set_set_points(new_set_point)
         return
     
     def run_active_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 10, verbose = False):

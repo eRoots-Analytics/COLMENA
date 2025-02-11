@@ -353,13 +353,13 @@ class PIcontroller:
         res = []
         output = self.apply(input, feedback=feedback)
         new_set_point = {}
-        new_set_point['model'] = 'TGOV1'
+        new_set_point['model'] = 'TGOV1N'
         new_set_point['param'] = 'paux0'
         new_set_point['idx'] = self.idx
         new_set_point['value'] = output
         new_set_point['add'] = False
 
-        if self.model != 'GENROU':
+        if self.model not in ['GENROU', 'TGOV1N']:
             new_set_point['model'] = self.model
             new_set_point['param'] = self.target_var
             new_set_point['value'] = output + self.reference*(1-self.is_delta)

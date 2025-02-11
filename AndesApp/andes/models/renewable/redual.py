@@ -38,16 +38,19 @@ class REDUAL(REGCV1, REGCP1):
         self.vref_aux = NumParam(default = 0) 
         self.wref_aux = NumParam(default = 0) 
         self.dwref_aux = NumParam(default = 0) 
+        self.paux_bis = NumParam(default = 0) 
 
         self.vref2.e_str = self.vref2.e_str + '+vref_aux'
         self.omega.e_str = self.omega.e_str + '+wref_aux'
         self.dw.e_str = self.dw.e_str.replace('dw', '*(dw-dwref_aux)')
 
-        #self.dw.e_str = self.dw.e_str + '+1*paux_bis'
-        #self.Pe.e_str = self.Pe.e_str + '+1*paux_bis'
+        self.dw.e_str = self.dw.e_str + '-0*paux_bis'
+        self.Pe.e_str = self.Pe.e_str + '-0*paux_bis'
+        self.a.e_str = self.a.e_str + '-0*u*paux_bis'
         #self.a.e_str = self.a.e_str + '+1*paux_bis'
-        #self.Pref2.e_str = self.Pref2.e_str + '+ 1*paux_bis'
         #self.dw.e_str = self.dw.e_str + '+ 10000*paux_bis'
+        #self.Pref2.e_str = self.Pref2.e_str 
+
         #We change the equations for algebraic variables
         self.to_reinitialize =False
         #We change the equations for state variables

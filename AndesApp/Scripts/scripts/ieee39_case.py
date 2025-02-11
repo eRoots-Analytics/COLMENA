@@ -71,14 +71,14 @@ if n_genrou == 0:
 
 redual = False
 if redual:
-    system = aux.build_new_system_legacy(system_ieee, new_model_name='REDUAL', n_redual = 3)
+    system = aux.build_new_system_legacy(system_ieee, new_model_name='REDUAL', n_redual = 2)
 
     system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_1', value=1)
     system.REDUAL.set(src='D', attr = 'v', idx='GENROU_1', value=5)
     system.REDUAL.set(src='M', attr = 'v', idx='GENROU_1', value=10)
-    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_2', value=0)
-    #system.REDUAL.set(src='kv', attr = 'v', idx='GENROU_1', value=0.005)
-    #system.REDUAL.set(src='kw', attr = 'v', idx='GENROU_1', value=0.1)
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_2', value=1)
+    system.REDUAL.set(src='kv', attr = 'v', idx='GENROU_1', value=0.005)
+    system.REDUAL.set(src='kw', attr = 'v', idx='GENROU_1', value=0.1)
 
     system.REDUAL.prepare()
     system.find_devices()
@@ -169,11 +169,13 @@ if multiple_devices:
     system = aux.build_new_system_legacy(system_ieee, new_model_name='REDUAL', n_redual = n_redual)
     for i in range(n_redual):
         idx = system.REDUAL.idx.v[i]
-        system.REDUAL.set(src='is_GFM', attr = 'v', idx=idx, value=1)
+        system.REDUAL.set(src='is_GFM', attr = 'v', idx=idx, value=0)
         system.REDUAL.set(src='D', attr = 'v', idx=idx, value=10)
         system.REDUAL.set(src='M', attr = 'v', idx=idx, value=10)
         system.REDUAL.set(src='kw', attr = 'v', idx=idx, value=0.1)
 
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_1', value=0)
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_3', value=0)
     system.REDUAL.prepare()
     for i in range(system.IEEEST.n):
         idx = system.IEEEST.idx.v[i]
@@ -189,6 +191,9 @@ if multiple_devices:
     system.Toggle.set(src='u', attr = 'v', idx='Toggler_1', value=0)
 
     new_model = getattr(system, 'REDUAL')
+    system.PQ.config.p2p = 1
+    system.PQ.config.p2z = 0
+    system.PQ.config.p2i = 0
     system.PFlow.run()
     system.TDS.config.tf = 20
     system.TDS_stepwise.config.criteria = 0
@@ -203,19 +208,17 @@ if multiple_devices:
     Ppf2 = system.PQ.Ppf.v[1]*1
     req0 = system.PQ.Req.v[0]*1
     xeq0 = system.PQ.Xeq.v[0]*1
-    system.PQ.config.p2p = 1
-    system.PQ.config.p2z = 0
-    system.PQ.config.p2i = 0
-    #set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.97*Ppf1, 'add':False, 'idx':'PQ_1', 't': 5}]
-    #set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.98*Ppf2, 'add':False, 'idx':'PQ_2', 't': 5}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.9*Ppf1, 'add':False, 'idx':'PQ_1', 't': 30}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':1.1*Ppf2, 'add':False, 'idx':'PQ_2', 't': 30}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.9*Ppf1, 'add':False, 'idx':'PQ_1', 't': 60}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.3*Ppf2, 'add':False, 'idx':'PQ_2', 't': 60}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':1.05*Ppf1, 'add':False, 'idx':'PQ_1', 't': 90}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.95*Ppf2, 'add':False, 'idx':'PQ_2', 't': 90}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.7*Ppf1, 'add':False, 'idx':'PQ_1', 't': 120}]
-    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.3*Ppf2, 'add':False, 'idx':'PQ_2', 't': 120}]
+
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':1*Ppf1, 'add':False, 'idx':'PQ_18', 't': 2}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':1*Ppf2, 'add':False, 'idx':'PQ_19', 't': 2.5}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.9*Ppf1, 'add':False, 'idx':'PQ_18', 't': 30}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':1.1*Ppf2, 'add':False, 'idx':'PQ_19', 't': 30}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.9*Ppf1, 'add':False, 'idx':'PQ_18', 't': 60}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.3*Ppf2, 'add':False, 'idx':'PQ_19', 't': 60}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':1.05*Ppf1, 'add':False, 'idx':'PQ_18', 't': 90}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.95*Ppf2, 'add':False, 'idx':'PQ_19', 't': 90}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.7*Ppf1, 'add':False, 'idx':'PQ_18', 't': 120}]
+    set_point_dict += [{'model':'PQ', 'param':'Ppf', 'value':0.3*Ppf2, 'add':False, 'idx':'PQ_19', 't': 120}]
 
     #set_point_dict += [{'model':'REDUAL', 'param':'is_GFM', 'value':0, 'add':False, 'idx':'GENROU_1', 't': 10}]
     #set_point_dict += [{'model':'REDUAL', 'param':'is_GFM', 'value':1, 'add':False, 'idx':'GENROU_2', 't': 10}]
@@ -233,27 +236,34 @@ if multiple_devices:
     #system.TDS_stepwise.config.tol = 0.005
     #system.TDS_stepwise.config.g_scale = 0
     #system.TDS_stepwise.run_set_points(set_points_dict = set_point_dict,  t_change = 4, t_max =7.1)    
-    system.TDS_stepwise.run_secondary_response(model = system.REDUAL, set_points_dict = set_point_dict, 
-                                               t_max = 10, batch_size = 0.2)    
+
+    model_controller = system.TGOV1N
+    model_controller = system.REDUAL
+    system.TDS_stepwise.run_secondary_response(models = [system.REDUAL], model_input =system.GENROU, set_points_dict = set_point_dict, 
+                                               t_max = 1, batch_size = 0.1)    
     system.TDS_stepwise.load_plotter()
 
     matplotlib.use('TkAgg')
     n_tuple = tuple(range(n_redual))
     ngenrou_tuple = tuple(range(10-n_redual))
-    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Qe, a = n_tuple)
+    #fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Qe, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.omega, a = n_tuple)
-    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.vref2, a = n_tuple)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.delta, a = n_tuple)
+    #fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.vref2, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pe, a = n_tuple)
-    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pref2, a = n_tuple)
-    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.udref, a = n_tuple)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Id, a = n_tuple)
+    fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Iq, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.a, a = n_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.PQ.v, a = n_tuple)
+    fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.paux, a = ngenrou_tuple)
+    fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pout, a = ngenrou_tuple)
     fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a = ngenrou_tuple)
+
     _ = 0
 
     plt.clf()
-    for controller in system.REDUAL.PIcontroller:
+    for controller in model_controller.PIcontroller:
         values = controller.history  # Assuming this is a list of numeric values
 
         # Generate a time axis (you might need to adjust this)
