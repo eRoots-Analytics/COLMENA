@@ -174,8 +174,8 @@ if multiple_devices:
         system.REDUAL.set(src='M', attr = 'v', idx=idx, value=10)
         system.REDUAL.set(src='kw', attr = 'v', idx=idx, value=0.1)
 
-    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_1', value=0)
-    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_3', value=0)
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_1', value=1)
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_3', value=1)
     system.REDUAL.prepare()
     for i in range(system.IEEEST.n):
         idx = system.IEEEST.idx.v[i]
@@ -239,7 +239,7 @@ if multiple_devices:
 
     model_controller = system.TGOV1N
     model_controller = system.REDUAL
-    system.TDS_stepwise.run_secondary_response(models = [system.REDUAL], model_input =system.GENROU, set_points_dict = set_point_dict, 
+    system.TDS_stepwise.run_secondary_response(models = [], model_input =system.GENROU, set_points_dict = set_point_dict, 
                                                t_max = 1, batch_size = 0.1)    
     system.TDS_stepwise.load_plotter()
 

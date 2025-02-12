@@ -87,21 +87,91 @@ class REDUAL(REGCV1, REGCP1):
             if v_eq_GFM is not None and v_eq_GFL is not None: 
                 v_eq_new = '(1-is_GFM)*(' + not_none(v_eq_GFL) + ') + (is_GFM)*(' + not_none(v_eq_GFM) + ')' 
                 setattr(var, 'v_str', v_eq_new)
-
+        
+        system.to_reinitialize = np.zeros(self.n)
         #self.Ipout.e_str = '(1-is_GFM)*(' + self.Ipout.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Ipout)'
         #self.Iqout_y.e_str = '(1-is_GFM)*(' + self.Iqout_y.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Iqout_y)'
 
-    def reinitialize(self, idx, steady_state = True):
+    def reinitialize(self, idx, type='no_change'):
         #Function that reinitializes the states
-        return
+        
         uid = self.idx2uid(idx)
         is_GFM = self.is_GFM.v[uid]
-        a = self.a.v[uid]
+        v = self.v.v[uid]
         am = self.am.v[uid]
         a = self.a.v[uid]
+        if type == 'no_change':
+            return
+
+        if type == 'continuous':
+            if is_GFM:
+                Id = self.Id.v[uid]
+                Iq = self.Iq.v[uid]
+                vd = self.vd.v[uid] 
+                vq = self.vq.v[uid]
+                ra = self.ra.v[uid]
+                xs = self.xs.v[uid]
+                uqref = self.uqref.v[uid]
+                udref = self.udref.v[uid]
+                udref0 = Id*ra - Iq*xs + vd         
+                uqref0 = Id*xs - Iq*ra + vq   
+                self.alter(src = 'dw', idx = idx, value=0)
+                self.alter(src = 'delta', idx = idx, value=a)
+                self.alter(src = 'PIvd_xi', idx = idx, value=Id)
+                self.alter(src = 'PIvq_xi', idx = idx, value=Iq)
+                self.alter(src = 'PIId_xi', idx = idx, value=0)
+                self.alter(src = 'PIIq_xi', idx = idx, value=0)
+                self.alter(src = 'udLag_y', idx = idx, value=udref0)
+                self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
+            else:
+                p = self.Pe.v[uid]
+                q = self.Qe.v[uid]
+                Iqcmd0 = p/v
+                Ipcmd0 = -q/v
+                self.alter(src = 'S0_y', idx = idx, value=-Iqcmd0)
+                self.alter(src = 'S1_y', idx = idx, value=v)
+                self.alter(src = 'S2_y', idx = idx, value=Ipcmd0)
+            
+            _= 0
+            return
+
+        elif type == 'initial_conditions':
+            if is_GFM:
+                Id = self.Id0.v[uid]
+                Iq = self.Iq0.v[uid]
+                vd = self.vd.v[uid] 
+                vq = self.vq.v[uid]
+                ra = self.ra.v[uid]
+                xs = self.xs.v[uid]
+                udref = self.udref.v[uid]
+                uqref = self.uqref.v[uid]
+                udref0 = Id*ra - Iq*xs + vd         
+                uqref0 = Id*xs - Iq*ra + vq
+                udref0 = self.udref0.v[uid]
+                uqref0 = self.uqref0.v[uid]
+
+                self.alter(src = 'dw', idx = idx, value=0)
+                self.alter(src = 'delta', idx = idx, value=a)
+                self.alter(src = 'PIvd_xi', idx = idx, value=Id)
+                self.alter(src = 'PIvq_xi', idx = idx, value=Iq)
+                self.alter(src = 'PIId_xi', idx = idx, value=0)
+                self.alter(src = 'PIIq_xi', idx = idx, value=0)
+                self.alter(src = 'udLag_y', idx = idx, value=udref0)
+                self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
+            else:
+                p = self.p0.v[uid]
+                q = self.q0.v[uid]
+                Iqcmd0 = self.Iqcmd0.v[uid]
+                Ipcmd0 = self.Ipcmd0.v[uid]
+                self.alter(src = 'S0_y', idx = idx, value=-Iqcmd0)
+                self.alter(src = 'S1_y', idx = idx, value=v)
+                self.alter(src = 'S2_y', idx = idx, value=Ipcmd0)
+            
+            _= 0
+            return
         if is_GFM:
             v = self.Pref
-            if steady_state:
+            if type=='reference_change':
                 Id = self.Id.v[uid]
                 Iq = self.Iq.v[uid]
                 vd = self.vd.v[uid] 

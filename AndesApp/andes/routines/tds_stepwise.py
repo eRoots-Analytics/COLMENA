@@ -613,6 +613,7 @@ class TDS_stepwise(BaseRoutine):
         change_done = False
         while self.system.dae.t < self.config.tmax:
             self.run_individual_batch(t_sim=batch_size, no_summary=False)
+            was_GFM = np.array(self.system.REDUAL.is_GFM.v) == 1
             
             if changes_done is False and self.system.dae.t > t_change and apply_set_points:
                 new_set_points = self.get_set_points(set_points)
@@ -623,10 +624,9 @@ class TDS_stepwise(BaseRoutine):
                 if unique_change is True:
                     changes_done = True
                 if self.system.REDUAL.n > 0:
-                    is_GFM = (system.REDUAL.is_GFM.v == 0) 
-                    system.REDUAL.to_reinitialize = (is_GFM)*0
+                    is_GFM = (system.REDUAL.is_GFM.v == 1) 
 
-            #We execute the controllers
+            #We execute the controllers for the controlled models
             for model in models:
                 if not hasattr(model, 'PIcontroller'):
                     continue
@@ -664,14 +664,16 @@ class TDS_stepwise(BaseRoutine):
                             elif model.__class__.__name__ == 'REDUAL':
                                 ctrl_input = ctrl_input_omega
                                 ctrl_input = ctrl_input_v
-                                ctrl_input = np.mean(self.system.Bus.v.v)
-                                ctrl_input = ctrl_input_v
 
                             else:
                                 new_set_point = self.secondary_response_role(idx)
                                 ctrl_input = ctrl_input_omega
                             new_set_point = controller.get_set_point(ctrl_input, feedback = True)
                             self.set_set_points(new_set_point)
+
+            #We check if REDUAL need to be reinitialized
+            is_GFM = (system.REDUAL.is_GFM.v == 1)
+            system.REDUAL.to_reinitialize = (was_GFM != is_GFM)
         return
     
     def run_active_response(self, model = None, batch_size = 0.5, controller_control = True, tmax = 10, verbose = False):
@@ -1100,11 +1102,11 @@ class TDS_stepwise(BaseRoutine):
         redual_init = True
         if system.dae.t < 0:
             self.init()
-        elif redual_init and system.REDUAL.n>1:
+        elif redual_init and system.REDUAL.n>=1:
             if isinstance(system.REDUAL.to_reinitialize, np.ndarray):
                 for i in range(system.REDUAL.n):
                     if system.REDUAL.to_reinitialize[i]: 
-                        redual_idx = system.REDUAL.idx.v[0]
+                        redual_idx = system.REDUAL.idx.v[i]
                         system.REDUAL.reinitialize(idx = redual_idx)
         else:  # resume simulation
             self.init_resume()
