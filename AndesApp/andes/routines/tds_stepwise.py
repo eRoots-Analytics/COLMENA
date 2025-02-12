@@ -443,7 +443,7 @@ class TDS_stepwise(BaseRoutine):
         while self.system.dae.t < self.config.tmax:
             time_start = time.time()
             try:
-                was_GFM = np.array(self.system.REDUAL.is_GFM.v) == 1
+                was_GFM = (np.array(self.system.REDUAL.is_GFM.v) == 1)
             except:
                 _ = 0
 
@@ -458,7 +458,7 @@ class TDS_stepwise(BaseRoutine):
                 if unique_change is True:
                     changes_done = True
                 if self.system.REDUAL.n > 0:
-                    is_GFM = (system.REDUAL.is_GFM.v == 0) 
+                    is_GFM = (system.REDUAL.is_GFM.v == 1) 
                     system.REDUAL.to_reinitialize = (is_GFM != was_GFM)
         return
     

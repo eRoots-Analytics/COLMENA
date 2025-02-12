@@ -14,7 +14,7 @@ import colmena_test as Colmena
 
 
 # ieee_file = get_case('ieee39/ieee39_full.xlsx')
-ieee_file = get_case('ieee39/ieee39.xlsx')
+ieee_file = get_case('ieee39/ieee39_full.xlsx')
 # ieee_file = get_case('ieee39/ieee39_full_josep.xlsx')
 ad.config_logger(stream_level=10)
 system = ad.load(ieee_file, setup = False)

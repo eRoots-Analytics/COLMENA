@@ -41,7 +41,11 @@ def build_new_system_legacy(system, new_model_name = 'REDUAL', n_redual = 1):
                 model = 'GENROU'
             elif i < n_redual and model in generator_like:
                 model = 'REDUAL'
-            system_to.add(model, new_dict)        
+            system_to.add(model, new_dict)     
+
+        for i in range(system.IEEEST.n):
+            idx = system.IEEEST.idx.v[i]
+            system.IEEEST.set(src='u', attr = 'v', idx=idx, value=0)   
             
     return system_to
 

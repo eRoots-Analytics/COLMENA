@@ -3,7 +3,7 @@ import andes.core as core
 from andes.core import NumParam, DataParam, ExtParam, ConstService, ExtState, Algeb, ExtAlgeb, NumReduce, NumRepeat, IdxRepeat, Limiter, Discrete, IdxParam
 from andes.core.service import InitChecker, FlagValue, DeviceFinder, RefFlatten
 from andes.core import BaseVar, BaseService, BaseParam
-from andes.models.renewable import REGCA1, REGCV1, REGCP1
+from andes.models.renewable import REGCA1, REGF1, REGCP1
 from andes.core.model import Model, ModelData
 import andes as ad
 import sympy as sp
@@ -22,11 +22,11 @@ class REDUALModel(Model):
     def __init__(self, system, config):
         super().__init__(system, config)
 
-class REDUAL(REGCV1, REGCP1):
+class REDUAL(REGF1, REGCP1):
     def __init__(self, system, config):
         REGCP1.__init__(self, system, config)  # Initialize REGCA1
-        REGCV1.__init__(self, system, config)  # Initialize REGCV1
-        GFM_test = REGCV1(system, config)
+        REGF1.__init__(self, system, config)  # Initialize REGF1
+        GFM_test = REGF1(system, config)
         GFL_test = REGCP1(system, config) 
         self.GFM_twin = GFM_test
         self.GFL_twin = GFL_test
@@ -37,18 +37,12 @@ class REDUAL(REGCV1, REGCP1):
 
         self.vref_aux = NumParam(default = 0) 
         self.wref_aux = NumParam(default = 0) 
-        self.dwref_aux = NumParam(default = 0) 
         self.paux_bis = NumParam(default = 0) 
 
-        self.vref2.e_str = self.vref2.e_str + '+vref_aux'
-        self.omega.e_str = self.omega.e_str + '+wref_aux'
-        self.dw.e_str = self.dw.e_str.replace('dw', '*(dw-dwref_aux)')
-
-        self.dw.e_str = self.dw.e_str + '-0*paux_bis'
-        self.Pe.e_str = self.Pe.e_str + '-0*paux_bis'
-        self.a.e_str = self.a.e_str + '-0*u*paux_bis'
-        #self.a.e_str = self.a.e_str + '+1*paux_bis'
-        #self.dw.e_str = self.dw.e_str + '+ 10000*paux_bis'
+        #self.vref2.e_str = self.vref2.e_str + '+vref_aux'
+        #self.dw.e_str = self.dw.e_str.replace('dw', '*(dw-dwref_aux)')
+        #self.Pe.e_str = self.Pe.e_str + '-0*paux_bis'
+        #self.a.e_str = self.a.e_str + '-0*u*paux_bis'
         #self.Pref2.e_str = self.Pref2.e_str 
 
         #We change the equations for algebraic variables
@@ -89,10 +83,137 @@ class REDUAL(REGCV1, REGCP1):
                 setattr(var, 'v_str', v_eq_new)
         
         system.to_reinitialize = np.zeros(self.n)
-        #self.Ipout.e_str = '(1-is_GFM)*(' + self.Ipout.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Ipout)'
-        #self.Iqout_y.e_str = '(1-is_GFM)*(' + self.Iqout_y.e_str  + ') + (is_GFM)*(Id*cos(delta) - Iq*sin(delta) -Iqout_y)'
 
     def reinitialize(self, idx, type='no_change'):
+        #Function that reinitializes the states
+        
+        uid = self.idx2uid(idx)
+        is_GFM = self.is_GFM.v[uid]
+        v = self.v.v[uid]
+        am = self.am.v[uid]
+        a = self.a.v[uid]
+        if type == 'no_change':
+            self.alter(src = 'delta', idx = idx, value=a)
+            return
+
+        if type == 'initial_conditions':
+            if is_GFM:
+                Pe = self.Pref.v[uid]
+                Qe = self.Qref.v[uid]
+                Paux = self.Paux.v[uid]
+                Qaux = self.Qaux.v[uid]
+                Id0 = self.Id0.v[uid]
+                Iq0 = self.Iq0.v[uid]
+                udref0 = self.udref0.v[uid]
+                uqref0 = self.uqref0.v[uid]
+
+                self.alter(src = 'delta', idx = idx, value=a)
+                self.alter(src = 'Psen_y', idx = idx, value=Pe)
+                self.alter(src = 'Qsen_y', idx = idx, value=Qe)
+                self.alter(src = 'Psig_y', idx = idx, value=Paux+Pe)
+                self.alter(src = 'Qsig_y', idx = idx, value=Qaux+Qe)
+                self.alter(src = 'PIplim_xi', idx = idx, value=Id0)
+                self.alter(src = 'PIqlim_xi', idx = idx, value=Iq0)
+                self.alter(src = 'PIId_xi', idx = idx, value=0)
+                self.alter(src = 'PIIq_xi', idx = idx, value=0)
+                self.alter(src = 'udLag_y', idx = idx, value=udref0)
+                self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
+            else:
+                p = self.p0.v[uid]
+                q = self.q0.v[uid]
+                Iqcmd0 = self.Iqcmd0.v[uid]
+                Ipcmd0 = self.Ipcmd0.v[uid]
+                self.alter(src = 'S0_y', idx = idx, value=-Iqcmd0)
+                self.alter(src = 'S1_y', idx = idx, value=v)
+                self.alter(src = 'S2_y', idx = idx, value=Ipcmd0)
+            
+            _= 0
+            return
+
+        elif type == 'continuous':
+            if is_GFM:
+                Pe = self.Pe.v[uid]
+                Qe = self.Qe.v[uid]
+                Paux = self.Paux.v[uid]
+                Qaux = self.Qaux.v[uid]
+                Id0 = self.Id.v[uid]
+                Iq0 = self.Iq.v[uid]
+                udref0 = self.udref.v[uid]
+                uqref0 = self.uqref.v[uid]
+
+                self.alter(src = 'delta', idx = idx, value=a)
+                self.alter(src = 'Psen_y', idx = idx, value=Pe)
+                self.alter(src = 'Qsen_y', idx = idx, value=Qe)
+                self.alter(src = 'Psig_y', idx = idx, value=Paux+Pe)
+                self.alter(src = 'Qsig_y', idx = idx, value=Qaux+Qe)
+                self.alter(src = 'PIplim_xi', idx = idx, value=Id0)
+                self.alter(src = 'PIqlim_xi', idx = idx, value=Iq0)
+                self.alter(src = 'PIId_xi', idx = idx, value=0)
+                self.alter(src = 'PIIq_xi', idx = idx, value=0)
+                self.alter(src = 'udLag_y', idx = idx, value=udref0)
+                self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
+            else:
+                p = self.Pe.v[uid]
+                q = self.Qe.v[uid]
+                Iqcmd0 = p/v
+                Ipcmd0 = -q/v
+                self.alter(src = 'S0_y', idx = idx, value=-Iqcmd0)
+                self.alter(src = 'S1_y', idx = idx, value=v)
+                self.alter(src = 'S2_y', idx = idx, value=Ipcmd0)
+            
+            _= 0
+            return
+        if is_GFM:
+            v = self.Pref
+            if type=='reference_change':
+                Id = self.Id.v[uid]
+                Iq = self.Iq.v[uid]
+                vd = self.vd.v[uid] 
+                vq = self.vq.v[uid]
+            else:
+                Id = self.Pref.v[uid]/v
+                Iq = -self.Qref.v[uid]/v
+                vd = v
+                vq = 0
+            ra = self.ra.v[uid]
+            xs = self.xs.v[uid]
+             
+            vref2 = self.vref2.v[uid] 
+            #Kp = self.Kp.v[uid] 
+            udref0 = Id*ra - Iq*xs + vd         
+            uqref0 = Id*xs - Iq*ra + vq   
+    
+            #We set the operating points given the present values      
+            self.alter(src = 'uqref', idx = idx, value=uqref0)
+            self.alter(src = 'uqref0', idx = idx, value=uqref0)
+            self.alter(src = 'udref', idx = idx, value=udref0)
+            self.alter(src = 'udref0', idx = idx, value=udref0)
+
+            #We reset state values
+            self.alter(src = 'delta', idx = idx, value=a)
+            self.alter(src = 'dw', idx = idx, value=am)
+            self.alter(src = 'PIvd_xi', idx = idx, value=Id)
+            self.alter(src = 'PIvq_xi', idx = idx, value=Iq)
+            self.alter(src = 'udLag_y', idx = idx, value=udref0)
+            self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
+
+        else:
+            Qe0 = self.Qe.v[uid]/self.v.v[uid]
+            Pe0 = self.Pe.v[uid]/self.v.v[uid]
+
+            #We set the operating points given the present values      
+            self.alter(src = 'Iqcmd', idx = idx, value=-Qe0)
+            self.alter(src = 'Iqcmd0', idx = idx, value=-Qe0)
+            self.alter(src = 'Ipcmd', idx = idx, value=Pe0)
+            self.alter(src = 'Ipcmd0', idx = idx, value=Pe0)
+
+            #we set some state differently to smooth the transition
+            self.alter(src = 'S0_y', idx = idx, value=Pe0)
+            self.alter(src = 'S2_y', idx = idx, value=Pe0)
+
+        return
+
+    def reinitialize_legacy(self, idx, type='no_change'):
         #Function that reinitializes the states
         
         uid = self.idx2uid(idx)

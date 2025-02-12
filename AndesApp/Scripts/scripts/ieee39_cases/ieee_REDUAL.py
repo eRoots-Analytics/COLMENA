@@ -39,15 +39,15 @@ system_ieee.Toggle.set(src='model', attr = 'v', idx = 'Toggler_1', value = 'Line
 system_ieee.Toggle.set(src='u', attr = 'v', idx = 'Toggler_1', value = 0)
 
 
-n_redual = 2
-system_pre = aux.build_new_system_legacy(system_ieee, n_redual =n_redual)
-system = aux.build_new_system(system_pre, model_swap={'REDUAL':['REGF1', 'REGCP1']})
+n_redual = 4
+system = aux.build_new_system_legacy(system_ieee, n_redual =n_redual)
 system.find_devices()
-system.REGCP1.u.v[:] = np.ones(n_redual)
-system.REGCV1.u.v[:] = np.zeros(n_redual)
-system.REGCV1.u.v[0] = 1
-system.REGCP1.u.v[0] = 1
 system.REDUAL.prepare()
+
+for i in range(n_redual):
+    idx = system.REDUAL.idx.v[i]
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx=idx, value=1)
+  
 system.setup()
 system.PFlow.run()
 system.TDS_stepwise.config.criteria = 0
@@ -66,24 +66,18 @@ xeq0 = system.PQ.Xeq.v[0]*1
 set_point_dict = []
 charge_setpoints = setpoints.variable_charge_setpoints(Ppf1, Ppf2)
 mode_setpoints = setpoints.mode_setpoints()
-double_set_point = setpoints.modedouble_setpoints(GFM_name='REGCV1')
-set_point_dict += double_set_point
-system.TDS_stepwise.run_set_points(set_points_dict=set_point_dict, t_change = 0, t_max =  25)    
+set_point_dict += charge_setpoints + mode_setpoints
+system.TDS_stepwise.run_set_points(set_points_dict=set_point_dict, t_change = 0, t_max = 50)    
 system.TDS_stepwise.load_plotter()
 
 matplotlib.use('TkAgg')
 n_tuple = tuple(range(n_redual))
 ngenrou_tuple = tuple(range(10-n_redual))
-fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.Qe, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.v, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.Pe, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.v, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGCP1.a, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGF1.Qe, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGF1.omega, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGF1.Pe, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGF1.v, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.REGF1.a, a = n_tuple)
+fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Qe, a = n_tuple)
+fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pe, a = n_tuple)
+fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v, a = n_tuple)
+fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.delta, a = n_tuple)
+fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.a, a = n_tuple)
 fig, ax = system.TDS_stepwise.plt.plot(system.PQ.v, a = n_tuple)
 fig, ax = system.TDS_stepwise.plt.plot(system.Bus.v)
 fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega, a = ngenrou_tuple)
