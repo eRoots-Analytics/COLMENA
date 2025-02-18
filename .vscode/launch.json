@@ -5,6 +5,7 @@
   "version": "0.2.0",
   "configurations": [
 
+
     {
       "name": "Python Debugger: all the code",
       "type": "debugpy",
@@ -26,6 +27,26 @@
         "--username=pablodejuan"
       ],
       "justMyCode": false
-    }
+    },
+
+    {
+      "name": "Python: Flask",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flask",
+      "env": {
+          "FLASK_APP": "${file}",  // Change this to your main Flask file
+          "FLASK_ENV": "development", 
+          "FLASK_DEBUG": "1" // Enables debugging
+      },
+      "args": [
+          "run",
+          "--no-debugger",
+          "--no-reload"
+      ],
+      "jinja": true,
+      "justMyCode": false
+  }
+
   ]
 }

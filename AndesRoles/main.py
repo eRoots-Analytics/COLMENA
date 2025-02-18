@@ -39,15 +39,16 @@ if __name__ == "__main__":
     test_example = TestExamples()
     test_example.execute_roles_in_service(service_class = ErootsUseCase)
     
-    responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'REDUAL', 'var_name':'omega'})
-    #responsePlot = 600
-    if not isinstance(responsePlot, int) and responsePlot.status_code == 200:
-        img = Image.open(BytesIO(responsePlot.content))
-        # Save or display the image as needed
-        img.show()  # To display it directly
-        img.save("plot.png")  # To save it to a file
-    elif not isinstance(responsePlot, int):
-        print(f"Error: {responsePlot.status_code} - {responsePlot.json().get('error')}")
+    plot_response = False
+    if plot_response:
+        responsePlot = requests.get(andes_url + '/plot', params = {'model_name':'REDUAL', 'var_name':'v'})
+        if not isinstance(responsePlot, int) and responsePlot.status_code == 200:
+            img = Image.open(BytesIO(responsePlot.content))
+            # Save or display the image as needed
+            img.show()  # To display it directly
+            img.save("plot.png")  # To save it to a file
+        elif not isinstance(responsePlot, int):
+            print(f"Error: {responsePlot.status_code} - {responsePlot.json().get('error')}")
 
             
     

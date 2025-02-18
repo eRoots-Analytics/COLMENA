@@ -22,7 +22,7 @@ from andes.utils.tab import Tab
 from andes.main import System
 # Append the parent directory of the current script's directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-# import aux_function as aux
+import aux_function as aux
 # Now import aux_function from the adjusted path
 #from Scripts.scripts import aux_function as aux
 logger = logging.getLogger(__name__)
@@ -509,7 +509,9 @@ class TDS_stepwise(BaseRoutine):
                 model_name = 'TGOV1N'
                 model = self.system.TGOV1N
                 model.PIcontroller = []
-            if reference is not None:
+            if reference is not None and isinstance(reference, float):
+                reference_value = reference
+            elif reference is not None:
                 reference_value = reference.v[i]
             else:
                 reference_value = 1
@@ -598,7 +600,6 @@ class TDS_stepwise(BaseRoutine):
                 self.init_PIcontrollers(model, target_var= 'vref_aux', dt=batch_size, Ki=0.5, Kp=0.5, active_filter=True, reference = model.v)
                 #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=0.05, Kp=0.1, initial_output = model.Pref, add=True,
                 #                        reference = model.vd0)
-
                 #self.init_PIcontrollers(model, target_var= 'wref_aux', dt=batch_size, Ki=0, Kp=0.1, active_filter=False)
                 #self.init_PIcontrollers(model, target_var= 'paux_bis', dt=batch_size, Ki=-0.5, Kp=-0.5, initial_output = None)
                 #self.init_PIcontrollers(model, target_var= 'Pref', dt=batch_size, Ki=1, Kp=3, add=True, initial_output = model.Pref)
@@ -636,15 +637,15 @@ class TDS_stepwise(BaseRoutine):
                     if True and self.system.dae.t > 0.5:
                         if controller_control:
                             try:
-                                ctrl_input_omega = model.omega.v[uid]
-                                ctrl_input_omega = np.mean(model.omega.v)
+                                ctrl_input_omega = 1 + model.dw_y.v[uid]
+                                ctrl_input_omega = 1 + np.mean(model.dw_y.v[uid])
                                 ctrl_input_v = model.v.v[uid]
                                 ctrl_input_phase = model.a.v[uid]
 
                             except:
                                 bus_idx = system.Bus.idx.v[uid]
                                 bus_uid = system.Bus.idx2uid(bus_idx)
-                                ctrl_input_omega = model_input.omega.v[uid]
+                                ctrl_input_omega = model_input.v.v[uid]
                                 ctrl_input_v = system.Bus.v.v[bus_uid]
                                 ctrl_input_phase = system.Bus.a.v[bus_uid]
 

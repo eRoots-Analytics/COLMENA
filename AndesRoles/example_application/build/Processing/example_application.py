@@ -61,10 +61,12 @@ class ExampleApplication(Service):
         @Requirements("CAMERA")
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            print('Role Working')
             self.dims = [512, 512]
 
         @Persistent()
         def behavior(self):
+            print('Role Behavior Working')
             image = np.random.randn(*self.dims)
             self.buffer.publish(image)
             self.sensed.publish(1)
@@ -78,9 +80,12 @@ class ExampleApplication(Service):
         @KPI("buffer_queue_size[100000000s] < 10")
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+            print('Role Working')
+
 
         @Async(image="buffer")
         def behavior(self, image):
+            print('Role Behavior Working')
             res = np.sum(image)
             self.result.publish(res)
             self.processed.publish(1)

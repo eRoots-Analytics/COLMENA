@@ -39,17 +39,15 @@ system_ieee.Toggle.set(src='model', attr = 'v', idx = 'Toggler_1', value = 'Line
 system_ieee.Toggle.set(src='u', attr = 'v', idx = 'Toggler_1', value = 0)
 
 
-n_redual = 6
+n_redual = 4
 system = aux.build_new_system_legacy(system_ieee, n_redual =n_redual)
 system.find_devices()
 system.REDUAL.prepare()
 
 for i in range(n_redual):
     idx = system.REDUAL.idx.v[i]
-    system.REDUAL.set(src='is_GFM', attr = 'v', idx=idx, value=0)
-    system.REDUAL.set(src='wdrp', attr = 'v', idx=idx, value=0.03)
-
-system.REDUAL.set(src='is_GFM', attr = 'v', idx='GENROU_1', value=0)
+    system.REDUAL.set(src='is_GFM', attr = 'v', idx=idx, value=1)
+  
 system.setup()
 system.PFlow.run()
 system.TDS_stepwise.config.criteria = 0
@@ -67,10 +65,9 @@ req0 = system.PQ.Req.v[0]*1
 xeq0 = system.PQ.Xeq.v[0]*1
 set_point_dict = []
 charge_setpoints = setpoints.variable_charge_setpoints(Ppf1, Ppf2)
-mode_setpoints = setpoints.mode_setpoints()
-set_point_dict += charge_setpoints + mode_setpoints
-set_point_dict = charge_setpoints + mode_setpoints
-system.TDS_stepwise.run_set_points(set_points_dict=set_point_dict, t_change = 0, t_max = 60)    
+mode_setpoints = setpoints.mode_setpoints(value = 1)
+set_point_dict += charge_setpoints 
+system.TDS_stepwise.run_secondary_response(models = [system.REDUAL], model_input = system.REDUAL, set_points_dict=charge_setpoints, t_max = 20)    
 system.TDS_stepwise.load_plotter()
 
 matplotlib.use('TkAgg')

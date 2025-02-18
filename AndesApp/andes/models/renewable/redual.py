@@ -39,7 +39,7 @@ class REDUAL(REGF1, REGCP1):
         self.wref_aux = NumParam(default = 0) 
         self.paux_bis = NumParam(default = 0) 
 
-        #self.vref2.e_str = self.vref2.e_str + '+vref_aux'
+        self.vref2.e_str = self.vref2.e_str + '+vref_aux'
         #self.dw.e_str = self.dw.e_str.replace('dw', '*(dw-dwref_aux)')
         #self.Pe.e_str = self.Pe.e_str + '-0*paux_bis'
         #self.a.e_str = self.a.e_str + '-0*u*paux_bis'
@@ -93,7 +93,12 @@ class REDUAL(REGF1, REGCP1):
         am = self.am.v[uid]
         a = self.a.v[uid]
         if type == 'no_change':
-            self.alter(src = 'delta', idx = idx, value=a)
+            if is_GFM:
+                self.alter(src = 'delta', idx = idx, value=a)
+                _ = 0
+            else:
+                _ = 0
+            
             return
 
         if type == 'initial_conditions':
@@ -119,6 +124,7 @@ class REDUAL(REGF1, REGCP1):
                 self.alter(src = 'udLag_y', idx = idx, value=udref0)
                 self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
             else:
+                return
                 p = self.p0.v[uid]
                 q = self.q0.v[uid]
                 Iqcmd0 = self.Iqcmd0.v[uid]
@@ -130,7 +136,7 @@ class REDUAL(REGF1, REGCP1):
             _= 0
             return
 
-        elif type == 'continuous':
+        if type == 'continuous':
             if is_GFM:
                 Pe = self.Pe.v[uid]
                 Qe = self.Qe.v[uid]
@@ -140,19 +146,22 @@ class REDUAL(REGF1, REGCP1):
                 Iq0 = self.Iq.v[uid]
                 udref0 = self.udref.v[uid]
                 uqref0 = self.uqref.v[uid]
+                Iq = self.Iqcmd.v[uid]
+                Iq = self.Iqout_x.v[uid]
 
-                self.alter(src = 'delta', idx = idx, value=a)
-                self.alter(src = 'Psen_y', idx = idx, value=Pe)
-                self.alter(src = 'Qsen_y', idx = idx, value=Qe)
+                #self.alter(src = 'delta', idx = idx, value=a)
+                #self.alter(src = 'Psen_y', idx = idx, value=Pe)
+                #self.alter(src = 'Qsen_y', idx = idx, value=Qe)
                 self.alter(src = 'Psig_y', idx = idx, value=Paux+Pe)
                 self.alter(src = 'Qsig_y', idx = idx, value=Qaux+Qe)
-                self.alter(src = 'PIplim_xi', idx = idx, value=Id0)
-                self.alter(src = 'PIqlim_xi', idx = idx, value=Iq0)
-                self.alter(src = 'PIId_xi', idx = idx, value=0)
-                self.alter(src = 'PIIq_xi', idx = idx, value=0)
+                #self.alter(src = 'PIplim_xi', idx = idx, value=Ip)
+                #self.alter(src = 'PIqlim_xi', idx = idx, value=Iq)
+                self.alter(src = 'PIId_xi', idx = idx, value=Id0)
+                self.alter(src = 'PIIq_xi', idx = idx, value=Iq0)
                 self.alter(src = 'udLag_y', idx = idx, value=udref0)
                 self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
             else:
+                return
                 p = self.Pe.v[uid]
                 q = self.Qe.v[uid]
                 Iqcmd0 = p/v
@@ -163,41 +172,52 @@ class REDUAL(REGF1, REGCP1):
             
             _= 0
             return
-        if is_GFM:
+        if type=='reference_change' and is_GFM:
             v = self.Pref
-            if type=='reference_change':
+            if type=='reference_change' and True:
+                Pe = self.Pe.v[uid]
+                Qe = self.Qe.v[uid]
+                Paux = self.Paux.v[uid]
+                Qaux = self.Qaux.v[uid]
+                Id0 = self.Id0.v[uid]
                 Id = self.Id.v[uid]
+                Iq0 = self.Iq0.v[uid]
                 Iq = self.Iq.v[uid]
-                vd = self.vd.v[uid] 
-                vq = self.vq.v[uid]
+                udref0 = self.udref.v[uid]
+                uqref0 = self.uqref.v[uid]
             else:
-                Id = self.Pref.v[uid]/v
-                Iq = -self.Qref.v[uid]/v
-                vd = v
-                vq = 0
-            ra = self.ra.v[uid]
-            xs = self.xs.v[uid]
-             
+                Pe = self.Pe.v[uid]
+                Qe = self.Qe.v[uid]
+                Paux = self.Paux.v[uid]
+                Qaux = self.Qaux.v[uid]
+                Id0 = self.Id.v[uid]
+                Iq0 = self.Iq.v[uid]
+                udref0 = self.udref.v[uid]
+                uqref0 = self.uqref.v[uid]
+            ra = self.rf.v[uid]
+            xs = self.xf.v[uid]
+            vd = self.vd.v[uid]
+            vq = self.vq.v[uid]
+
             vref2 = self.vref2.v[uid] 
             #Kp = self.Kp.v[uid] 
             udref0 = Id*ra - Iq*xs + vd         
             uqref0 = Id*xs - Iq*ra + vq   
     
             #We set the operating points given the present values      
-            self.alter(src = 'uqref', idx = idx, value=uqref0)
-            self.alter(src = 'uqref0', idx = idx, value=uqref0)
-            self.alter(src = 'udref', idx = idx, value=udref0)
-            self.alter(src = 'udref0', idx = idx, value=udref0)
-
-            #We reset state values
             self.alter(src = 'delta', idx = idx, value=a)
-            self.alter(src = 'dw', idx = idx, value=am)
-            self.alter(src = 'PIvd_xi', idx = idx, value=Id)
-            self.alter(src = 'PIvq_xi', idx = idx, value=Iq)
+            self.alter(src = 'Psen_y', idx = idx, value=Pe)
+            self.alter(src = 'Qsen_y', idx = idx, value=Qe)
+            self.alter(src = 'Psig_y', idx = idx, value=Paux+Pe)
+            self.alter(src = 'Qsig_y', idx = idx, value=Qaux+Qe)
+            self.alter(src = 'PIplim_xi', idx = idx, value=Id0)
+            self.alter(src = 'PIqlim_xi', idx = idx, value=Iq0)
+            self.alter(src = 'PIId_xi', idx = idx, value=0)
+            self.alter(src = 'PIIq_xi', idx = idx, value=0)
             self.alter(src = 'udLag_y', idx = idx, value=udref0)
             self.alter(src = 'uqLag_y', idx = idx, value=uqref0)
-
         else:
+            return
             Qe0 = self.Qe.v[uid]/self.v.v[uid]
             Pe0 = self.Pe.v[uid]/self.v.v[uid]
 

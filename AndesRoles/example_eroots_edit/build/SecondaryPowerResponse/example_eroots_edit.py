@@ -114,7 +114,7 @@ class ErootsUseCase(Service):
             verbose = True
             responseAndes = self.sync2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
-            value = self.publish_metric('omega')
+            value = self.publish_metric('frequency')
             change = False
             if value > 1.003:
                 print(f'here the frequency is {value}')
@@ -201,7 +201,7 @@ class ErootsUseCase(Service):
 
         @Async(new_data ='estimationChannel')
         def behavior(self, new_data):
-            role
+            return
         
     
 
