@@ -271,6 +271,7 @@ class PIcontroller:
         self.active_filter = kwargs.get("active_filter", False)  
         self.omega_low = kwargs.get("omega_low", 1)  
         self.idx = kwargs.get("idx", 1)  
+        self.idx_bis = kwargs.get("idx_bis", 1)  # Maximum limit
         self.history = []
 
         # Transfer function for the PI controller: H(s) = Kp + Ki/s
@@ -309,7 +310,7 @@ class PIcontroller:
         self.x0 = np.zeros(self.pi_ss.A.shape[0])
         #self.x0 = self.x0.reshape(-1,1)
 
-    def apply(self, input, feedback = False):
+    def apply(self, input, dt = None, feedback = False):
         """
         Process a single input value through the PI controller with feedback.
 
@@ -321,7 +322,8 @@ class PIcontroller:
         - output_value (float): The controller's output.
 
         """
-
+        if dt is None:
+            dt = self.dt
 
         if feedback:
             error = self.reference - input
@@ -336,7 +338,7 @@ class PIcontroller:
         self.pi_tf
         response= ctrl.forced_response(
             self.pi_tf,
-            T = [0, self.dt],
+            T = [0, dt],
             U=[error, error],  # Error signal as input
             X0 =self.x0  # Initial state
         )

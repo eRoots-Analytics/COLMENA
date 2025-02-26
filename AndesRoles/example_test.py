@@ -1,11 +1,9 @@
 import time
 import numpy as np
-import json
 import requests
 import time
-import cvxpy as cp
-import traceback
 import sys
+import json
 sys.path.append('/home/pablo/Desktop/eroots/COLMENA/AndesApp/Scripts/scripts')
 import os
 from colmena import (
@@ -54,10 +52,9 @@ class ErootsUseCase(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS
-            HOST_IP = "192.168.1.122" 
+            HOST_IP = "192.168.68.61" 
             PORT = 5000
             self.andes_url = f"http://{HOST_IP}:{PORT}"
-            print('Monitoring Role is initializing')
             responseAndes = requests.get(self.andes_url + '/assign_device')
             self.device_dict = responseAndes.json()
             self.t_start = time.time()
@@ -76,13 +73,45 @@ class ErootsUseCase(Service):
             return responseAndes
         
         def publish_metric(self, param):
+            print("keys are ", self.variables.keys())
+            if param not in self.variables.keys():
+                requests.post(self.andes_url + '/print_var', json = self.variables)
             value = self.variables[param]
-            self.frequency.publish(1 + value)
+            self.frequency.publish(value)
             return value
         
         @Persistent()
         def behavior(self):
             responseAndes = self.sync2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
-            value = self.publish_metric('dw_y')
+            value = self.publish_metric('v')
             return
+    
+    class GridFormingRole(Role):
+        @Metric('frequency')
+        @KPI('erootsusecase/frequency[1s]>1')
+        @Requirements('GENERATOR')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            HOST_IP = "192.168.68.61" 
+            PORT = 5000
+            self.andes_url = f"http://{HOST_IP}:{PORT}"
+            responseAndes = requests.get(self.andes_url + '/assign_device', params = {'role':self.__class__.__name__})
+            self.device_dict = responseAndes.json()
+            self.t_start = time.time()
+
+        def behavior(self):
+            print('Grid Forming Mode Changed 1')
+            requests.post(self.andes_url + '/print_var', json = {'keys':['v','is_GFM']})
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = 'is_GFM'
+            roleChangeDict['value'] = 1
+            responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
+            requests.post(self.andes_url + '/print_var', json = {'keys':['v','is_GFM']})
+
+            roleChangeOut = self.device_dict
+            roleChangeOut['role'] = self.__class__.__name__
+            responseAndes = requests.post(self.andes_url + '/assign_out', json = roleChangeOut)
+            print('Grid Forming Mode Changed 2')
+            return responseAndes
+

@@ -1,19 +1,20 @@
 import numpy as np
 import subprocess
+import time
 import shlex
 import signal
 import sys
 
 pre_command = 'source /home/pablo/myenv/bin/activate'
 build_command = {
-        "cmd": "python3 -m colmena_build --colmena_path='/home/pablo/Desktop/Colmena/programming-model' "
+        "cmd": "/home/pablo/myenv/bin/python -m colmena_build --colmena_path='/home/pablo/Desktop/Colmena/programming-model' "
                "--service_code_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles' "
                "--module_name='example_test' "
                "--service_name='ErootsUseCase' ",
         "cwd": "/home/pablo/Desktop/Colmena/programming-model/scripts"  
     }
 deploy_command = {
-        "cmd": "python3 -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/example_test/build' "
+        "cmd": "/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/example_test/build' "
                "--platform='linux/amd64' "
                "--user=pablodejuan",
         "cwd": "/home/pablo/Desktop/Colmena/deployment-tool/deployment"  # Change to the correct directory
@@ -31,15 +32,24 @@ agent_command= {
 
 
 agents = [{'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'agent_a'},
-          {'hardware':'CAMERA', 'strategy':'EAGER', 'agent_name':'agent_b'}, 
-          {'hardware':'CPU', 'strategy':'EAGER', 'agent_name':'agent_c'}] 
+          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'agent_b'}, 
+          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'agent_c'}] 
 redeploy_commands = [build_command, zenoh_command, agent_command, agent_command, deploy_command]  
 commands =  [zenoh_command, agent_command, agent_command, deploy_command]  
 commands = redeploy_commands 
-#commands = [zenoh_command, agent_command, agent_command, deploy_command]
-commands = [zenoh_command, agent_command, agent_command, deploy_command]
+commands = [agent_command, agent_command, deploy_command]
+#commands = [build_command]
 processes = []
 agent_i = 0
+
+
+cmd = zenoh_command['cmd']
+cwd = zenoh_command['cwd']
+terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {zenoh_command['cwd']} \"{zenoh_command['cmd']}\"; exec bash'"
+#process = subprocess.Popen(terminal_cmd, shell=True)
+subprocess.Popen(terminal_cmd,shell=True)
+
+time.sleep(6)
 for cmd in commands:
     if cmd.get('is_agent', False):  # Check if it's the agent command
         agent_data = agents[agent_i]
@@ -50,12 +60,13 @@ for cmd in commands:
         agent_i += 1  # Move to the next agent
     else:
         cmd_formatted = cmd.copy()
-    print(f"Starting: {cmd_formatted['cmd']} in {cmd['cwd']}")
-    terminal_cmd = f"terminator --working-directory={cmd_formatted['cwd']} -e 'bash -c \"{pre_command} && {cmd_formatted['cmd']}; exec bash\"'"
-    process = subprocess.Popen(shlex.split(terminal_cmd))
+
+    print(f"Starting: {cmd_formatted['cmd']} in {cmd_formatted['cwd']}")
+    # Open a new terminal and source the environment before running the command
+    terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {cmd_formatted['cwd']} \"{cmd_formatted['cmd']}\"; exec bash'"
+    process = subprocess.Popen(terminal_cmd, shell=True)
     processes.append(process)
 
-# Collect and print outputs
 for process in processes:
     stdout, stderr = process.communicate()
     if stdout:

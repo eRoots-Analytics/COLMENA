@@ -18,7 +18,6 @@ sys.path.insert(0, two_levels_up)
 from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
 
-controllable_devices = []  
 system = None  
 print(sys.path)
 app = Flask(__name__)
@@ -31,13 +30,18 @@ available_devices ={'device_1':{'model':'REDUAL', 'idx':'GENROU_1', 'assigned':F
 # Route to load the simulation case
 @app.route('/load_simulation', methods=['POST'])
 def load_simulation():
-    global controllable_devices
     global system
+    global controllable_devices
+    global change
     try:
-
-        # Load the Andes simulation (but don't run it yet)
+        # Load the Andes simulation (but don't run it yet)ç
+        change = 'None'
+        n_redual = 4
         system = ad.load(get_case('ieee39/ieee39_full.xlsx'), setup=False)
-        system = aux.build_new_system_legacy(system, new_model_name = 'REDUAL', n_redual =4)
+        system = aux.build_new_system_legacy(system, new_model_name = 'REDUAL', n_redual =n_redual)
+        for i in range(n_redual):
+            idx = system.REDUAL.idx.v[i]
+            system.REDUAL.alter(src='is_GFM', idx=idx, value = 0)
         system.find_devices()
         system.REDUAL.prepare()
         system.Toggle.alter(src='dev', idx = 'Toggler_1', value = 'GENROU_8')
@@ -52,8 +56,13 @@ def load_simulation():
             device_dict = {}
             device_dict['idx'] = idx
             device_dict['model'] = 'REDUAL'
-            device_dict['assigned'] = False
+            device_dict['GridFormingRole'] = False
+            device_dict['MonitoringRole'] = False
             controllable_devices.append(device_dict)
+
+        print('idx.v is ', system.REDUAL.idx.v)
+        print('Simulation Loaded with controllable devices', controllable_devices)
+
         return jsonify({"message": f"Simulation loaded successfully"}), 200
     except Exception as e:
         print("error in loading the grid")
@@ -62,16 +71,33 @@ def load_simulation():
 
 @app.route('/assign_device', methods=['GET'])
 def assign_device():
-    global controllable_devices
-    global system
     try:
+        role = request.args.get('role')
+        print("role is", controllable_devices)
         # Get the case file path from the request
         for device in controllable_devices:
-            if not device['assigned']:
+            print("role is", role)
+            if not device[role]:
                 response = device
-                device['assigned'] = True
+                device[role] = True
                 return jsonify(response), 200
-        return jsonify({"message": f"All devices already assigned"}), 200
+        return jsonify(response), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/assign_out', methods=['POST'])
+def assign_out():
+    try:
+        data = request.get_json()
+        idx = data['idx'] 
+        model = data['model']
+        role = data['role']
+        for item in controllable_devices:
+            if idx == item['idx'] and model == item['model'] and role == item[role]:
+                item[role] = False
+                return jsonify({'message': 'Role ended'}), 200
+        return jsonify({'message': 'Role ended'}), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -90,7 +116,23 @@ def run_simulation():
         return jsonify({"message": "Simulation ran successfully", "output": str(sim_output)}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+@app.route('/print_var', methods=['POST'])
+def print_var():
+    try:
+        data = request.get_json()
+        for i in data['keys']:
+            var = getattr(system.REDUAL, i)
+            res = var
+            print('Var value is', var.v)
+        return jsonify({"message": res}), 200
+    except Exception as e:
+        change = 'printed'
+        print(change)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 # Route to run the previously loaded simulation
 @app.route('/line_pairings', methods=['GET'])
 def line_pairings():
@@ -128,17 +170,20 @@ def device_role_change():
     #method to post the new device role in the app
     try:
         data = request.get_json()
-        idx = data['device_idx']
-        model_name = data['model_name']
+        print(data)
+        idx = data['idx']
+        model_name = data['model']
         param = data['param']
         value = data['value']
         model = getattr(system, model_name)
         uid = model.idx2uid(idx)
-        if getattr(data,'add', None) is not None and data['add']:
-            param_in_andes = getattr(model,param)
-            param_in_andes = param_in_andes.v[uid]
-            value = param_in_andes + value 
+        if hasattr(data,'add'): 
+            if data['add']:
+                param_in_andes = getattr(model,param)
+                param_in_andes = param_in_andes.v[uid]
+                value = param_in_andes + value 
         model.alter(idx =idx, src=param, value = value)
+        change = 'changed'
         return jsonify({'message': 'success'}), 200
     except Exception as e:
         print(e)
@@ -168,6 +213,7 @@ def device_sync(all_devices = False):
             return jsonify({"error": "No JSON data received!"}), 400
         response = {}
 
+        print('data keys are', data.keys())
         idx = data['idx']
         model_name = data['model']
         model = getattr(system, model_name)
@@ -199,7 +245,6 @@ def device_sync(all_devices = False):
             elif isinstance(var_value, np.ndarray):
                 var_value = var_value.tolist()
             response[var_name] = var_value
-
         #Since this is used at the very beginning to initialize the agents we can now start the simulation 
         return jsonify(response), 200
     except Exception as e:
@@ -217,7 +262,7 @@ def specific_device_sync(all_devices = False):
         response = {}
         idx = data['idx']
         idx = int(idx)
-        model_name = data['model_name']
+        model_name = data['model']
         param_name = data['param']
        
         model = getattr(system, model_name)
@@ -274,12 +319,12 @@ def run_real_time():
 def plot():
     try:
         data = request.args.to_dict()
-        model_name = data['model_name']
-        var_name = data['var_name']
+        model_name = data['model']
+        var_name = data['var']
         model = getattr(system, model_name)
         var = getattr(model, var_name)
         system.TDS_stepwise.load_plotter()
-        fig, ax = system.TDS_stepwise.plt.plot(var, a=(0))
+        fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v)
         # Save the plot to a BytesIO object rather than displaying it
         img = io.BytesIO()
         fig.savefig(img, format='png')
@@ -294,10 +339,13 @@ def plot():
         return jsonify({"error": str(e)}), 500
     
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    host = "192.168.68.60"
+    host = "0.0.0.0"
+    app.run(host=host, port=5000, debug=False)
     andes_url = 'http://127.0.0.1:5000'
     andes_directory = ad.get_case("kundur/kundur_full.xlsx")
     andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
     andes_dict = {"case_file":andes_directory}
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
+    time.sleep(2)
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)

@@ -55,8 +55,9 @@ class ErootsUseCase(Service):
             HOST_IP = "192.168.68.61" 
             PORT = 5000
             self.andes_url = f"http://{HOST_IP}:{PORT}"
-            responseAndes = requests.get(self.andes_url + '/assign_device', params={'role':self.__class__.__name__})
+            responseAndes = requests.get(self.andes_url + '/assign_device')
             self.device_dict = responseAndes.json()
+            #self.device_dict = {'model':'REDUAL', 'idx':'GENROU_1'}
             self.t_start = time.time()
         
           
@@ -65,8 +66,15 @@ class ErootsUseCase(Service):
             self.variables = responseAndes.json()
             return responseAndes
         
+        def change2Andes(self, param, value):
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = param
+            roleChangeDict['value'] = value
+            responseAndes = requests.get(self.andes_url + '/device_role_change', params = self.roleChangeDict)
+            return responseAndes
+        
         def publish_metric(self, param):
-            print("keys are published")
+            print("keys are ", self.variables.keys())
             if param not in self.variables.keys():
                 requests.post(self.andes_url + '/print_var', json = self.variables)
             value = self.variables[param]
@@ -78,7 +86,6 @@ class ErootsUseCase(Service):
             responseAndes = self.sync2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
             value = self.publish_metric('v')
-            time.sleep(0.5)
             return
     
     class GridFormingRole(Role):
@@ -90,20 +97,22 @@ class ErootsUseCase(Service):
             HOST_IP = "192.168.68.61" 
             PORT = 5000
             self.andes_url = f"http://{HOST_IP}:{PORT}"
-            responseAndes = requests.get(self.andes_url + '/assign_device', params={'role':self.__class__.__name__})
+            responseAndes = requests.get(self.andes_url + '/assign_device', params = {'role':self.__class__.__name__})
             self.device_dict = responseAndes.json()
             self.t_start = time.time()
 
         def behavior(self):
-            print('Convereter Grid Formed')
+            print('Grid Forming Mode Changed 1')
+            requests.post(self.andes_url + '/print_var', json = {'keys':['v','is_GFM']})
             roleChangeDict = self.device_dict
             roleChangeDict['param'] = 'is_GFM'
             roleChangeDict['value'] = 1
-            responseAndes = requests.get(self.andes_url + '/device_role_change', params = roleChangeDict)
+            responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
+            requests.post(self.andes_url + '/print_var', json = {'keys':['v','is_GFM']})
 
             roleChangeOut = self.device_dict
             roleChangeOut['role'] = self.__class__.__name__
             responseAndes = requests.post(self.andes_url + '/assign_out', json = roleChangeOut)
-            print('Convereter Grid Formed')
+            print('Grid Forming Mode Changed 2')
             return responseAndes
 

@@ -1,6 +1,5 @@
 from flask import Flask
 from flask import url_for, request, render_template_string, jsonify, current_app
-from flask_sqlalchemy import SQLAlchemy
 from copy import deepcopy
 from threading import Thread
 import os, sys

@@ -17,6 +17,16 @@
                 "GENERATOR"
             ],
             "kpis": []
+        },
+        {
+            "id": "GridFormingRole",
+            "imageId": "colmena-gridformingrole",
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
+            "kpis": [
+                "erootsusecase/frequency[1s]>1"
+            ]
         }
     ]
 }

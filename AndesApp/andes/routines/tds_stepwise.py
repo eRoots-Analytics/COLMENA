@@ -20,8 +20,10 @@ from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
 from andes.utils.misc import elapsed, is_interactive, is_notebook
 from andes.utils.tab import Tab
 from andes.main import System
+from andes.routines.aux_data import get_set_points
 # Append the parent directory of the current script's directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
+sys.path.append('/home/pablo/Desktop/eroots/COLMENA/AndesApp/Scripts/scripts')
 import aux_function as aux
 # Now import aux_function from the adjusted path
 #from Scripts.scripts import aux_function as aux
@@ -61,6 +63,7 @@ class TDS_stepwise(BaseRoutine):
 
     def __init__(self, system=None, config=None):
         super().__init__(system, config)
+        self.get_set_points = get_set_points
         self.config.add(OrderedDict((('method', 'trapezoid'),
                                      ('tol', 1e-4),
                                      ('t0', 0.0),
@@ -355,20 +358,6 @@ class TDS_stepwise(BaseRoutine):
         logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
         logger.debug("Resuming from t=%.4fs.", system.dae.t)
 
-    def get_new_roles(self, directory, generator = False):
-        res_dict = {}
-        system = self.system
-        for uid in range(system.GENROU_bimode.n):
-            idx = system.GENROU_bimode.idx.v[uid]
-            omega = system.GENROU_bimode.omega.v[uid]
-            if 0.997 < omega and omega < 1.003:
-                system.GENROU_bimode.alter("Ma", idx=idx, value= 0.4)
-                system.GENROU_bimode.alter("Mb", idx=idx, value= 0.4)
-            else:
-                system.GENROU_bimode.alter("Ma", idx=idx, value= 1.7)
-                system.GENROU_bimode.alter("Mb", idx=idx, value= 1.7)
-        return 
-
     def topology_change(self, add_changes = [], remove_changes=[]):
         system_from = self.system
         system_dict = system_from.as_dict()
@@ -504,21 +493,26 @@ class TDS_stepwise(BaseRoutine):
         model_name = type(model).__name__
         for i in range(model.n):
             idx = model.idx.v[i]
-            if model_name == 'GENROU':
+            idx_bis = model.idx.v[i]
+            if model_name == 'GENROU' and target_var in ['paux0', 'wref0']:
                 idx = self.system.TGOV1N.idx.v[i]
+                idx_bis = self.system.GENROU.idx.v[i]
                 model_name = 'TGOV1N'
-                model = self.system.TGOV1N
-                model.PIcontroller = []
+            if model_name == 'GENROU' and target_var == 'vref0':
+                idx = self.system.IEEEX1.idx.v[i]
+                idx_bis = self.system.GENROU.idx.v[i]
+                model_name = 'IEEEX1'
+
             if reference is not None and isinstance(reference, float):
                 reference_value = reference
-            elif reference is not None:
-                reference_value = reference.v[i]
+            elif reference is not None and isinstance(reference, np.ndarray):
+                reference_value = reference[i]
             else:
                 reference_value = 1
 
             Lmin = -10
             Lmax = 10
-            PIparams= {'dt':dt, 'Kp':Kp, 'Ki':Ki, 'Uref':1, 'idx':idx, 'model_name':model_name, 'model_var':model, 'add':add,
+            PIparams= {'dt':dt, 'Kp':Kp, 'Ki':Ki, 'Uref':1, 'idx':idx, 'idx_bis':idx_bis, 'model_name':model_name, 'model_var':model, 'add':add,
                        "target_var":target_var, 'reference':reference_value, 'active_filter':active_filter, 'Lmin':Lmin, 'Lmax':Lmax}
             if initial_output is not None:
                 PIparams['initial_output'] = initial_output.v[i]
@@ -704,6 +698,42 @@ class TDS_stepwise(BaseRoutine):
                         self.set_set_points(new_set_point)
         return
     
+    def run_opf_setpoints(self, system, opf_res, batch_size = 0.1, t_max =10, models = []):
+        Pref = opf_res.P
+        self.config.tmax = t_max
+        t_change = 0
+
+        system = self.system
+        new_target_ref1 = 'paux'
+        new_target_ref2 = 'qaux'
+
+        self.init()
+        change_ref = False 
+        if change_ref:
+            system.TGOV1N.pref0.v[:] = opf_res.P[-10:].values
+
+        for model in models:
+            generator_optimizer = (model.__class__.__name__ in ['GENROU', 'TGOV1N'])
+            #self.init_PIcontrollers(model,  dt=batch_size, Ki=0.5, Kp = 0.5, target_var= 'pref0', reference = opf_res.P)
+            #self.init_PIcontrollers(model,  dt=batch_size, Ki=-0.5, Kp = -0.4, target_var= 'paux0', reference = opf_res.P[-10:].values)
+            self.init_PIcontrollers(model,  dt=batch_size, Ki=0.5, Kp = 0.5, target_var= 'wref0', initial_output = model.omega, reference = opf_res.Vm[-10:].values)
+    
+        while self.system.dae.t < self.config.tmax:
+            self.run_individual_batch(t_sim=batch_size, no_summary=False)
+            new_set_points = []
+            for model in models:
+                for controller in model.PIcontroller:
+                    idx = controller.idx_bis
+                    uid = model.idx2uid(idx)
+                    if controller.target_var in ['paux0'] :
+                        #ctrl_input = system.TGOV1N.pout.v[uid]
+                        ctrl_input = system.GENROU.Pe.v[uid]
+                    elif controller.target_var in ['vref0', 'wref0'] :
+                        ctrl_input = system.GENROU.v.v[uid]
+                    new_set_point = controller.get_set_point(ctrl_input, feedback = True)
+                    self.set_set_points(new_set_point)
+        return
+
     def secondary_response_condition(self, idx):
         eps = 0.001
         t_steady = 0
@@ -786,225 +816,6 @@ class TDS_stepwise(BaseRoutine):
         self.config.shrinkt = 1
         return self.run(t_run = t_run, no_summary= no_summary, verbose = verbose, kwargs=kwargs) 
     
-    def get_set_points(self, set_points = None, line_id = 8, line_toggle = True, idxs = None):
-        set_point_changes = []
-        line_n = self.system.Line.n
-        line_resistance = False
-        line_failure = False
-        resistance = False
-        change_turbine = False
-
-        if set_points is None:
-            return []
-
-        if set_points == 'REDUAL':
-            new_set_point = {}
-            idxs = ['GENROU_1', 'GENROU_2']
-            new_set_point['model'] = 'REDUAL'
-            new_set_point['param'] = 'is_GFM'
-            new_set_point['value'] = 0
-            new_set_point['add'] = False
-            new_set_point['t'] = 14
-            if idxs is not None:
-                for i, idx in enumerate(idxs):
-                    idx_val = str('GENROU_') + str(i+1)    
-                    new_set_point['idx'] = idx_val
-                    set_point_changes.append(new_set_point)
-
-        if set_points == 'intermittent':
-            new_set_point = {}
-            new_set_point['model'] = 'GENROU'
-            new_set_point['param'] = 'gammap'
-            new_set_point['value'] = -0.1
-            new_set_point['idx'] = 1
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-
-        elif set_points == 'turbine':
-            new_set_point = {}
-            new_set_point['model'] = 'TGOV1'
-            new_set_point['param'] = 'paux0'
-            new_set_point['value'] = 0.1
-            new_set_point['idx'] = 1
-            new_set_point['add'] = True
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-        
-        elif set_points == 'fload':
-            new_set_point = {}
-            new_set_point['model'] = 'FLoad'
-            new_set_point['param'] = 'kp'
-            new_set_point['value'] = 50
-            new_set_point['idx'] = 'FLoad_1'
-            new_set_point['add'] = True
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-        
-        elif set_points == 'load_p0':
-            new_set_point = {}
-            new_set_point['model'] = 'PQ'
-            new_set_point['param'] = 'p0'
-            new_set_point['value'] = 1
-            new_set_point['idx'] = 'PQ_1'
-            new_set_point['add'] = True
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-            new_set_point = {}
-            new_set_point['model'] = 'PQ'
-            new_set_point['param'] = 'Ppf'
-            new_set_point['value'] = 15.7
-            new_set_point['idx'] = 'PQ_1'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-            new_set_point = {}
-            new_set_point['model'] = 'PQ'
-            new_set_point['param'] = 'p2p'
-            new_set_point['value'] = 0.5
-            new_set_point['idx'] = 'PQ_1'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            #set_point_changes.append(new_set_point)
-            new_set_point = {}
-            new_set_point['model'] = 'PQ'
-            new_set_point['param'] = 'p2i'
-            new_set_point['value'] = 0
-            new_set_point['idx'] = 'PQ_1'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            #set_point_changes.append(new_set_point)
-
-        elif set_points == 'droop':
-            new_set_point = {}
-            new_set_point['model'] = 'TGOV1'
-            new_set_point['param'] = 'R'
-            new_set_point['value'] = 0.1
-            new_set_point['idx'] = 1
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-
-        elif set_points == 'converter':
-            new_set_point = {}
-            new_set_point['model'] = 'PVD1'
-            new_set_point['param'] = 'gammap'
-            new_set_point['value'] = 0.1
-            new_set_point['idx'] = 1
-            new_set_point['add'] = True
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-        
-        elif set_points == 'load':
-            new_set_point = {}
-            new_set_point['model'] = 'PQ'
-            new_set_point['param'] = 'Ppf'
-            new_set_point['value'] = 0.5
-            new_set_point['idx'] = 'PQ_1'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-
-        elif set_points == 'pref':
-            new_set_point = {}
-            new_set_point['model'] = 'TGOV1'
-            new_set_point['param'] = 'pref0'
-            new_set_point['value'] = 0.1
-            new_set_point['idx'] = 1
-            new_set_point['add'] = True
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-
-        elif set_points == 'ZIP':
-            new_set_point = {}
-            new_set_point['model'] = 'ZIP'
-            new_set_point['param'] = 'kpp'
-            new_set_point['value'] = 10
-            new_set_point['idx'] = 'ZIP_1'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-
-        elif set_points == 'motor':
-            new_set_point = {}
-            new_set_point['model'] = 'Motor5'
-            new_set_point['param'] = 'kpp'
-            new_set_point['value'] = 10
-            new_set_point['idx'] = 'ZIP_1'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-
-        elif line_toggle:
-            new_set_point = {}
-            new_set_point['model'] = 'Toggle'
-            new_set_point['param'] = 't'
-            new_set_point['value'] = 5
-            new_set_point['idx'] = 1
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-            return set_point_changes
-        
-        elif line_resistance:
-            new_set_point = {}
-            new_set_point['model'] = 'Line'
-            new_set_point['param'] = 'b'
-            new_set_point['value'] = 1e9
-            new_set_point['idx'] = 'Line_8'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-            new_set_point = {}
-            new_set_point['model'] = 'Line'
-            new_set_point['param'] = 'g'
-            new_set_point['value'] = 1e9
-            new_set_point['idx'] = 'Line_8'
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-        for i in range(line_n):
-            if self.system.dae.t < 5 or line_id!=5:
-                continue
-            if set_points is None:
-                break
-            elif resistance:
-                new_set_point = {}
-                new_set_point['model'] = 'Line'
-                new_set_point['param'] = 'u'
-                new_set_point['value'] = 0
-                new_set_point['idx'] = i
-                new_set_point['add'] = False
-                new_set_point['t'] = 5
-            elif self.system.dae.t > 5:
-                new_set_point = {}
-                new_set_point['model'] = 'Line'
-                new_set_point['param'] = 'u'
-                new_set_point['value'] = 0
-                new_set_point['idx'] = i
-                new_set_point['t'] = 5
-                new_set_point['add'] = False
-            elif self.system.dae.t > 10:
-                new_set_point['model'] = 'Line'
-                new_set_point['param'] = 'u'
-                new_set_point['value'] = 1
-                new_set_point['idx'] = i
-                new_set_point['t'] = 5
-                new_set_point['add'] = False
-            if 'new_set_point' in locals():        
-                set_point_changes.append(new_set_point)
-        if not line_failure and set_points is None:
-            new_set_point = {}
-            new_set_point['model'] = 'GENROU'
-            new_set_point['param'] = 'u'
-            new_set_point['value'] = 0
-            new_set_point['idx'] = i
-            new_set_point['add'] = False
-            new_set_point['t'] = 5
-            set_point_changes.append(new_set_point)
-        return set_point_changes
-            
-    
     def set_set_points(self, set_points):
         if type(set_points) == dict:
             set_points = [set_points]
@@ -1018,7 +829,6 @@ class TDS_stepwise(BaseRoutine):
                 t_change = set_point['t']
             else:
                 t_change = self.system.dae.t
-
             
             if not (t_change-1<self.system.dae.t<t_change+1):
                 continue

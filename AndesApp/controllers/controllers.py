@@ -14,6 +14,7 @@ class PIcontroller:
         self.reference = kwargs.get("ref", 1.0)  # Maximum limit
         self.model = kwargs.get("model", 'GENROU')  # Maximum limit
         self.idx = kwargs.get("idx", 1)  # Maximum limit
+        self.idx_bis = kwargs.get("idx_bis", 1)  # Maximum limit
 
         # Transfer function for the PI controller: H(s) = Kp + Ki/s
         num = [self.Kp, self.Ki]
@@ -38,17 +39,19 @@ class PIcontroller:
         # Initialize states for the state-space representation
         self.x0 = np.zeros(self.pi_ss.A.shape[0])
 
-    def apply(self, input):
+    def apply(self, input, dt =None):
         """
         Process a single input value through the PI controller with feedback.
 
         Args:
-        - setpoint (float): The desired reference value.
-        - measurement (float): The measured feedback value.
+        - input (float): The input 
 
         Returns:
         - output_value (float): The controller's output.
         """
+
+        if dt is None:
+            dt = self.dt
         # Calculate the error between the setpoint and the measurement
         error = self.reference - input
 
@@ -56,7 +59,7 @@ class PIcontroller:
         self.pi_tf
         response= ctrl.forced_response(
             self.pi_tf,
-            T = [0, self.dt],
+            T = [0, dt],
             U=[error, error],  # Error signal as input
             X0 =self.x0  # Initial state
         )

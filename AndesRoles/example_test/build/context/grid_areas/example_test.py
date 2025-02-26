@@ -1,11 +1,9 @@
 import time
 import numpy as np
-import json
 import requests
 import time
-import cvxpy as cp
-import traceback
 import sys
+import json
 sys.path.append('/home/pablo/Desktop/eroots/COLMENA/AndesApp/Scripts/scripts')
 import os
 from colmena import (
@@ -54,16 +52,16 @@ class ErootsUseCase(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS
-            HOST_IP = "192.168.1.122" 
+            HOST_IP = "192.168.68.60" 
             PORT = 5000
             self.andes_url = f"http://{HOST_IP}:{PORT}"
-            print('Monitoring Role is initializing')
-            responseAndes = requests.get(self.andes_url + '/assign_device')
-            self.device_dict = responseAndes.json()
+            #responseAndes = requests.get(self.andes_url + '/assign_device')
+            #self.device_dict = responseAndes.json()
+            self.device_dict = {'model':'REDUAL', 'idx':'GENROU_1'}
+            self.t_start = time.time()
         
           
         def sync2Andes(self):
-            print(self.device_dict)
             responseAndes = requests.get(self.andes_url + '/device_sync', params=self.device_dict)
             self.variables = responseAndes.json()
             return responseAndes
@@ -76,6 +74,9 @@ class ErootsUseCase(Service):
             return responseAndes
         
         def publish_metric(self, param):
+            print("keys are ", self.variables.keys())
+            if param not in self.variables.keys():
+                requests.post(self.andes_url + '/print_var', json = self.variables)
             value = self.variables[param]
             self.frequency.publish(value)
             return value
@@ -84,5 +85,37 @@ class ErootsUseCase(Service):
         def behavior(self):
             responseAndes = self.sync2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
-            value = self.publish_metric('omega')
+            value = self.publish_metric('v')
+
+            roleChangeOut = self.device_dict
+            roleChangeOut['role'] = self.__class__.__name__
+            responseAndes = requests.get(self.andes_url + '/assign_out', params = roleChangeOut)
             return
+    
+    class GridFormingRole(Role):
+        @Metric('frequency')
+        @KPI('erootsusecase/frequency[1s]>1')
+        @Requirements('GENERATOR')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            HOST_IP = "192.168.68.60" 
+            PORT = 5000
+            self.andes_url = f"http://{HOST_IP}:{PORT}"
+            self.device_dict = {'model':'REDUAL', 'idx':'GENROU_1'}
+            self.t_start = time.time()
+
+        def behavior(self):
+            responseTimeSync = requests.get(self.andes_url + '/device_sync')
+            responseDict = responseTimeSync.json()
+            if responseDict['time'] < 10 and not self.kpi_exist:
+                return
+            roleChangeDict = self.device_dict
+            roleChangeDict['param'] = 'is_GFM'
+            roleChangeDict['value'] = 1
+            responseAndes = requests.get(self.andes_url + '/device_role_change', params = roleChangeDict)
+
+            roleChangeOut = self.device_dict
+            roleChangeOut['role'] = self.__class__.__name__
+            responseAndes = requests.get(self.andes_url + '/assign_out', params = roleChangeOut)
+            return responseAndes
+
