@@ -12,6 +12,8 @@ import numpy as np
 import traceback
 import aux_function as aux
 import matplotlib.pyplot as plt
+import matplotlib
+from copy import deepcopy
 current_directory = os.path.dirname(os.path.abspath(__file__))
 two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
@@ -19,6 +21,7 @@ from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
 
 system = None  
+started = None  
 print(sys.path)
 app = Flask(__name__)
 # In-memory storage for received JSON data (list of dictionaries)
@@ -33,22 +36,37 @@ def load_simulation():
     global system
     global controllable_devices
     global change
+    global started
+    global system_initial
     try:
         # Load the Andes simulation (but don't run it yet)ç
         change = 'None'
+        app.config['started'] = False
+        app.config['await_start'] = True
         n_redual = 4
-        system = ad.load(get_case('ieee39/ieee39_full.xlsx'), setup=False)
-        system = aux.build_new_system_legacy(system, new_model_name = 'REDUAL', n_redual =n_redual)
+        system_ieee = ad.load(get_case('ieee39/ieee39_full.xlsx'), setup=False)
+        system = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
+        system_initial = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
         for i in range(n_redual):
             idx = system.REDUAL.idx.v[i]
             system.REDUAL.alter(src='is_GFM', idx=idx, value = 0)
+            system_initial.REDUAL.alter(src='is_GFM', idx=idx, value = 0)
         system.find_devices()
         system.REDUAL.prepare()
         system.Toggle.alter(src='dev', idx = 'Toggler_1', value = 'GENROU_8')
+        system.Toggle.alter(src='t', idx = 'Toggler_1', value = 10)
         system.setup()
         system.TDS_stepwise.config.criteria = 0
         system.PFlow.run()
-        system.TDS.init()
+
+        system_initial.find_devices()
+        system_initial.REDUAL.prepare()
+        system_initial.Toggle.alter(src='dev', idx = 'Toggler_1', value = 'GENROU_8')
+        system_initial.Toggle.alter(src='t', idx = 'Toggler_1', value = 10)
+        system_initial.setup()
+        system_initial.TDS_stepwise.config.criteria = 0
+        system_initial.PFlow.run()
+        system_initial.TDS.init()
 
         #We now define the controllable devices
         controllable_devices = []
@@ -58,8 +76,19 @@ def load_simulation():
             device_dict['model'] = 'REDUAL'
             device_dict['GridFormingRole'] = False
             device_dict['MonitoringRole'] = False
+            device_dict['AutomaticGenerationResponse'] = True
             controllable_devices.append(device_dict)
 
+        for idx in system.GENROU.idx.v[5:6]:
+            continue
+            device_dict = {}
+            device_dict['idx'] = idx
+            device_dict['model'] = 'REDUAL'
+            device_dict['GridFormingRole'] = False
+            device_dict['MonitoringRole'] = False
+            device_dict['AutomaticGenerationResponse'] = True
+
+            controllable_devices.append(device_dict)
         print('idx.v is ', system.REDUAL.idx.v)
         print('Simulation Loaded with controllable devices', controllable_devices)
 
@@ -123,9 +152,9 @@ def print_var():
         data = request.get_json()
         for i in data['keys']:
             var = getattr(system.REDUAL, i)
-            res = var
+            res = var.v[0]
             print('Var value is', var.v)
-        return jsonify({"message": res}), 200
+        return jsonify({"message": 'printed'}), 200
     except Exception as e:
         change = 'printed'
         print(change)
@@ -173,7 +202,7 @@ def device_role_change():
         print(data)
         idx = data['idx']
         model_name = data['model']
-        param = data['param']
+        param = data['var']
         value = data['value']
         model = getattr(system, model_name)
         uid = model.idx2uid(idx)
@@ -207,6 +236,7 @@ def set_point_change():
 @app.route('/device_sync', methods=['GET'])
 def device_sync(all_devices = False):
     #method to post the new device role in the app
+    app.config['await_start'] = False
     try:
         data = request.args.to_dict()
         if data is None:
@@ -216,7 +246,7 @@ def device_sync(all_devices = False):
         print('data keys are', data.keys())
         idx = data['idx']
         model_name = data['model']
-        model = getattr(system, model_name)
+        model = getattr(system_initial, model_name)
         uid = model.idx2uid(idx)
         response = model.as_dict()
 
@@ -228,7 +258,6 @@ def device_sync(all_devices = False):
                 var_value = var_value.tolist()
             response[key] = var_value
 
-        
         states = model._states_and_ext() 
         algebs = model._algebs_and_ext()
         othervars = OrderedDict(states)
@@ -261,19 +290,25 @@ def specific_device_sync(all_devices = False):
             return jsonify({"error": "No JSON data received!"}), 400
         response = {}
         idx = data['idx']
-        idx = int(idx)
         model_name = data['model']
-        param_name = data['param']
+        var_name = data['var']
        
-        model = getattr(system, model_name)
-        param = getattr(model, param_name)
+        model = getattr(system, model_name, None)
+        var = getattr(model, var_name)
+        if len(var.v) == 0:
+            model = getattr(system_initial, model_name, None)
+            var = getattr(model, var_name)
         uid = model.idx2uid(idx)
-        value = param.v[uid]
-        response['value'] = value
-        
+        value = var.v[uid]
+        print(f"value is {var}")
+        try:
+            response['value'] = value
+        except:
+            response['value'] = None
         return jsonify(response), 200
     except Exception as e:
         print(e)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/sync_time', methods=['GET'])
@@ -298,18 +333,28 @@ def run():
 
 @app.route('/run_real_time', methods=['GET'])
 def run_real_time():
-    while not json_storage['start']:
-        _=0
-    t_0 = time.time()
-    t_run = float(request.args.get('t_run', 30))  
-    delta_t = float(request.args.get('delta_t', 30))  
     try:
+        global started
+
+        set_points = []
+        set_points += [{'model':'Line', 'idx':'Line_19', 't':10, 'param':'u', 'value':0, 'add':False}]
+        set_points += [{'model':'Line', 'idx':'Line_19', 't':30, 'param':'u', 'value':1, 'add':False}]
+        while app.config['await_start']:
+            time.sleep(1)
+
+        t_0 = time.time()
+        t_run = float(request.args.get('t_run', 90))  
+        delta_t = float(request.args.get('delta_t', 0.1))  
+        app.config['started'] = True
+        system.PFlow.run()
         while system.dae.t <= t_run:
             if time.time() - t_0 >= delta_t: 
-                system.TDS_stepwise.run_individual_batch(delta_t)
+                system.TDS_stepwise.run_individual_batch(t_sim = delta_t)
                 print(f't_run is {t_run}')
+                print(f't_run is {delta_t}')
                 print(f't_dae is {system.dae.t}')
                 t_0 = time.time()
+            system.TDS_stepwise.set_set_points(set_points)
         return jsonify({"Message": 'Success', "Time":system.dae.t}), 200
     except Exception as e:
         traceback.print_exc()
@@ -324,7 +369,9 @@ def plot():
         model = getattr(system, model_name)
         var = getattr(model, var_name)
         system.TDS_stepwise.load_plotter()
-        fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v)
+        matplotlib.use('TkAgg')
+        fig, ax = system.TDS_stepwise.plt.plot(system.Bus.v)
+        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega)
         # Save the plot to a BytesIO object rather than displaying it
         img = io.BytesIO()
         fig.savefig(img, format='png')
@@ -339,9 +386,9 @@ def plot():
         return jsonify({"error": str(e)}), 500
     
 if __name__ == '__main__':
-    host = "192.168.68.60"
+    host = "192.168.68.67"
     host = "0.0.0.0"
-    app.run(host=host, port=5000, debug=False)
+    app.run(host=host, port=5000, debug=False, threaded=True)
     andes_url = 'http://127.0.0.1:5000'
     andes_directory = ad.get_case("kundur/kundur_full.xlsx")
     andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
@@ -349,3 +396,4 @@ if __name__ == '__main__':
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
     time.sleep(2)
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
+    responseLoad = requests.post(andes_url + '/run', json=andes_dict)

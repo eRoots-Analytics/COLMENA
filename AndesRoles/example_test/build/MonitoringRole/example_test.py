@@ -93,6 +93,7 @@ class ErootsUseCase(Service):
             responseAndes = requests.get(self.andes_url + '/assign_device', params={'role':self.__class__.__name__})
             self.device_dict = responseAndes.json()
             self.t_start = time.time()
+            responseRun = requests.get(self.andes_url + '/run_real_time', params={'t_run':50, 'delta_t':0.1})
 
         def behavior(self):
             print('Convereter Grid Formed')

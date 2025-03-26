@@ -114,14 +114,20 @@ def setup_MPC(system):
             r = system.Line.r.v[index]
             x = system.Line.x.v[index]
             b_line = system.Line.b.v[index]
-            g[(bus1, bus2)] = r/(r**2 + x**2)
-            g[(bus2, bus1)] = r/(r**2 + x**2)
-            b[(bus1, bus2)] = -x/(r**2 + x**2)
-            b[(bus2, bus1)] = -x/(r**2 + x**2)
-            r_dict[(bus1, bus2)] = r
-            r_dict[(bus2, bus1)] = r
-            x_dict[(bus1, bus2)] = x
-            x_dict[(bus2, bus1)] = x
+            try:
+                r_dict[(bus1, bus2)] += r
+                r_dict[(bus2, bus1)] += r
+                x_dict[(bus1, bus2)] += x
+                x_dict[(bus2, bus1)] += x
+                g[(bus1, bus2)] = r/(r**2 + x**2)
+                g[(bus2, bus1)] = r/(r**2 + x**2)
+                b[(bus1, bus2)] = -x/(r**2 + x**2)
+                b[(bus2, bus1)] = -x/(r**2 + x**2)
+            except:
+                r_dict[(bus1, bus2)] = r
+                r_dict[(bus2, bus1)] = r
+                x_dict[(bus1, bus2)] = x
+                x_dict[(bus2, bus1)] = x
         else:
             g[(bus1, bus2)] = 0
             g[(bus2, bus1)] = 0
@@ -181,7 +187,7 @@ for i in model.bus_rangeSet:
     if i in system.PV.bus.v:
         index = system.PV.bus.v.index(i)
         model.Pg[i].set_value( system.PV.p0.v[index] )
-        model.Pg[i].set_value( system.PV.p0.v[index] )
+        model.Qg[i].set_value( system.PV.q0.v[index] )
         qg = system.PV.p0.v[index] 
         pg = system.PV.q0.v[index]
     else:

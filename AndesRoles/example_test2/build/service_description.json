@@ -1,0 +1,42 @@
+{
+    "id": {
+        "value": "ErootsUseCase"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_areas",
+            "imageId": "colmena-grid_areas"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "MonitoringRole",
+            "imageId": "colmena-monitoringrole",
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
+            "kpis": []
+        },
+        {
+            "id": "GridFormingRole",
+            "imageId": "colmena-gridformingrole",
+            "hardwareRequirements": [
+                "TRANSFORMER"
+            ],
+            "kpis": [
+                "erootsusecase/frequency[1s]>1"
+            ]
+        },
+        {
+            "id": "AutomaticGenerationControl",
+            "imageId": "colmena-automaticgenerationcontrol",
+            "hardwareRequirements": [
+                "GENERATOR"
+            ],
+            "kpis": [
+                "erootsusecase/frequency[1s]>1.0001"
+            ]
+        }
+    ]
+}
