@@ -1,32 +1,39 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
-[tool.hatch.metadata]
-allow-direct-references = true
-
 
 [project]
-name = "colmena"
-version = "0.1.0"
+name = "grid_areas"
+dynamic = ["version", "dependencies"]
 authors = [
-    {name="Workflows and Distributed Computing group"},
+    { name = "Workflows and Distributed Computing group" },
 ]
-
-
-description = "COLMENA Programming model library"
-readme = "README.md"
+description = "COLMENA: grid_areas"
 requires-python = ">=3.8"
+license = "Apache-2.0"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: Apache Software License",
 ]
-dependencies = [
-    "coloredlogs",
-    "eclipse-zenoh==0.10.1rc0",
-    "typing",
-    "numpy",
-    "zeromq-pyre@git+https://github.com/zeromq/pyre.git",
-    "pytest"
-]
+homepage = "https://proyecto-colmena.com/en"
 
+[project.scripts]
+start = "grid_areas.main:main"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.pip]
+extra-index-url = "https://test.pypi.org/simple/"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+path = "grid_areas/main.py"
+
+[tool.hatch.build]
+include = [
+    "grid_areas/*"
+]

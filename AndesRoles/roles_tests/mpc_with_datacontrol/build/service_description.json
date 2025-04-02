@@ -1,0 +1,32 @@
+{
+    "id": {
+        "value": "AgentControl"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_area",
+            "imageId": "grid_area:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "LayerOne",
+            "imageId": "layerone:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": [
+                "agentcontrol/deviation[3s] < 1"
+            ]
+        },
+        {
+            "id": "MonitoringRole",
+            "imageId": "monitoringrole:latest",
+            "hardwareRequirements": [
+                "DEVICE"
+            ],
+            "kpis": []
+        }
+    ]
+}

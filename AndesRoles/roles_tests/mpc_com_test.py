@@ -92,5 +92,5 @@ class OneLayerControl(Service):
 
             #The deviation metric is equal to the differenece between power expected and actual power 
             #This metric is published in the area's scope 
-            error = norm(state_projection[0] - actual_state)
+            error = np.norm(state_projection[0] - actual_state)
             self.deviation.publish(error, scope = self.area.name)

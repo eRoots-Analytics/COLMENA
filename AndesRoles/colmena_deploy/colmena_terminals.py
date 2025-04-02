@@ -1,20 +1,16 @@
 import numpy as np
 import subprocess
 import time
-import shlex
-import signal
-import sys
 
 pre_command = 'source /home/pablo/myenv/bin/activate'
 build_command = {
-        "cmd": "/home/pablo/myenv/bin/python -m colmena_build --colmena_path='/home/pablo/Desktop/Colmena/programming-model' "
-               "--service_code_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests' "
-               "--module_name='mpc_one_layer' "
-               "--service_name='AgentControl' ",
-        "cwd": "/home/pablo/Desktop/Colmena/programming-model/scripts"  
+        "cmd": "/home/pablo/myenv/bin/python -m colmena_build "
+               "--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_with_datacontrol.py' "
+               "--build_file='/home/pablo/Desktop/Colmena/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' ",
+        "cwd": "/home/pablo/Desktop/Colmena/programming-model/colmena/building_tool"  
     }
 deploy_command = {
-        "cmd": "/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_one_layer/build' "
+        "cmd": "/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_with_datacontrol/build' "
                "--platform='linux/amd64' "
                "--user=pablodejuan",
         "cwd": "/home/pablo/Desktop/Colmena/deployment-tool/deployment"  # Change to the correct directory
@@ -24,23 +20,27 @@ zenoh_command = {
         "cwd": "/home/pablo/Desktop/Colmena/agent"  # Change to the directory where compose.yaml is located
     }
 agent_command= {
-        "cmd": "DEVICE_HARDWARE={hardware} DEVICE_STRATEGY={strategy} DEVICE_NAME={agent_name} docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
+        "cmd": "DEVICE_HARDWARE={hardware} DEVICE_STRATEGY={strategy} docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
         "cwd": "/home/pablo/Desktop/Colmena/agent", 
         'is_agent': True,
     }
 
-agents = [{'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'agent_a'},
-          {'hardware':'TRANSFORMER', 'strategy':'EAGER', 'agent_name':'agent_b'}, 
-          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'agent_c'}] 
+agents = [{'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_a'},
+          {'hardware':'TRANSFORMER', 'strategy':'LAZY', 'agent_name':'device_b'}, 
+          {'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_c'}, 
+          {'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_d'}] 
 
-agents = [{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'agent_a'},
-          {'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'agent_b'}] 
+mpc_agents = True
+if mpc_agents:
+    agents = [{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area1'},{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area2'}] 
+    agents += [{'hardware':'DEVICE', 'strategy':'EAGER', 'agent_name':'device1'},{'hardware':'DEVICE', 'strategy':'EAGER', 'agent_name':'device2'}] 
 
 redeploy_commands = [build_command, zenoh_command, agent_command, agent_command, deploy_command]  
 commands =  [zenoh_command, agent_command, agent_command, deploy_command]  
 commands = redeploy_commands 
-commands = [agent_command, agent_command, deploy_command]
+commands = [agent_command, agent_command, agent_command, agent_command, deploy_command]
 #commands = [build_command]
+#commands = [deploy_command]
 processes = []
 agent_i = 0
 
@@ -52,7 +52,7 @@ terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate
 #process = subprocess.Popen(terminal_cmd, shell=True)
 subprocess.Popen(terminal_cmd,shell=True)
 
-time.sleep(6)
+time.sleep(5)
 for cmd in commands:
     if cmd.get('is_agent', False):  # Check if it's the agent command
         agent_data = agents[agent_i]

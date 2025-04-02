@@ -17,7 +17,8 @@ from colmena import (
     Persistent,
     Async,
     KPI,
-    Data
+    Data,
+    Dependencies
 )
 
 HOST_IP = '192.168.68.67'
@@ -39,14 +40,8 @@ class GridAreas(Context):
                     return area
         return False
 
-class DeviceName(Context):
-
-    def whateveryouwant(self, device):
-        return uuid.uuid4()
-
 class ErootsUseCase(Service):
     @Metric('frequency')
-    @Context(class_ref=GridAreas, name="grid_areas")
     @Context(class_ref=GridAreas, name="grid_areas")
     @Channel('behaviorChange', scope= ' ')
     def __init__(self, *args, **kwargs):
@@ -55,16 +50,18 @@ class ErootsUseCase(Service):
                 
     class MonitoringRole(Role):
         @Metric('frequency')
-        @Channel('frequency_monitor')
+        @Metric('monitored')
         @Requirements('GENERATOR')
-        @Data(name = 'monitoring_data', scope = 'erootsusecase/device_name')
-        #@KPI('erootsusecase/frequency[1s]>1')
+        @KPI('erootsusecase/monitored[1s] < 0.5')
+        @Dependencies("requests")
+        @Requirements('GENERATOR')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS
             PORT = 5000
-            self.andes_url = f"http://{HOST_IP}:{PORT}"
-            responseAndes = requests.get(self.andes_url + '/assign_device')
+            self.andes_url = f"http://{HOST_IP}:{PORT}"            
+            self.agent_id = os.getenv('AGENT_ID')
+            responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
             self.device_dict = responseAndes.json()
             self.t_start = time.time()
         
@@ -83,59 +80,78 @@ class ErootsUseCase(Service):
             self.frequency.publish(value)
             return value
         
-        @Persistent()
+        @Persistent(period = 0.1)
         def behavior(self):
-            responseAndes = self.sync2Andes()
+            responseAndes = self.change2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
-            value = self.publish_metric('v')
-            return
+            value = self.publish_metric('omega')
+            self.monitored.publish(1)
+            return 1
     
     
     class GridFormingRole(Role):
         @Metric('frequency')
-        @KPI('erootsusecase/frequency[1s]>1')
+        @KPI('erootsusecase/frequency[1s] > 0.9998')
+        @Dependencies("requests")
         @Requirements('TRANSFORMER')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             PORT = 5000
             self.andes_url = f"http://{HOST_IP}:{PORT}"
-            responseAndes = requests.get(self.andes_url + '/assign_device', params = {'role':self.__class__.__name__})
+            self.agent_id = os.getenv('AGENT_ID')
+            responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
             self.device_dict = responseAndes.json()
             self.t_start = time.time()
 
+        @Persistent(period = 0.1)
         def behavior(self):
-            print('Grid Forming Mode Changed 1')
+            query_dict = self.device_dict
+            query_dict['var'] = 'is_GFM'
+            responseAndes = requests.get(self.andes_url + '/specific_device_sync', params=query_dict)
+            is_GFM = responseAndes.json()['value']
+
+            query_dict['var'] = 'Pe'
+            responseAndes = requests.get(self.andes_url + '/specific_device_sync', params=query_dict)
+            Pe = responseAndes.json()['value']
+            if is_GFM:
+                Paux = self.Paux_init - Pe
+            else:
+                self.Paux_init = Pe
+                Paux = 0
             requests.post(self.andes_url + '/print_var', json = {'keys':['v','is_GFM']})
             roleChangeDict = self.device_dict
             roleChangeDict['var'] = 'is_GFM'
             roleChangeDict['value'] = 1
+            roleChangeDict['agent'] = self.agent_id
             responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
             requests.post(self.andes_url + '/print_var', json = {'keys':['v','is_GFM']})
 
-            roleChangeOut = self.device_dict
-            roleChangeOut['role'] = self.__class__.__name__
-            responseAndes = requests.post(self.andes_url + '/assign_out', json = roleChangeOut)
+            roleChangeDict['var'] = 'Paux'
+            roleChangeDict['value'] = Paux*0.5
+            #responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
+
             print('Grid Forming Mode Changed 2')
             return responseAndes
         
     class AutomaticGenerationControl(Role):
         @Metric('frequency')
         @Requirements('GENERATOR')
-        @KPI('erootsusecase/frequency[1s]>1.0001')
+        @KPI('erootsusecase/frequency[1s] > 0.998')
+        @Dependencies("requests")
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS
             PORT = 5000
             self.andes_url = f"http://{HOST_IP}:{PORT}"
-            #responseAndes = requests.get(self.andes_url + '/assign_device')
-            #self.device_dict = responseAndes.json()
-            self.device_dict = {'model':'GENROU', 'idx':'GENROU_5'}
+            self.agent_id = os.getenv('AGENT_ID')
+            responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
+            self.device_dict = responseAndes.json()
             PI_params = self.device_dict.get('PI_params', {})
             self.t_start = time.time()
             self.t_last = time.time()
             self.reference = PI_params.get('reference', 1)
-            self.Ki = PI_params.get('Ki', 10)
-            self.Kp = PI_params.get('Kp', -10)
+            self.Ki = PI_params.get('Ki', -40)
+            self.Kp = PI_params.get('Kp', -20)
             self.ctrl_input = PI_params.get('ctrl_input', 1)
             self.x = 0
             self.first = True
@@ -144,9 +160,14 @@ class ErootsUseCase(Service):
         def behavior(self):
             query_dict = self.device_dict
             query_dict['var'] = 'omega'
-            responseAndes = requests.get(self.andes_url + '/specific_device_sync', params=self.device_dict)
-            print("Dict is", responseAndes.json())
+            responseAndes = requests.get(self.andes_url + '/specific_device_sync', params=query_dict)
             u_input = responseAndes.json()['value']
+
+            query_dict['var'] = 'paux0'
+            query_dict['model'] = 'TGOV1N'
+            query_dict['idx'] = 'TGOV1_' + self.device_dict['idx'][-1]
+            responseAndes = requests.get(self.andes_url + '/specific_device_sync', params=query_dict)
+            print("Dict is", responseAndes.json())
             if self.first:
                 dt=0
                 self.first = False
@@ -158,9 +179,12 @@ class ErootsUseCase(Service):
             y = self.x + self.Kp*(u_input-self.reference)
             roleChangeDict = {}
             roleChangeDict['model'] = 'TGOV1N'
-            roleChangeDict['idx'] = 'TGOV1_5'
+            roleChangeDict['idx'] = 'TGOV1_' + self.device_dict['idx'][-1]
             roleChangeDict['var'] = 'paux0'
-            roleChangeDict['value'] = 10
-            #time.sleep(0.2)
+            roleChangeDict['value'] = y
+            roleChangeDict['agent'] = self.agent_id
             responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
+            roleChangeDict['var'] = 'paux'
+            responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
+            time.sleep(0.1)
             return responseAndes

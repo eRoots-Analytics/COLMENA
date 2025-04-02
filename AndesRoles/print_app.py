@@ -1,9 +1,10 @@
 from flask import Flask
 import requests
 
+
 app = Flask(__name__)
 
-@app.route('/print_payload', methods=['POST'])
+@app.route('/print_app', methods=['POST'])
 def print_payload():
     payload = requests.get_json()  # Get the JSON payload
     print("Received Payload:", payload)  # Print to console

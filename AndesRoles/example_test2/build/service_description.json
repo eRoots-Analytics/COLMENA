@@ -5,37 +5,40 @@
     "dockerContextDefinitions": [
         {
             "id": "grid_areas",
-            "imageId": "colmena-grid_areas"
+            "imageId": "grid_areas:latest"
         }
     ],
     "kpis": [],
     "dockerRoleDefinitions": [
         {
             "id": "MonitoringRole",
-            "imageId": "colmena-monitoringrole",
+            "imageId": "monitoringrole:latest",
             "hardwareRequirements": [
+                "GENERATOR",
                 "GENERATOR"
             ],
-            "kpis": []
+            "kpis": [
+                "erootsusecase/monitored[1s] < 0.5"
+            ]
         },
         {
             "id": "GridFormingRole",
-            "imageId": "colmena-gridformingrole",
+            "imageId": "gridformingrole:latest",
             "hardwareRequirements": [
                 "TRANSFORMER"
             ],
             "kpis": [
-                "erootsusecase/frequency[1s]>1"
+                "erootsusecase/frequency[1s] > 0.998"
             ]
         },
         {
             "id": "AutomaticGenerationControl",
-            "imageId": "colmena-automaticgenerationcontrol",
+            "imageId": "automaticgenerationcontrol:latest",
             "hardwareRequirements": [
                 "GENERATOR"
             ],
             "kpis": [
-                "erootsusecase/frequency[1s]>1.0001"
+                "erootsusecase/frequency[1s] > 0.998"
             ]
         }
     ]

@@ -16,7 +16,6 @@ two_levels_up = os.path.dirname(current_directory)
 sys.path.insert(0, two_levels_up+'/AndesApp')
 from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
-import inspect
 import matplotlib.pyplot as plt
 import matplotlib
 from colmena import (
