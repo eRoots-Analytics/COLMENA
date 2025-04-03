@@ -1,13 +1,13 @@
 # Fdb version 4
 ["biber main"] 0 "main.bcf" "main.bbl" "main" 0 -1
-  "main.bcf" 1743602481.84969 108066 1ea4e4b77efd5934e26eab464349e00f "pdflatex"
+  "main.bcf" 1743692455.09301 108066 1ea4e4b77efd5934e26eab464349e00f "pdflatex"
   "ref.bib" 1743602068.50202 4236 c4fb56db82fd348d7f458eb10a2298c1 ""
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1743602480.38996 "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" "main.pdf" "main" 1743602481.97899 2
-  "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" 1743602478.2287 20589 077f7be844d5e96faafe763244aa1c37 ""
+["pdflatex"] 1743692453.76504 "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" "main.pdf" "main" 1743692455.21796 2
+  "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" 1743691450.6937 20589 077f7be844d5e96faafe763244aa1c37 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/tcrm1000.tfm" 1136768653 1536 e07581a4bb3136ece9eeb4c3ffab8233 ""
@@ -270,10 +270,10 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1732099773 5476123 0aaf5f0b94d004f6c94b5aad0957af23 ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1732099823 3343019 767295ba2e057db46aea124254a1a7f8 ""
   "/usr/local/texlive/2024/texmf.cnf" 1732099769.70411 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1743602481.84769 5381 0de8e28223eb55a4a1a96da47e99dbc9 "pdflatex"
+  "main.aux" 1743692455.08901 5381 0de8e28223eb55a4a1a96da47e99dbc9 "pdflatex"
   "main.bbl" 1743602462.63472 20448 a11ece229b982549ed04c087e4f80fa1 "biber main"
-  "main.out" 1743602481.84869 1384 e2a0d554a9fefa49e0e063d9614c8c30 "pdflatex"
-  "main.tex" 1743602478.2287 20589 077f7be844d5e96faafe763244aa1c37 ""
+  "main.out" 1743692455.09201 1384 e2a0d554a9fefa49e0e063d9614c8c30 "pdflatex"
+  "main.tex" 1743691450.6937 20589 077f7be844d5e96faafe763244aa1c37 ""
   "plots/IEEE39 (1).png" 1740669021.24624 207926 7f63e0366dac7a3324b0497dbdc913d7 ""
   "plots/colmena_omega.png" 1743598588.32668 45361 1bbf0ffe86dc567da209293ee53f77cc ""
   "plots/control_omega.png" 1743592572.22073 35283 851cfd391492f071cf2b50e6499370d2 ""
