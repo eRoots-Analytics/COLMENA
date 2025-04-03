@@ -98,8 +98,8 @@
       \strng{authornamehash}{454950dba5d911059d8d457458a057fc}
       \strng{authorfullhash}{80d9e92cec78666f53efd70ca48b4eca}
       \strng{authorfullhashraw}{80d9e92cec78666f53efd70ca48b4eca}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Power Systems}
@@ -108,7 +108,6 @@
       \field{title}{Hybrid Symbolic-Numeric Framework for Power System Modeling and Analysis}
       \field{volume}{36}
       \field{year}{2021}
-      \true{nocite}
       \field{pages}{1373\bibrangedash 1384}
       \range{pages}{12}
       \verb{doi}
@@ -132,8 +131,8 @@
       \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
       \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
       \field{extraname}{1}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
@@ -170,8 +169,8 @@
       \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
       \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
       \field{extraname}{1}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm}}
@@ -208,8 +207,8 @@
       \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
       \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
       \field{extraname}{2}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf300/pg_tca300bus.htm}}
@@ -229,20 +228,20 @@
     \endentry
     \entry{grids:activsg2000}{misc}{}{}
       \name{author}{1}{}{%
-        {{hash=b85317d5fc9b016c6d69cb84f9f442a0}{%
+        {{hash=80fca8af316f10c00e4d72a341540af0}{%
            family={University},
            familyi={U\bibinitperiod},
-           given={Texas\bibnamedelima A&M},
+           given={Texas\bibnamedelima AM},
            giveni={T\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
       }
-      \strng{namehash}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{fullhash}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{fullhashraw}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{bibnamehash}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{authorbibnamehash}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{authornamehash}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{authorfullhash}{b85317d5fc9b016c6d69cb84f9f442a0}
-      \strng{authorfullhashraw}{b85317d5fc9b016c6d69cb84f9f442a0}
+      \strng{namehash}{80fca8af316f10c00e4d72a341540af0}
+      \strng{fullhash}{80fca8af316f10c00e4d72a341540af0}
+      \strng{fullhashraw}{80fca8af316f10c00e4d72a341540af0}
+      \strng{bibnamehash}{80fca8af316f10c00e4d72a341540af0}
+      \strng{authorbibnamehash}{80fca8af316f10c00e4d72a341540af0}
+      \strng{authornamehash}{80fca8af316f10c00e4d72a341540af0}
+      \strng{authorfullhash}{80fca8af316f10c00e4d72a341540af0}
+      \strng{authorfullhashraw}{80fca8af316f10c00e4d72a341540af0}
       \field{sortinit}{1}
       \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
@@ -462,7 +461,7 @@
       \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{title}{Power Electronics: Converters, Applications, & Design}
+      \field{title}{Power Electronics: Converters, Applications, and Design}
       \true{nocite}
     \endentry
     \entry{source:bookelectron}{book}{}{}
