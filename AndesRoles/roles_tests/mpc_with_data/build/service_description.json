@@ -6,6 +6,10 @@
         {
             "id": "grid_area",
             "imageId": "grid_area:latest"
+        },
+        {
+            "id": "first_layer",
+            "imageId": "first_layer:latest"
         }
     ],
     "kpis": [],
@@ -13,7 +17,17 @@
         {
             "id": "LayerOne",
             "imageId": "layerone:latest",
-            "hardwareRequirements": [],
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": []
+        },
+        {
+            "id": "MonitoringRole",
+            "imageId": "monitoringrole:latest",
+            "hardwareRequirements": [
+                "DEVICE"
+            ],
             "kpis": []
         }
     ]

@@ -36,7 +36,7 @@ class GridAreas(Context):
             location = {'id' : 'area2'}
         print(json.dumps(location))
 
-"""class Device(Context):
+class Device(Context):
     @Dependencies('requests')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,7 +56,7 @@ class FirstLayer(Context):
         if agent_id in ['area1', 'area2']:
             location = {'id' : 'firstlayer'}
         print(json.dumps(location))
-"""
+
 class AgentControl(Service):
     @Metric('deviation')
     @Context(class_ref= GridAreas, name = 'grid_area')

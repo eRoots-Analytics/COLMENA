@@ -5,12 +5,12 @@ import time
 pre_command = 'source /home/pablo/myenv/bin/activate'
 build_command = {
         "cmd": "/home/pablo/myenv/bin/python -m colmena_build "
-               "--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_with_datacontrol.py' "
+               "--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_with_data.py' "
                "--build_file='/home/pablo/Desktop/Colmena/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' ",
         "cwd": "/home/pablo/Desktop/Colmena/programming-model/colmena/building_tool"  
     }
 deploy_command = {
-        "cmd": "/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_with_datacontrol/build' "
+        "cmd": "/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/mpc_with_data/build' "
                "--platform='linux/amd64' "
                "--user=pablodejuan",
         "cwd": "/home/pablo/Desktop/Colmena/deployment-tool/deployment"  # Change to the correct directory
@@ -32,8 +32,8 @@ agents = [{'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_a'},
 
 mpc_agents = True
 if mpc_agents:
-    agents = [{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area1'},{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area2'}] 
-    agents += [{'hardware':'DEVICE', 'strategy':'EAGER', 'agent_name':'device1'},{'hardware':'DEVICE', 'strategy':'EAGER', 'agent_name':'device2'}] 
+    agents = [{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area_a'},{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area_b'}] 
+    agents += [{'hardware':'DEVICE', 'strategy':'EAGER', 'agent_name':'device_a'},{'hardware':'DEVICE', 'strategy':'EAGER', 'agent_name':'device_c'}] 
 
 redeploy_commands = [build_command, zenoh_command, agent_command, agent_command, deploy_command]  
 commands =  [zenoh_command, agent_command, agent_command, deploy_command]  
@@ -48,11 +48,13 @@ agent_i = 0
 cmd = zenoh_command['cmd']
 cwd = zenoh_command['cwd']
 terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {zenoh_command['cwd']} \"{zenoh_command['cmd']}\"; exec bash'"
+build_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
 #terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
 #process = subprocess.Popen(terminal_cmd, shell=True)
 subprocess.Popen(terminal_cmd,shell=True)
+subprocess.Popen(build_cmd,shell=True)
 
-time.sleep(5)
+time.sleep(7)
 for cmd in commands:
     if cmd.get('is_agent', False):  # Check if it's the agent command
         agent_data = agents[agent_i]

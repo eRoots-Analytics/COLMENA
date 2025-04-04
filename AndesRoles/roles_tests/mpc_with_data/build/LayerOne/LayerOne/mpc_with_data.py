@@ -23,39 +23,120 @@ from colmena import (
 #Service to deploy a one layer control
 url = 'http://192.168.68.67:5000' + "/print_app"
 
-
-
 class GridAreas(Context):
     @Dependencies("requests")
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def locate(self, device):
-        location = {"id": os.getenv("COMPOSE_PROJECT_NAME", "default_device_id")}
+        agent_id = os.getenv('AGENT_ID')
+        if agent_id in ['area_a', 'device_a', 'device_b']:
+            location = {'id' : 'area_a'}
+        if agent_id in ['area_b', 'device_c', 'device_d']:
+            location = {'id' : 'area_b'}
+        print(json.dumps(location))
+
+class Device(Context):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def locate(self, device):
+        agent_id = os.getenv('AGENT_ID')
+        id = {'id':agent_id}
+        print(json.dumps(id))
+
+class FirstLayer(Context):
+    @Dependencies("requests")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def locate(self, device):
+        agent_id = os.getenv('AGENT_ID')
+        if agent_id in ['area_a', 'area_b']:
+            location = {'id' : 'firstlayer'}
+        else:
+            location = {'id': 'secondlayer'}
         print(json.dumps(location))
 
 class AgentControl(Service):
     @Context(class_ref= GridAreas, name = 'grid_area')
-    @Data(name = 'state_horizon', scope = 'grid_area/id = .')
+    @Context(class_ref= FirstLayer, name = 'first_layer')
+    @Data(name = 'state_horizon', scope = 'first_layer/id = .')
+    @Data(name = 'device_data', scope = 'grid_area/id = .')
+    @Metric('deviation')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     class LayerOne(Role):
         @Context(class_ref= GridAreas, name="grid_area")
-        @Data(name = 'state_horizon', scope = 'grid_area/id = .')
+        @Data(name = 'state_horizon', scope = 'first_layer/id = .')
+        @Data(name = 'device_data', scope = 'grid_area/id = .')
+        @Requirements('AREA')
+        @Dependencies('requests')
+        @Metric('deviation')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            n_areas = 2
+            self.states = np.ones(n_areas)
+            self.value = np.random.rand(1)
+            self.agent_id = os.getenv('AGENT_ID')
+            self.T = 10
+            self.first = True
+            self.state_horizon.publish(None)
+
+        @Persistent()
+        def behavior(self):
+            p_mean = 0
+            a_mean = 0
+
+            device_data = json.loads(self.device_data.get().decode('utf-8'))
+            if device_data is None:
+                device_data = {}
+                n = 1
+            else:
+                n = len(device_data.keys())
+
+            for key, val in device_data.items():
+                p_mean += val['P']/n
+                a_mean += val['a']/n
+            
+            area_state = [p_mean, a_mean]
+            area_state_horizon = np.tile(area_state, (self.T, 1))
+            
+            state_horizon = json.loads(self.device_data.get().decode('utf-8'))
+            state_horizon[self.agent_id] = area_state_horizon
+            self.state_horizon.publish(self.agent_id)
+
+            print(f"state horizon if {state_horizon}")
+            area_state = [p_mean, a_mean]
+            area_state_constant = np.tile(area_state, (self.T, 1))
+
+            deviation = np.norm(area_state_horizon - area_state_constant)
+            self.deviation.publish(deviation)
+            time.sleep(0.2)
+            return 1
+
+    class MonitoringRole(Role):
+        @Context(class_ref= GridAreas, name ="grid_area")
+        @Data(name = 'device_data', scope = 'grid_area/id = .')
+        @Requirements('DEVICE')
         @Dependencies("requests")
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             n_areas = 2
             self.states = np.ones(n_areas)
             self.value = np.random.rand(1)
-            self.area = 1
+            self.agent_id = os.getenv('AGENT_ID')
+            self.device_data.publish(None)
 
         @Persistent()
         def behavior(self):
-            device_id = os.getenv("COMPOSE_PROJECT_NAME", "default_device_id")
-            agent_get = self.state_horizon.get()
-            self.state_horizon.publish(device_id)
-            response = requests.post(url, json=agent_get)
-            time.sleep(0.1)
-
+            data = json.loads(self.device_data.get().decode('utf-8'))
+            if data is None:
+                data = {}
+            p_value = 1 + 0.1*np.random.rand()
+            a_value = 1 + 0.1*np.random.rand()
+            data[self.agent_id] ={'P':p_value, 'a':a_value}
+            self.device_data.publish(data)
+            time.sleep(0.2)
+            return 1

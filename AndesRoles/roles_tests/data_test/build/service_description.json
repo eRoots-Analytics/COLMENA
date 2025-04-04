@@ -1,0 +1,20 @@
+{
+    "id": {
+        "value": "AgentControl"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_area",
+            "imageId": "grid_area:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "LayerOne",
+            "imageId": "layerone:latest",
+            "hardwareRequirements": [],
+            "kpis": []
+        }
+    ]
+}
