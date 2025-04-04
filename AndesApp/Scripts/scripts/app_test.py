@@ -25,7 +25,7 @@ andes_url = 'http://192.168.68.67:5000'
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
 #responseAndes = requests.get(andes_url + '/device_sync', params={'model':'REDUAL', 'idx':'GENROU_1'})
 #responseAndes = requests.get(andes_url + '/specific_device_sync', params={'model':'GENROU', 'idx':'GENROU_5', 'var':'omega'})
-responseRun = requests.get(andes_url + '/run_real_time', params={'t_run':55, 'delta_t':0.1})
+responseRun = requests.get(andes_url + '/run_real_time', params={'t_run':50, 'delta_t':0.05})
 
 responseAndes = requests.get(andes_url + '/plot', params={'model': 'Bus', 'var':'v'})
 

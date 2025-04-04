@@ -14,7 +14,6 @@
             "id": "MonitoringRole",
             "imageId": "monitoringrole:latest",
             "hardwareRequirements": [
-                "GENERATOR",
                 "GENERATOR"
             ],
             "kpis": [
@@ -28,7 +27,7 @@
                 "TRANSFORMER"
             ],
             "kpis": [
-                "erootsusecase/frequency[1s] > 0.998"
+                "erootsusecase/frequency[1s] > 0.9998"
             ]
         },
         {

@@ -51,7 +51,7 @@ build_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_en
 subprocess.Popen(terminal_cmd, shell=True)
 subprocess.Popen(build_cmd, shell=True)
 
-time.sleep(4)
+time.sleep(6)
 for cmd in commands:
     if cmd.get('is_agent', False):  # Check if it's the agent command
         agent_data = agents[agent_i]

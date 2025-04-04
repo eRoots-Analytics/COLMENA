@@ -79,6 +79,7 @@
 \usepackage[style=ieee, backend=biber]{biblatex}
 \addbibresource{ref.bib}
 \setlength{\parskip}{1em} 
+
 \begin{document}
 \maketitle
 
@@ -92,9 +93,9 @@ We chose a modified version of the IEEE 39-bus system \cite{grids:ieee39} as a t
 \begin{figure}[h]
     \centering
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{plots/IEEE39 (1).png}
+        \includegraphics[width=0.8\textwidth]{plots/IEEE39withtrafo.png}
     \end{center}
-    \caption{Modified IEEE 39-bus system topology used in the prototype.}
+    \caption{Modified IEEE 39-bus system topology used in the prototype, G mark generators and T the transformers.}
     \label{fig:ieee39_topology}
 \end{figure}
 
@@ -153,11 +154,44 @@ This role runs persistently on every agent paired with a physical device. Upon i
 
 \subsubsection*{Automatic Generation Control (AGC) Role}
 
-This role is activated when the frequency observed by the agent falls outside the admissible range ($[\omega_{\min}, \omega_{\max}]$). It is compatible only with devices injecting power into the grid (generators and converters). The role implements a Proportional-Integral (PI) controller with a feedback loop that adjusts the power delivered by the device. It reads the current frequency value from the agent's data and sends the required power adjustment to the device as a parameter change request to ANDES.
+This role is activated when the frequency observed by the agent falls outside the admissible range ($[\omega_{\min}, \omega_{\max}]$). It is compatible only with devices injecting power into the grid (generators and converters). The role implements a Proportional-Integral (PI) controller with a feedback loop that adjusts the power delivered by the device. It reads the current frequency value from the agent's data and sends the required power adjustment to the device as a parameter change request to ANDES. 
+
+
 
 \subsubsection*{GFM Activation Role}
 
 This role changes the operational mode of coupled converters from GFL to GFM. It is activated when the frequency observed by the agent's coupled device falls outside the admissible range. When the frequency returns to the admissible range and the role deactivates, the converter mode is reverted to GFL (assuming GFL is the default state).
+
+At the electrical level, the transformer in GFM mode acts as a current source for the rest of the grid while in GFM mode it acts as a current source. The GFM mode makes it possible to control the voltage of the bus it's connected to, this is usually an asset when wanting to control the frequency and voltage of the grid since a transformer in GFM has a controllable voltage value. 
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{plots/gfm_gfl.png} % Replace with your file name
+    \caption{(a) GFL equivalent grid (b) GFM equivalent grid}
+    \label{fig:low_voltage_bus}
+\end{figure}
+
+On a control level, switching between modes modifies the entire control loop. In GFL mode, the converter tracks the grid voltage and frequency and injects power by regulating current references. In contrast, GFM mode generates its own voltage waveform with a controlled amplitude and angle, determining frequency dynamics based on active power exchange with the grid, which means having a certain phase shift with the rest of the grid.  
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.90\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{plots/gfl_diagram.png}
+        \caption{GFL control diagram \cite{diagram:gfl}.}
+        \label{fig:control_gfl}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.52\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{plots/gfm_diagram.png}
+        \caption{GFM control diagram \cite{diagram:gfm}.}
+        \label{fig:colmena_gfm}
+    \end{subfigure}
+    \caption{Different control diagram of the transformer.}
+    \label{fig:gflgfm}
+\end{figure}
+
 
 \subsubsection*{Load Shedding Role}
 
@@ -243,16 +277,16 @@ To evaluate the performance, we compare the results against a control simulation
 
 \begin{figure}[h!]
     \centering
-    \begin{subfigure}[t]{0.48\textwidth}
+    \begin{subfigure}[t]{0.60\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{plots/control_omega.png}
+        \includegraphics[width=\linewidth]{plots/control_omega2.png}
         \caption{Frequency ($\omega$) evolution (Control Case).}
         \label{fig:control_omega}
     \end{subfigure}
     \hfill
-    \begin{subfigure}[t]{0.48\textwidth}
+    \begin{subfigure}[t]{0.65\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{plots/colmena_omega.png}
+        \includegraphics[width=\linewidth]{plots/genrou_omega.png}
         \caption{Frequency ($\omega$) evolution (COLMENA Case).}
         \label{fig:colmena_omega}
     \end{subfigure}
@@ -273,8 +307,8 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
         xlabel={Time (s)},
         ylabel={Activation},
         ymin=-0.2, ymax=1.2,
-        xmin=0, xmax=55,
-        xtick={0,10,20,30,40,50, 55},
+        xmin=0, xmax= 85,
+        xtick={0, 3, 6, 10, 18, 20, 30, 40, 50, 60, 70, 80, 85},,
         ytick={0,1},
         yticklabels={Inactive, Active},
         title={Monitoring Role Activation},
@@ -287,7 +321,7 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
         draw=blue,
         line width=1pt
     ] coordinates {
-        (0,1) (55,1)
+        (0,1) (85,1)
     };
     \end{axis}
     \end{tikzpicture}
@@ -302,8 +336,8 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
         xlabel={Time (s)},
         ylabel={Activation},
         ymin=-0.2, ymax=1.2,
-        xmin=0, xmax=55,
-        xtick={0, 3, 6, 10, 18, 20, 30, 40, 50, 55},
+        xmin=0, xmax=85,
+        xtick={0, 3, 6, 10, 18, 20, 30, 40, 50, 60, 70, 80, 85},
         ytick={0,1},
         yticklabels={Inactive, Active},
         title={AGC Role Activation},
@@ -316,7 +350,7 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
         draw=red,
         line width=1pt
     ] coordinates {
-        (0,0) (3,0) (3,1) (6,1) (6,0) (18,0) (18,1) (55,1)
+        (0,0) (3,0) (3,1) (6,1) (6,0) (18,0) (18,1) (61,1) (61,0) (85,0)
     };
     \end{axis}
     \end{tikzpicture}
@@ -331,8 +365,8 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
         xlabel={Time (s)},
         ylabel={Activation},
         ymin=-0.2, ymax=1.2,
-        xmin=0, xmax=55,
-        xtick={0, 3, 6, 10, 18, 20, 30, 40, 50, 55},
+        xmin=0, xmax=85,
+        xtick={0, 3, 6, 10, 18, 20, 30, 40, 50, 60, 70, 80, 85},
         ytick={0,1},
         yticklabels={Inactive, Active},
         title={GFM Activation Role Activation},
@@ -345,7 +379,7 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
         draw=green,
         line width=1pt
     ] coordinates {
-        (0,0) (3,0) (3,1) (6,1) (6,0) (18,0) (18,1) (55,1)
+        (0,0) (3,0) (3,1) (6,1) (6,0) (18,0) (18,1) (61,1) (61,0) (85,0)
     };
     \end{axis}
     \end{tikzpicture}
@@ -354,7 +388,7 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
     \label{fig:activation_plots}
 \end{figure}
     
-Furthermore, Figure \ref{fig:activation_plots} illustrates that the AGC and GFM Activation roles activate appropriately in response to frequency deviations caused by the grid disturbances initiated at t=3s, t=18s, and t=33s.
+Furthermore, Figure \ref{fig:activation_plots} illustrates that the AGC and GFM Activation roles activate appropriately in response to frequency deviations caused by the grid disturbances initiated at t=3s, t=18s, and t=33s and deactivate when the metric is back to its nominal value. In the simulation we see that after the action of the roles on the grid this one goes back to a steady state condition which is what we expected. Additionally, the action of the four agents on 2 generators and 2 transformers changed the behavior of the whole grid. 
 
 \section{Milestone Review}
 

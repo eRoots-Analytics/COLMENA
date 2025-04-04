@@ -42,6 +42,7 @@ class GridAreas(Context):
 
 class ErootsUseCase(Service):
     @Metric('frequency')
+    @Metric('monitored')
     @Context(class_ref=GridAreas, name="grid_areas")
     @Channel('behaviorChange', scope= ' ')
     def __init__(self, *args, **kwargs):
@@ -54,7 +55,6 @@ class ErootsUseCase(Service):
         @Requirements('GENERATOR')
         @KPI('erootsusecase/monitored[1s] < 0.5')
         @Dependencies("requests")
-        @Requirements('GENERATOR')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS
@@ -80,9 +80,8 @@ class ErootsUseCase(Service):
             self.frequency.publish(value)
             return value
         
-        @Persistent(period = 0.1)
+        @Persistent(period = 0.05)
         def behavior(self):
-            responseAndes = self.change2Andes()
             print(f"role 1 synced at {time.time() - self.t_start}")
             value = self.publish_metric('omega')
             self.monitored.publish(1)
@@ -150,8 +149,8 @@ class ErootsUseCase(Service):
             self.t_start = time.time()
             self.t_last = time.time()
             self.reference = PI_params.get('reference', 1)
-            self.Ki = PI_params.get('Ki', -40)
-            self.Kp = PI_params.get('Kp', -20)
+            self.Ki = PI_params.get('Ki', -75)
+            self.Kp = PI_params.get('Kp', -35)
             self.ctrl_input = PI_params.get('ctrl_input', 1)
             self.x = 0
             self.first = True
@@ -186,5 +185,5 @@ class ErootsUseCase(Service):
             responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
             roleChangeDict['var'] = 'paux'
             responseAndes = requests.post(self.andes_url + '/device_role_change', json = roleChangeDict)
-            time.sleep(0.1)
+            time.sleep(0.05)
             return responseAndes

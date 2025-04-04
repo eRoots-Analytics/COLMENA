@@ -435,6 +435,8 @@ def plot():
         fig.savefig('plots/genrou_pe.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pout)
         fig.savefig('plots/tgov_pout.png', format='png')
+        fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.v)
+        fig.savefig('plots/tgov_pout.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v)
         fig.savefig('plots/redual_v.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.vd)

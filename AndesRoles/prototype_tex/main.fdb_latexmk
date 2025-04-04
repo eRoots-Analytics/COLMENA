@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber main"] 1743692499.55048 "main.bcf" "main.bbl" "main" 1743692504.0214 0
-  "main.bcf" 1743692503.9278 108066 cbd928b40c5b2b873e0f927d2fac0303 "pdflatex"
-  "ref.bib" 1743692499.32575 4237 9d68209739ba253b86291589c6327a0c ""
+["biber main"] 1743764505.53079 "main.bcf" "main.bbl" "main" 1743764751.07483 0
+  "main.bcf" 1743764750.97585 108330 73ac8998bcf7d1043b0dd7dd4e44947d "pdflatex"
+  "ref.bib" 1743764503.81276 4575 796a474403aac9776b5d95026b77cb0b ""
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1743692502.30447 "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" "main.pdf" "main" 1743692504.02167 0
-  "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" 1743692499.32475 22726 b39a4ac9dcf79b24cc1ae3522d511925 ""
+["pdflatex"] 1743764749.17026 "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" "main.pdf" "main" 1743764751.07512 0
+  "/home/pablo/Desktop/eroots/COLMENA/AndesRoles/prototype_tex/main.tex" 1743764748.90488 24859 fc384572ac1c0b3fc7c0349090587fc0 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/tcrm1000.tfm" 1136768653 1536 e07581a4bb3136ece9eeb4c3ffab8233 ""
@@ -269,14 +269,17 @@
   "/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1732099773 5476123 0aaf5f0b94d004f6c94b5aad0957af23 ""
   "/usr/local/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1732099823 3343019 767295ba2e057db46aea124254a1a7f8 ""
   "/usr/local/texlive/2024/texmf.cnf" 1732099769.70411 455 5b996dcaa0eb4ef14a83b026bc0a008c ""
-  "main.aux" 1743692503.9248 6115 87beb33b5373f8b37b6c66533e74a43a "pdflatex"
-  "main.bbl" 1743692500.43877 20429 fe4a44be52591b3c2e22054c36ba8837 "biber main"
-  "main.out" 1743692503.9268 1405 68d4a08b68b4305b8578b4150e72b9a0 "pdflatex"
-  "main.run.xml" 1743692503.9288 2390 084982b9e83c4fcf38893e7b6e9ffeb1 "pdflatex"
-  "main.tex" 1743692499.32475 22726 b39a4ac9dcf79b24cc1ae3522d511925 ""
-  "plots/IEEE39 (1).png" 1740669021.24624 207926 7f63e0366dac7a3324b0497dbdc913d7 ""
-  "plots/colmena_omega.png" 1743598588.32668 45361 1bbf0ffe86dc567da209293ee53f77cc ""
-  "plots/control_omega.png" 1743592572.22073 35283 851cfd391492f071cf2b50e6499370d2 ""
+  "main.aux" 1743764750.97285 7542 5a2f3ae0d4481224c551aa2431232deb "pdflatex"
+  "main.bbl" 1743764506.34771 23649 31efdc20cca511c2409509342651f320 "biber main"
+  "main.out" 1743764750.97485 1405 68d4a08b68b4305b8578b4150e72b9a0 "pdflatex"
+  "main.run.xml" 1743764750.97685 2390 084982b9e83c4fcf38893e7b6e9ffeb1 "pdflatex"
+  "main.tex" 1743764748.90488 24859 fc384572ac1c0b3fc7c0349090587fc0 ""
+  "plots/IEEE39withtrafo.png" 1743763647.30407 99221 cec20acb07f27d9d5105bff2d9bb2cae ""
+  "plots/control_omega2.png" 1743758410.84262 36820 980a242bb6254745e4d37ea9a76a6e12 ""
+  "plots/genrou_omega.png" 1743757670.15105 47020 d5c2037d6d15fb9437774e98ebff67ce ""
+  "plots/gfl_diagram.png" 1743760080.94721 173939 62a2b871548cbe76feb78a3366383728 ""
+  "plots/gfm_diagram.png" 1743760008.29739 20091 5524c74e16b068683f0d5461cf640eec ""
+  "plots/gfm_gfl.png" 1743758848.88359 18227 ee9cd14b366cd96e7d35b485105d5760 ""
   (generated)
   "main.aux"
   "main.bcf"

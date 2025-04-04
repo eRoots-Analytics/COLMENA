@@ -93,7 +93,15 @@
       \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
+      \field{howpublished}{Available at: https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Machine%20Model%20REGC_A.htm}
+      \field{note}{Accessed: 2025-04-04}
       \field{title}{Machine Model REGC A}
+      \verb{urlraw}
+      \verb https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Machine%20Model%20REGC_A.htm
+      \endverb
+      \verb{url}
+      \verb https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Machine%20Model%20REGC_A.htm
+      \endverb
     \endentry
     \entry{diagram:gfm}{article}{}{}
       \name{author}{4}{}{%
