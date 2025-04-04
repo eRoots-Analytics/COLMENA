@@ -95,7 +95,7 @@ We chose a modified version of the IEEE 39-bus system \cite{grids:ieee39} as a t
     \begin{center}
         \includegraphics[width=0.8\textwidth]{plots/IEEE39withtrafo.png}
     \end{center}
-    \caption{Modified IEEE 39-bus system topology used in the prototype, G mark generators and T the transformers.}
+    \caption{Modified IEEE 39-bus system topology used in the prototype, G mark generators and T the converters.}
     \label{fig:ieee39_topology}
 \end{figure}
 
@@ -162,7 +162,7 @@ This role is activated when the frequency observed by the agent falls outside th
 
 This role changes the operational mode of coupled converters from GFL to GFM. It is activated when the frequency observed by the agent's coupled device falls outside the admissible range. When the frequency returns to the admissible range and the role deactivates, the converter mode is reverted to GFL (assuming GFL is the default state).
 
-At the electrical level, the transformer in GFM mode acts as a current source for the rest of the grid while in GFM mode it acts as a current source. The GFM mode makes it possible to control the voltage of the bus it's connected to, this is usually an asset when wanting to control the frequency and voltage of the grid since a transformer in GFM has a controllable voltage value. 
+At the electrical level, the converter in GFM mode acts as a current source for the rest of the grid while in GFM mode it acts as a current source. The GFM mode makes it possible to control the voltage of the bus it's connected to, this is usually an asset when wanting to control the frequency and voltage of the grid since a converter in GFM has a controllable voltage value. 
 
 \begin{figure}[htbp]
     \centering
@@ -188,7 +188,7 @@ On a control level, switching between modes modifies the entire control loop. In
         \caption{GFM control diagram \cite{diagram:gfm}.}
         \label{fig:colmena_gfm}
     \end{subfigure}
-    \caption{Different control diagram of the transformer.}
+    \caption{Different control diagram of the converter.}
     \label{fig:gflgfm}
 \end{figure}
 
@@ -388,7 +388,7 @@ As shown in Figure \ref{fig:omega_comparison}, the grid frequency ($\omega$) in 
     \label{fig:activation_plots}
 \end{figure}
     
-Furthermore, Figure \ref{fig:activation_plots} illustrates that the AGC and GFM Activation roles activate appropriately in response to frequency deviations caused by the grid disturbances initiated at t=3s, t=18s, and t=33s and deactivate when the metric is back to its nominal value. In the simulation we see that after the action of the roles on the grid this one goes back to a steady state condition which is what we expected. Additionally, the action of the four agents on 2 generators and 2 transformers changed the behavior of the whole grid. 
+Furthermore, Figure \ref{fig:activation_plots} illustrates that the AGC and GFM Activation roles activate appropriately in response to frequency deviations caused by the grid disturbances initiated at t=3s, t=18s, and t=33s and deactivate when the metric is back to its nominal value. In the simulation we see that after the action of the roles on the grid this one goes back to a steady state condition which is what we expected. Additionally, the action of the four agents on 2 generators and 2 converters changed the behavior of the whole grid. 
 
 \section{Milestone Review}
 
