@@ -20,7 +20,6 @@ sys.path.insert(0, two_levels_up)
 from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
 
-system = None  
 started = None  
 print(sys.path)
 app = Flask(__name__)
@@ -29,24 +28,43 @@ json_storage = []
 delta_t = 0.1
 available_devices ={'device_1':{'model':'REDUAL', 'idx':'GENROU_1', 'assigned':False},
                     'device_2':{'model':'REDUAL', 'idx':'GENROU_2', 'assigned':False}}
+agent_names = ['agent_a','agent_b','agent_c','agent_d','area_1','area_2']
 
 # Route to load the simulation case
 @app.route('/load_simulation', methods=['POST'])
 def load_simulation():
     global system
-    global controllable_devices
-    global change
     global started
     global system_initial
     global agent_actions
     try:
         # Load the Andes simulation (but don't run it yet)
-        change = 'None'
+        data = request.get_json()
+        case_file = data['case_file'] 
+        if 'ieee39' in case_file:
+            app.config['grid'] = 'ieee39'
+        elif 'kundur' in case_file:
+            app.config['grid'] = 'kundur'
+        elif 'ieee14' in case_file:
+            app.config['grid'] = 'ieee14'
+
         agent_actions = {}
+        for agent_name in agent_names:
+            agent_actions[agent_name] = []
         app.config['started'] = False
         app.config['await_start'] = True
         n_redual = 4
-        system_ieee = ad.load(get_case('ieee39/ieee39_full.xlsx'), setup=False)
+        system_ieee = ad.load(case_file, setup=False)
+        print(f"case_file is {case_file}")
+        if data['redual'] is False:
+            system = system_ieee
+            system.setup()
+            system.PFlow.run()
+            #system.TDS.init()
+            print(f"system area is {system.Area}")
+            return jsonify({"message": f"Simulation loaded successfully"}), 200
+
+        print("redual is true")
         system = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
         system_initial = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
         for i in range(n_redual):
@@ -81,19 +99,8 @@ def load_simulation():
         system_initial.PFlow.run()
         system_initial.TDS.init()
 
-        #We now define the controllable devices
-        controllable_devices = []
-        for idx in system.REDUAL.idx.v:
-            device_dict = {}
-            device_dict['idx'] = idx
-            device_dict['model'] = 'REDUAL'
-            device_dict['GridFormingRole'] = False
-            device_dict['MonitoringRole'] = False
-            device_dict['AutomaticGenerationResponse'] = True
-            controllable_devices.append(device_dict)
-
-        print('idx.v is ', system.REDUAL.idx.v)
-        print('Simulation Loaded with controllable devices', controllable_devices)
+        system = system_initial
+        print(f"system area is {system.Area}")
 
         return jsonify({"message": f"Simulation loaded successfully"}), 200
     except Exception as e:
@@ -110,10 +117,10 @@ def assign_device():
         gen2 = {'idx':"GENROU_6", 'model':'GENROU'}
         transf1 = {'idx':"GENROU_2", 'model':'REDUAL'}
         transf2 = {'idx':"GENROU_3", 'model':'REDUAL'}
-        if not hasattr(agent_actions, agent_id):
-            agent_actions[agent_id] = []
+        area1 = {'idx':"1", 'model':'area'}
+        area2 = {'idx':"2", 'model':'area'}
 
-        device_dict = {'agent_a':gen1, 'agent_b':gen2, 'agent_c':transf1, 'agent_d':transf2}
+        device_dict = {'agent_a':gen1, 'agent_b':gen2, 'agent_c':transf1, 'agent_d':transf2, 'area_1':area1, 'area_2':area2}
         app.config['await_start'] = False
         response = device_dict[agent_id]
         return jsonify(response), 200
@@ -168,19 +175,70 @@ def print_var():
 
 
 # Route to run the previously loaded simulation
-@app.route('/line_pairings', methods=['GET'])
-def line_pairings():
-    line_pairings = {}
+@app.route('/lines_susceptance', methods=['GET'])
+def lines_susceptance():
+    data = request.get_json()
+    area = data['area']
+    result = {}
+    response = {}
     try:
-        for i, bus_from in enumerate(system.Lines.bus1.v):
-            bus_to = system.Lines.bus2.v[i]
-            line_pairings[bus_to] = bus_from      
+        for i, bus_to, bus_from in enumerate(zip(system.Line.bus1.v, system.Line.bus2.v)):
+            bus_to_uid = system.Bus.idx2uid[bus_to]       
+            bus_from_uid = system.Bus.idx2uid[bus_from]    
+            area_to = system.Bus.area.v[bus_to_uid]   
+            area_from = system.Bus.area.v[bus_from_uid]   
+            if area_to == area and area_from == area:
+                result[bus_to, bus_from] = system.Line.b.v[i]
+                result[bus_from, bus_to] = system.Line.b.v[i]
 
-        return jsonify(line_pairings), 200
+        response['value'] = result
+        return jsonify(response), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# Route to run the previously loaded simulation
+@app.route('/system_susceptance', methods=['GET'])
+def system_susceptance():
+    try:
+        data = request.args.to_dict()
+        area = int(data['area'])
+        other_areas = system.Area.idx.v
+        other_areas = [x_area for x_area in other_areas if x_area != area]
+        connecting_lines = {}
+        connecting_susceptance = {}
+        for x_area in other_areas:
+            connecting_lines[x_area] = []
+
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area1 != area2 and area in [area1, area2]:
+                connecting_area = area2 if area == area1 else area1
+                connecting_lines[connecting_area].append(line)
+                print(f"connecting")
+            
+        for x_area, lines in connecting_lines.items():
+            bi = 0
+            for line in lines:
+                line_uid = system.Line.idx2uid(line)
+                xi = system.Line.x.v[line_uid]
+                Sn = system.Line.Sn.v[line_uid]
+                bi += (1/xi)*Sn
+                print(f"line is {line} bi is {bi}")
+            connecting_susceptance[int(x_area)] = bi
+        
+        print(f"connecting_susceptance is {connecting_susceptance}")
+        print(f"other_areas is {other_areas}")
+        return jsonify(connecting_susceptance), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/run_simulation_online', methods=['POST'])
 def run_simulation_online():
@@ -205,6 +263,7 @@ def device_role_change():
     try:
         data = request.get_json()
         print(data)
+        print(system.TGOV1N.idx.v)
         idx = data['idx']
         model_name = data['model']
         param = data['var']
@@ -213,13 +272,16 @@ def device_role_change():
         agent_actions[agent_id].append(system.dae.t)
         model = getattr(system, model_name)
         uid = model.idx2uid(idx)
+        param_in_andes = getattr(model,param)
+        initial_value = param_in_andes.v[uid]
         if hasattr(data,'add'): 
             if data['add']:
                 param_in_andes = getattr(model,param)
                 param_in_andes = param_in_andes.v[uid]
                 value = param_in_andes + value 
         model.alter(idx =idx, src=param, value = value)
-        change = 'changed'
+        print(f"role changed successfully from {initial_value} to {value}")
+        print(f'value is {param_in_andes.v[uid]}')
         return jsonify({'message': 'success'}), 200
     except Exception as e:
         print(e)
@@ -299,7 +361,7 @@ def specific_device_sync(all_devices = False):
         idx = data['idx']
         model_name = data['model']
         var_name = data['var']
-       
+        print(model_name)
         model = getattr(system, model_name, None)
         var = getattr(model, var_name)
         if len(var.v) == 0:
@@ -323,6 +385,7 @@ def complete_variable_sync(all_devices = False):
     #method to post the new device role in the app
     try:
         data = request.args.to_dict()
+        print(f"data is {data}")
         if data is None:
             return jsonify({"error": "No JSON data received!"}), 400
         response = {}
@@ -330,13 +393,99 @@ def complete_variable_sync(all_devices = False):
         var_name = data['var']
        
         model = getattr(system, model_name, None)
+        print(f"System other is {system.GENROU}")
+        print("System area is", system.Area, f"model name is {model_name}")
         var = getattr(model, var_name)
-        value = var.v[:]
-        print(f"value is {var}")
+        value = var.v
+
         try:
-            response['value'] = value.tolist()
+            response['value'] = value
         except:
             response['value'] = None
+            print("value is in ", value)
+        if type(value) == np.ndarray:
+            response['value'] = value.tolist()
+        print(f"value is {value}")
+        print(f"res is {response['value']}")
+        return jsonify(response), 200
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/partial_variable_sync', methods=['POST'])
+def partial_variable_sync(all_devices = False):
+    #method to post the new device role in the app
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No JSON data received!"}), 400
+        response = {}
+        model_name = data['model']
+        var_name = data['var']
+        idxs = data['idx']
+        print(idxs)
+        model = getattr(system, model_name, None)
+        var = getattr(model, var_name)
+        res = []
+        for idx in idxs:
+            uid = model.idx2uid(idx)
+            value = var.v[uid]
+            res.append(value)
+        try:
+            response['value'] = res
+        except:
+            response['value'] = None
+            print("value is in except", res)
+        if type(res) == np.ndarray:
+            response['value'] = res.tolist()
+        print(f"res is {res}")
+        return jsonify(response), 200
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/area_variable_sync', methods=['POST'])
+def area_variable_sync(all_devices = False):
+    #method to post the new device role in the app
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No JSON data received!"}), 400
+        response = {}
+        model_name = data['model']
+        var_name = data['var']
+        area = data['area']
+        area = int(area)
+        area_buses = system.Bus.idx.v
+        area_buses = [bus for i, bus in enumerate(area_buses) if system.Bus.area.v[i] == area]
+
+        model = getattr(system, model_name, None)
+        var = getattr(model, var_name)
+
+        res = []
+        #check this is not a bus
+        if model_name == 'Bus':
+            bus_iterate = model.idx.v
+        else:
+            bus_iterate = model.bus.v
+
+        for i, bus in enumerate(bus_iterate):
+            if bus in area_buses:
+                value = var.v[i]
+                res.append(value)
+
+        try:
+            response['value'] = res
+        except:
+            response['value'] = None
+            print("value is in except", res)
+        
+        if type(res) == np.ndarray:
+            response['value'] = res.tolist()
+
+        print(f"response is {response}")
         return jsonify(response), 200
     except Exception as e:
         print(e)
@@ -374,7 +523,9 @@ def specific_variable_sync(all_devices = False):
 
 @app.route('/sync_time', methods=['GET'])
 def sync_time():
-    app_t = system.TDS_stepwise.dae.t
+    app_t = system.dae.t
+    app_t = float(app_t)
+    print(app_t)
     return jsonify({"time": app_t}) 
 
 @app.route('/start_simulation', methods=['POST'])
@@ -382,20 +533,36 @@ def start_simulation():
     app.config['await_start'] = False
     return jsonify({"Result": 'Success'}) 
 
+@app.route('/add_set_point', methods=['GET'])
+def add_set_point():
+    global set_points
+    try:
+        data = request.args.to_dict()
+        data['t'] = float(data['t'])
+        data['param'] = data['var']
+        data['add'] = False
+        if data['t'] > system.dae.t:
+            set_points += [data]
+        return jsonify({"Message": 'Success'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/run_real_time', methods=['GET'])
 def run_real_time():
+    global set_points
+    
     try:
-        global started
-
         set_points = []
-        Ppf_pq5 = system.PQ.Ppf.v[4]
-        Ppf_pq6 = system.PQ.Ppf.v[5]
-        set_points += [{'model':'Line', 'idx':'Line_19', 't':5, 'param':'u', 'value':0, 'add':False}]
-        #set_points += [{'model':'Line', 'idx':'Line_19', 't':30, 'param':'u', 'value':0, 'add':False}]
-        set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.50*Ppf_pq5, 'add':False}]
-        set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.30*Ppf_pq6, 'add':False}]
+        speed_factor = float(request.args.get('speed', 1))
+        if app.config['grid'] == 'ieee39':
+            Ppf_pq5 = system.PQ.Ppf.v[4]
+            Ppf_pq6 = system.PQ.Ppf.v[5]
+            set_points += [{'model':'Line', 'idx':'Line_19', 't':5, 'param':'u', 'value':0, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.50*Ppf_pq5, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.30*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
-            time.sleep(0.3)
+            time.sleep(0.25)
 
         t_0 = time.time()
         t_run = float(request.args.get('t_run', 40))  
@@ -404,12 +571,12 @@ def run_real_time():
         system.PFlow.run()
         while system.dae.t <= t_run:
             if time.time() - t_0 >= delta_t: 
-                system.TDS_stepwise.run_individual_batch(t_sim = delta_t)
+                system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
                 print(f't_run is {t_run}')
-                print(f't_run is {delta_t}')
+                print(f'delta_t is {delta_t}')
                 print(f't_dae is {system.dae.t}')
                 t_0 = time.time()
-            system.TDS_stepwise.set_set_points(set_points)
+                system.TDS_stepwise.set_set_points(set_points)
         app.config['await_start'] = True
         return jsonify({"Message": 'Success', "Time":t_run}), 200
     except Exception as e:
@@ -433,19 +600,22 @@ def plot():
         fig.savefig('plots/genrou_omega.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.Pe)
         fig.savefig('plots/genrou_pe.png', format='png')
+        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta)
+        fig.savefig('plots/delta.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pout)
         fig.savefig('plots/tgov_pout.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.v)
-        fig.savefig('plots/tgov_pout.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v)
-        fig.savefig('plots/redual_v.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.vd)
-        fig.savefig('plots/redual_vd.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.udref)
-        fig.savefig('plots/redual_udref.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pe)
-        fig.savefig('plots/redual_Pe.png', format='png')
-        # Save the plot to a BytesIO object rather than displaying it
+        fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pref)
+        fig.savefig('plots/tgov_pref.png', format='png')
+        if app.config['redual']:
+            fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v)
+            fig.savefig('plots/redual_v.png', format='png')
+            fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.vd)
+            fig.savefig('plots/redual_vd.png', format='png')
+            fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.udref)
+            fig.savefig('plots/redual_udref.png', format='png')
+            fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Pe)
+            fig.savefig('plots/redual_Pe.png', format='png')
+            # Save the plot to a BytesIO object rather than displaying it
 
         img = io.BytesIO()
         img.seek(0)

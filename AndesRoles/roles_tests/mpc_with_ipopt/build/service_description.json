@@ -1,0 +1,24 @@
+{
+    "id": {
+        "value": "DistributedMPC"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "first_layer",
+            "imageId": "first_layer:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "LayerOne",
+            "imageId": "layerone:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": [
+                "distributedmpc/error[1s] < 0.01"
+            ]
+        }
+    ]
+}

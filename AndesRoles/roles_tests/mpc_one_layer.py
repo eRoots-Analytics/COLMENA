@@ -16,7 +16,8 @@ from colmena import (
     Persistent,
     Async,
     KPI,
-    Data
+    Data,
+    Dependencies
 )
 
 #Service to deploy a one layer control
@@ -36,6 +37,8 @@ class GridAreas(Context):
 class AgentControl(Service):
     @Channel('state_horizon', scope='')
     @Context(class_ref= GridAreas, name = 'grid_area')
+    @Dependencies("requests")
+    @Dependencies("pyomo")
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -69,7 +72,7 @@ class AgentControl(Service):
             self.state_horizon.publish([self.area, self.value])
             time.sleep(0.2)
             return 1
-        
+     
     class Activation(Role):
         @Channel('state_horizon')
         def __init__(self, *args, **kwargs):

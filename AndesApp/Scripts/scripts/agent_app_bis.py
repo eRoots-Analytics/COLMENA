@@ -21,7 +21,6 @@ login_form_html = """
     </form>
 """
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
-db = SQLAlchemy(app)
 # In-memory storage for received JSON data (list of dictionaries)
 json_storage = {}
 # Define a model to store JSON data
