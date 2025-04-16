@@ -819,6 +819,7 @@ class TDS_stepwise(BaseRoutine):
     def set_set_points(self, set_points):
         if type(set_points) == dict:
             set_points = [set_points]
+            print(set_points)
         for set_point in set_points:
             model_name = set_point['model']
             param = set_point['param']
@@ -830,7 +831,7 @@ class TDS_stepwise(BaseRoutine):
             else:
                 t_change = self.system.dae.t
             
-            if not (t_change-1<self.system.dae.t<t_change+1):
+            if not (t_change-1<self.system.dae.t<t_change+0.1):
                 continue
 
             model = getattr(self.system, model_name)
@@ -847,9 +848,12 @@ class TDS_stepwise(BaseRoutine):
 
             param = getattr(model, param, None)
             if param is not None:
+                initial_value = param.v[uid]
                 if add:
                     value = value + param.v[uid]
                 model.alter(src = param.name, idx = idx, value = value)
+                if value != initial_value:
+                    print(f"Param param.name changed from {initial_value} to {value}")
             
             else:
                 param = set_point['param']
@@ -872,7 +876,7 @@ class TDS_stepwise(BaseRoutine):
             return
         
         for (model_name, idx), role in roles_dict.items():
-            role_parameter = 'u'+role 
+            role_parameter = 'u' + role 
             getattr(self, model_name).alter(role_parameter, idx = idx, value = 1)
             
             #We set the other parameters to 0

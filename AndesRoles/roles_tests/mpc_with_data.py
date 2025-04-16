@@ -82,18 +82,20 @@ class AgentControl(Service):
             self.agent_id = os.getenv('AGENT_ID')
             self.T = 10
             self.first = True
-            self.state_horizon.publish(None)
 
         @Persistent()
         def behavior(self):
             p_mean = 0
             a_mean = 0
 
-            device_data = json.loads(self.device_data.get().decode('utf-8'))
-            if device_data is None:
+            if self.first:
                 device_data = {}
+                state_horizon = {}
+                self.first = False
                 n = 1
             else:
+                device_data = json.loads(self.device_data.get().decode('utf-8'))
+                state_horizon = json.loads(self.device_data.get().decode('utf-8'))
                 n = len(device_data.keys())
 
             for key, val in device_data.items():
@@ -103,7 +105,6 @@ class AgentControl(Service):
             area_state = [p_mean, a_mean]
             area_state_horizon = np.tile(area_state, (self.T, 1))
             
-            state_horizon = json.loads(self.device_data.get().decode('utf-8'))
             state_horizon[self.agent_id] = area_state_horizon
             self.state_horizon.publish(self.agent_id)
 
@@ -111,7 +112,7 @@ class AgentControl(Service):
             area_state = [p_mean, a_mean]
             area_state_constant = np.tile(area_state, (self.T, 1))
 
-            deviation = np.norm(area_state_horizon - area_state_constant)
+            deviation = np.linalg.norm(area_state_horizon - area_state_constant)
             self.deviation.publish(deviation)
             time.sleep(0.2)
             return 1
@@ -127,16 +128,23 @@ class AgentControl(Service):
             self.states = np.ones(n_areas)
             self.value = np.random.rand(1)
             self.agent_id = os.getenv('AGENT_ID')
-            self.device_data.publish(None)
+            self.first = True
+
 
         @Persistent()
         def behavior(self):
-            data = json.loads(self.device_data.get().decode('utf-8'))
-            if data is None:
-                data = {}
+
+            if self.first:
+                device_data = {}
+                self.first = False
+            else:
+                device_data = json.loads(self.device_data.get().decode('utf-8'))
+                
+            print(device_data)
+            
             p_value = 1 + 0.1*np.random.rand()
             a_value = 1 + 0.1*np.random.rand()
-            data[self.agent_id] ={'P':p_value, 'a':a_value}
-            self.device_data.publish(data)
+            device_data[self.agent_id] ={'P':p_value, 'a':a_value}
+            self.device_data.publish(device_data)
             time.sleep(0.2)
             return 1

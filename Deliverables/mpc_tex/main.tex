@@ -1,0 +1,124 @@
+%! TeX program = pdflatex
+\documentclass{article}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{minted}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+% \usepackage{tikz-cd}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{float}
+% \usetikzlibrary{shapes, arrows, positioning}
+% \lstset{ 
+%     language=Python,                 % the language of the code
+%     basicstyle=\ttfamily\small,      % the size of the fonts that are used for the code
+%     numbers=left,                    % where to put the line-numbers
+%     numberstyle=\tiny\color{gray},   % the style that is used for the line-numbers
+%     stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+%     numbersep=5pt,                   % how far the line-numbers are from the code
+%     backgroundcolor=\color{white},   % choose the background color. You must add \usepackage{color}
+%     showspaces=false,                % show spaces adding particular underscores
+%     showstringspaces=false,          % underline spaces within strings
+%     showtabs=false,                  % show tabs within strings adding particular underscores
+%     frame=single,                    % adds a frame around the code
+%     rulecolor=\color{black},         % if not rolframe-color may be changed on line-breaks within not black text (e.g. comments (green here))
+%     tabsize=4,                       % sets default tabsize to 4 spaces
+%     captionpos=b,                    % sets the caption-position to bottom
+%     breaklines=true,                 % sets automatic line breaking
+%     breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+%     title=\lstname,                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+%     keywordstyle=\color{blue},       % keyword style
+%     commentstyle=\color{green},      % comment style
+%     stringstyle=\color{red},         % string literal style
+%     escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+%     morekeywords={*,...} 
+% }            % if you want to add more keywords to the rol\newenvironment{notation}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+\newtheorem{property}{Property}
+
+\newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}
+
+\title{Electrical grid simulation in the COLMENA framework}
+\author{Pablo de Juan Vela $^{1}$ \\
+        \small $^{1}$eRoots, Barcelona, Spain \\
+}
+\date{\today}
+
+\usepackage[style=ieee]{biblatex}
+\addbibresource{ref.bib}
+\setlength{\parskip}{1em} 
+\begin{document}
+\maketitle
+
+\section{MPC Formulation}
+The decision variables are:
+\begin{itemize}
+    \item $f_t$ the area's frequency.
+    \item $\delta_{i,t}$ the area's angle.
+    \item $P^{gen}_t$ the generator power output.
+    \item $P^{i,j}_t$ the power exchanged between area i and area j.
+\end{itemize}
+
+The parameters are:
+\begin{itemize}
+    \item $B_{i,j}$ the susceptance between area i and arera j.
+    \item $\hat{\delta_{i,0}}$ the area's angle initial values.
+    \item $\hat{f_{0}}$ the area's frequency initial values.
+\end{itemize}
+
+The MPC formulation is
+\begin{align}
+    \min_{f_{t}, \delta_{i,t}, P_^{gen}{t}, P^{i,j}_t} &||f - f_0||^2 + \sum_{j \in OtherAreas} \lambda_j(\delta_{j,t} - \hat{\delta}_{j,t}) + \sum_{j \in OtherAreas}(\delta_{j,t} - \hat{\delta}_{j,t})^2\\
+    \text{s.t.} \quad  &\dot{\delta}_a = 2 \pi (f_t - f_0) \quad  \forall t = 0, \dots, T\\
+    & M(\dot{f})= -D(f-f_0) + \sum_{gen \in area} P^{gen}_t +\sum_{j \in \text{other area}}P_{i,j} - P^{demand}_t \\
+    & \delta_{i,0} = \hat{\delta}_{i,0} \\
+    & f_0 = \hat{f}_0 \\
+    & P_{i,j} = \sum_{j \in \text{Areas}} B_{i,j}(\delta_{i,t} - \delta_{j,t}) \\
+    & u_{min} \leq P^{gen}_{i, t+1} - P^{gen}_{i, t} \leq u_{max} \\
+    & P_{gen}^{min} \leq P^{gen}_{i, t} \leq P_{gen}^{max}
+\end{align}
+
+The extended formulation would add the following equation:
+
+\begin{align}
+    \sum_{j \in area} P_{\text{bus}_i, \text{bus}_j} + P^{gen}_{\text{bus}_i} +
+\end{align}
+
+\begin{algorithm}
+    \caption{Distributed MPC ADMM algorithm}
+    \label{algo:ADMM}
+    \begin{algorithmic}[1]
+        \State Initialize grid states $x$ to $x_0$ using Power Flow results.
+        \While{error $>$ tolerance}
+            \For{each agent in area\_agents}
+                \State Agent controlling area i
+                \State Get initial values $f_0^{\text{area}_i}$, $\delta_{\text{area}, 0} \quad \forall \text{agent}$ from other agents via \texttt{@Data(horizon)}
+                \State Get state horizon of the other $\hat{\delta}_{\text{area}, 0} \quad \forall \text{agent}$ from other agents via \texttt{@Data(horizon)}
+                \State Solve local area MPC
+                \State Publish state horizon solution $\delta_{\text{area}_i, t}^* \forall t=0...T$ to \texttt{@Data(horizon)}
+                \State $error \gets \delta_{i} - \hat{\delta_{i}}$
+                \State $\lambda_{i} \gets \lambda_{i} + \alpha \cdot error$
+            \EndFor
+        \EndWhile
+        \For{gen in generators}
+            \State Consider the area's MPC the generator belongs to.
+            \State Update generator power setpoint $P_{ref, gen} \gets (P^{g}_{gen, 0})^*$
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Distributed MPC with role dynamics}
+
+\nocite{*}
+\printbibliography
+\end{document}

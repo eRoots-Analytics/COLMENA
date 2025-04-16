@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "context"
+dynamic = ["version", "dependencies"]
+authors = [
+    { name = "Workflows and Distributed Computing group" },
+]
+description = "COLMENA: context"
+requires-python = ">=3.8"
+license = "Apache-2.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: Apache Software License",
+]
+homepage = "https://proyecto-colmena.com/en"
+
+[project.scripts]
+start = "context.main:main"
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.pip]
+extra-index-url = "https://test.pypi.org/simple/"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+path = "context/main.py"
+
+[tool.hatch.build]
+include = [
+    "context/*"
+]
