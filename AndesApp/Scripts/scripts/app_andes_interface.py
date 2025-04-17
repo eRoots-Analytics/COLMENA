@@ -424,10 +424,11 @@ def partial_variable_sync(all_devices = False):
         model_name = data['model']
         var_name = data['var']
         idxs = data['idx']
-        print(idxs)
         model = getattr(system, model_name, None)
         var = getattr(model, var_name)
         res = []
+        print(idxs)
+        print("var is", var)
         for idx in idxs:
             uid = model.idx2uid(idx)
             value = var.v[uid]
