@@ -55,7 +55,6 @@ def check_constraint_violations(model, tolerance=1e-4):
                     msg += f" > UB({ub:.4e}) "
                     violated = True
 
-
             if violated:
                 print(constr.pprint())
                 print(msg)
