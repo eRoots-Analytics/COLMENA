@@ -262,15 +262,17 @@ def setup_mpc(self, mpc_problem, dt = 0.5, T = 20, controllable_redual = False):
     def freq_cost(model):
         return sum((model.freq[t]-1)**2 for t in model.TimeHorizon)
     def lagrangian_term(model):
-        a = sum( sum(mpc_problem.dual_vars[i, t]*(model.delta_areas[i,t] - model.state_horizon_values[i,t]) for i in model.other_areas) for t in model.TimeHorizon)
+        sign = 1 if self.area == 1 else -1
+        a = sum( sum(mpc_problem.dual_vars[i, t]*sign*(model.delta_areas[i,t] - model.state_horizon_values[i,t]) for i in model.other_areas) for t in model.TimeHorizon)
         b = 0
         for i, area in enumerate(model.areas):
             other_agent = mpc_problem.agents[i]
-            b += sum(mpc_problem.dual_vars[area, t]*(model.delta[t] - other_agent.state_horizon_values[area,t])  for t in model.TimeHorizon)
+            b += sum(mpc_problem.dual_vars[area, t]*sign*(model.delta[t] - other_agent.state_horizon_values[area,t])  for t in model.TimeHorizon)
         return a + b
     def penalty_term(model):
+        sign = 1 if self.area ==1 else -1
         a = sum( 10*sum((model.delta_areas[i,t] - model.state_horizon_values[i,t])**2 for i in model.other_areas) for t in model.TimeHorizon)
-        b = 10*sum((model.delta[t] - model.state_horizon_values[self.area,t])**2  for t in model.TimeHorizon)
+        b = 100*sum((model.delta[t] - model.state_horizon_values[self.area,t])**2  for t in model.TimeHorizon)
         return a+b
         
     model.cost = pyo.Objective(rule=lambda model: freq_cost(model) + lagrangian_term(model) + penalty_term(model), sense=pyo.minimize)
@@ -282,14 +284,14 @@ class mpc_agent:
         self.n_areas = 2
         self.alpha = 0.8
         self.dt = 0.2
-        self.tol = 1e-3
+        self.tol = 1e-5
         self.andes_url = andes_url 
         self.agent_id = agent_name
         self.area = int(self.agent_id[-1])
         responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
         self.device_dict = responseAndes.json()
         self.t_start = time.time()
-        self.T = 20                            #number of timesteps when performing the MPC
+        self.T = 3                           #number of timesteps when performing the MPC
         
         self.areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         self.other_areas = [i for i in self.areas if i != self.area]
@@ -372,8 +374,9 @@ def solve_mpc():
     agent_2 = mpc_agent("area_2")
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
+    mpc_problem.alpha = 10
     other = {"area_1": agent_2, "area_2": agent_1}
-    for i in range(30):
+    for i in range(100):
         responseAndes = requests.get(agent_1.andes_url + '/sync_time')
         time_start = int(responseAndes.json()['time'])
         for agent in agents:
@@ -393,9 +396,7 @@ def solve_mpc():
                     if key[0] != agent.area:
                         model.dual_vars[key] = val
 
-            for t in range(agent.T +1):
-                other_area = 1 if agent.area == 2 else 2
-                agent.state_horizon_values[other_area, t] = other_agent.state_horizon_values[other_area, t] 
+
 
             agent.warm_start()
             solver = pyo.SolverFactory('ipopt')
@@ -403,12 +404,17 @@ def solve_mpc():
             agent.save_warm_start()
             #we update the dual variables
 
-
+            agent.first = False
             #We get the current state_horizon and updated it with the solution for the agent's area
             for t in model.TimeHorizon:
-                agent.state_horizon_values[agent.area, t] = model.delta[t].value
+                #agent.state_horizon_values[agent.area, t] = model.delta[t].value
                 for other_agent in agents:
+                    other_area = other_agent.area
+                    if other_area == agent.area:
+                        continue
+                    #agent.state_horizon_values[other_area, t] = model.delta_areas[other_area, t].value
                     other_agent.state_horizon_values[agent.area, t] = model.delta[t].value
+                    other_agent.state_horizon_values[other_area, t] = model.delta_areas[other_area, t].value
 
         mpc_problem.delta_dual_vars = {k: 0 for k in mpc_problem.dual_vars}
         for t in range(mpc_problem.T+1):
@@ -416,12 +422,12 @@ def solve_mpc():
                 mpc_problem.delta_dual_vars[area, t] = mpc_problem.alpha*(mpc_problem.dual_vars[area, t] - agent.state_horizon_values[area, t])
                 mpc_problem.dual_vars[area, t] += mpc_problem.delta_dual_vars[area, t]
 
-        error = max(mpc_problem.dual_vars.values())
+        error = max(abs(v) for v in mpc_problem.dual_vars.values())
         andes_role_changes = []
         converged = False
         print("error is ", error)
         print(f"delta_dual_vars are {mpc_problem.delta_dual_vars[1,0]}")
-        if error < agent.tol:
+        if np.abs(error) < agent.tol:
             print(f"dist MPC converged")
             converged = True
 
@@ -457,14 +463,20 @@ def solve_mpc():
         print(f"error is {error}")
     return converged, andes_role_changes, agents
 
-
 andes_url = 'http://192.168.10.137:5000'
 responseLoad = requests.post(andes_url + '/start_simulation')
 time.sleep(1)
 converged, andes_role_changes, agents = solve_mpc()
 print(f"converged is {converged}")
 
+model = agents[0].model
+agent = agents[0]
+for t in model.TimeHorizon:
+    print(f"delta[{t}] = {model.delta[t].value}")
+    print(f"delta other[{t}] = {agent.state_horizon_values[1,t]}")
+
 model = agents[1].model
-for i in model.TimeHorizon:
-    print(f"delta[{i}] = {model.delta[i].value}")
-    print(f"f[{i}] = {model.freq[i].value}")
+agent = agents[1]
+for t in model.TimeHorizon:
+    print(f"delta[{t}] = {model.delta[t].value}")
+    print(f"delta other[{t}] = {agent.state_horizon_values[2,t]}")
