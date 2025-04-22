@@ -24,7 +24,7 @@ andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.10.137:5000'
+andes_url = 'http://192.168.68.55:5000'
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
 #responseAndes = requests.get(andes_url + '/device_sync', params={'model':'REDUAL', 'idx':'GENROU_1'})
 #responseAndes = requests.get(andes_url + '/specific_device_sync', params={'model':'GENROU', 'idx':'GENROU_5', 'var':'omega'})

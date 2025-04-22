@@ -8,19 +8,19 @@ from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
 import pyomo.environ as pyo
 from pyomo.opt import SolverFactory
-from colmena import (
-    Context,
-    Service,
-    Role,
-    Channel,
-    Requirements,
-    Metric,
-    Persistent,
-    Async,
-    KPI,
-    Data,
-    Dependencies
-)
+# from colmena import (
+#     Context,
+#     Service,
+#     Role,
+#     Channel,
+#     Requirements,
+#     Metric,
+#     Persistent,
+#     Async,
+#     KPI,
+#     Data,
+#     Dependencies
+# )
 
 #Service to deploy a one layer control
 
@@ -463,7 +463,7 @@ def solve_mpc():
         print(f"error is {error}")
     return converged, andes_role_changes, agents
 
-andes_url = 'http://192.168.10.137:5000'
+andes_url = 'http://192.168.68.55:5000'
 responseLoad = requests.post(andes_url + '/start_simulation')
 time.sleep(1)
 converged, andes_role_changes, agents = solve_mpc()
