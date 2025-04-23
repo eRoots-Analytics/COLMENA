@@ -229,7 +229,7 @@ def system_susceptance():
                 line_uid = system.Line.idx2uid(line)
                 xi = system.Line.x.v[line_uid]
                 Sn = system.Line.Sn.v[line_uid]
-                bi += (1/xi)*Sn
+                bi += (1/xi)
                 print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
         
