@@ -119,11 +119,11 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     buses = requests.post(andes_url + '/area_variable_sync', json={'model':'Bus', 'var':'idx', 'area':self.area}).json()['value']
 
     #We get the buses where the devices are located
-    bus_area = requests.get(andes_url + '/complete_variable_sync', params={'model':'Bus', 'var':'area'}).json()['value']
-    PQ_bus = requests.post(andes_url + '/area_variable_sync', json={'model':'PQ', 'var':'bus', 'area':self.area}).json()['value']
     PV_bus = requests.post(andes_url + '/area_variable_sync', json={'model':'PV', 'var':'bus', 'area':self.area}).json()['value']
     generator_bus = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'bus', 'area':self.area}).json()['value']
     other_areas = [i for i in areas if i != self.area]
+    responseAndes = requests.get(andes_url + '/neighbour_area', params = {'area': str(area)})    
+    other_areas = responseAndes.json()['value']
 
 
     gen_location = {gen:generator_bus[i] for i, gen in enumerate(generators)}
@@ -132,6 +132,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
 
     M_coi = 0
     D_coi = 0
+    fn_coi = 0
     S_area = 0
     P_demand = 0
     S_base = []
@@ -148,6 +149,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     fn_values = responseAndes.json()['value']
     responseAndes = requests.get(andes_url + '/complete_variable_sync', params={'model':'PV', 'var':'p0'})
     p0_values = responseAndes.json()['value']
+
     #We compute the Center of Inertia and other values using the previous parameters
     for i, bus in enumerate(generator_bus):
         if bus in buses:
@@ -166,12 +168,14 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
             S_base.append(Sn)
     M_coi = M_coi/S_area
     D_coi = D_coi/S_area
-    fn = fn/S_area
+    fn_coi = fn_coi/S_area
+    fn_coi = 60
 
     #We define the model and the first sets over which the variables are defined 
     model = pyo.ConcreteModel()
     model.M = pyo.Param(initialize= M_coi)
     model.D = pyo.Param(initialize= D_coi)
+    model.fn = pyo.Param(initialize= fn_coi)
     model.generators = pyo.Set(initialize = generators)
     model.loads = pyo.Set(initialize = loads)
     pe_base = {i:Pe_values for i,Pe in list(zip(model.generators, Pe_values))}
@@ -180,18 +184,15 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     model.areas = pyo.Set(initialize = areas)
     model.TimeHorizon = pyo.RangeSet(0, self.T)
     model.TimeDynamics = pyo.RangeSet(0, self.T-1)
+    model.dual_vars = pyo.Param(model.areas, model.areas, model.TimeHorizon, initialize = mpc_problem.dual_vars, mutable = True)
 
-
-    model.dual_vars = pyo.Param(model.areas, model.TimeHorizon, initialize = mpc_problem.dual_vars, mutable = True)
-
-    #We query Andes for the pmax and pmin values of
+    #We query Andes for the pmax and pmin values of the generators
     slack_bus = requests.get(andes_url + '/complete_variable_sync', params={'model':'Slack', 'var':'bus', 'area':self.area}).json()['value']
     pmax_slack_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'Slack', 'var':'pmax', 'area':self.area}).json()['value']
     pmin_slack_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'Slack', 'var':'pmin', 'area':self.area}).json()['value']
     Sn_slack_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'Slack', 'var':'Sn', 'area':self.area}).json()['value']
     pmax_pv_values = requests.post(andes_url + '/area_variable_sync', json={'model':'PV', 'var':'pmax', 'area':self.area}).json()['value']
     pmin_pv_values = requests.post(andes_url + '/area_variable_sync', json={'model':'PV', 'var':'pmin', 'area':self.area}).json()['value']
-
 
     def power_bounds(model, gen, t):
         gen_bus = gen_location[gen]
@@ -208,6 +209,13 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
             pmin = 0
         return (pmin, pmax)
     
+    #We define the decision variable of the problem:
+        #delta (size T) the angle of the area
+        #freq  (size T) the frequency of the area in pu
+        #Pg    (size #generators*T) the power generation of the generators in the area
+        #P     (size T) the sum of the total power in the area 
+        #delta_areas (size other_ares*T) the angle of the other areas
+
     model.delta = pyo.Var(model.TimeHorizon, bounds=(-50, 50))
     model.delta_areas = pyo.Var(model.other_areas, model.TimeHorizon, initialize = 0.0, bounds=(-50, 50))
     model.freq = pyo.Var(model.TimeHorizon, bounds = (0.85, 1.15))
@@ -215,23 +223,26 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     model.P = pyo.Var(model.TimeHorizon, initialize = 0.0)
     model.P_exchange = pyo.Var(model.TimeHorizon, initialize = 0.0)
 
+    #We define parameters of the problem:
+        #b (size areas*areas) the susceptance in pu between 2 areas
+        #Pd (size T) the power demand in the area at time t 
+        #state_horizon_values (size T) the power demand in the area at time t 
 
-    #we define the parameters
     b_areas = requests.get(andes_url + '/system_susceptance', params={'area':self.area}).json()
-    fn_generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'fn', 'area':self.area}).json()['value']
     b_areas = {int(k): v for k, v in b_areas.items()}
-
     model.Pd = pyo.Param(model.TimeHorizon, initialize = P_demand)
     model.b = pyo.Param(model.other_areas, initialize = b_areas)
-    model.fn = pyo.Param(model.generators, initialize = fn_generators)
-    model.state_horizon_values = pyo.Param(model.areas, model.TimeHorizon, initialize = self.state_horizon_values, mutable=True)
+    model.state_horizon_values = pyo.Param(model.areas, model.areas, model.TimeHorizon, initialize = self.state_horizon_values, mutable=True)
 
-    #We define the initial conditions 
+    #We define the initial conditions:
+    # delta0 : the initial area angle initialized as the weighted mean od sum (M_i*delta_i)/sum(M_i)
+    # freq0  : the initial area frequency 
     delta_values = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'delta', 'idx':generators}).json()['value']
+    delta_values = requests.post(andes_url + '/partial_variable_sync', json={'model':'Bus', 'var':'a', 'idx':buses}).json()['value']
     freq_values = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'omega', 'idx':generators}).json()['value']
     M_values = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'M', 'idx':generators}).json()['value']
 
-    delta0 = np.dot(M_values, delta_values) / np.sum(M_values)
+    delta0 = np.mean(delta_values)
     freq0 = np.dot(M_values, freq_values) / np.sum(M_values)
     model.delta[0].value = delta0
     model.freq[0].value = freq0
@@ -239,8 +250,10 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     initial_area_values = {}
     for x_area in model.other_areas:
         delta_area = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'delta', 'area':x_area}).json()['value']
+        delta_area = requests.post(andes_url + '/area_variable_sync', json={'model':'Bus', 'var':'a', 'area':x_area}).json()['value']
         M_area = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'M', 'area':x_area}).json()['value']
-        initial_area_values[x_area] = (np.dot(M_area, delta_area) / np.sum(M_area))
+        #initial_area_values[x_area] = (np.dot(M_area, delta_area) / np.sum(M_area))
+        initial_area_values[x_area] = np.mean(delta_area)
 
     def initial_p(model, i):
         try:
@@ -255,29 +268,46 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     def initial_delta_areas(model, i):
         return (initial_area_values[i], model.delta_areas[i, 0], initial_area_values[i])
     
+    #We define the problem constraints
+    #C1: initial area angle initial value
+    #C2: initial area frequency initial value 
+    #C3: initial area's angle value for the neighboring areas
+    #C4: initial power injected by the generators in p.u.
     model.constraint_initial_conditions = pyo.Constraint(expr = model.delta[0] == delta0)
     model.constraint_initial_conditions2 = pyo.Constraint(expr = model.freq[0] == freq0)
     model.constraint_initial_conditions3 = pyo.Constraint(model.other_areas, rule = initial_delta_areas)
     model.constraint_initial_conditions4 = pyo.Constraint(model.generators, rule= initial_p)
 
-    #We define the dynamics of the system
-    self.ramp_up = 0.5
-    model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.delta[t+1] == model.delta[t] + dt*2*np.pi*model.fn[i]*(model.freq[t]-1))
+    #We define the dynamics of the system as constraints
+    #C1: the current area angle derivative
+    #C2: the current frequency angle derivative
+    #C3: the generator maximum ramp up
+    #C4: the generator minimum ramp up
+    self.ramp_up = 0.01
+    model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.delta[t+1] == model.delta[t] + dt*2*np.pi*model.fn*(model.freq[t]-1))
     model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.M*(model.freq[t+1] - model.freq[t])/dt == (-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t]))
     model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
     model.constrains_dynamics4 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: -self.ramp_up*self.dt <= (model.Pg[i, t+1] - model.Pg[i, t]))
 
     #We define the Inter Area constraints:
+    #C1: constraint defining the power exchanged between areas P_exchange = sum(P_i,j) for j in the other areas
+    #C2: constraint defining the total power generated P = sum(P_gen) for gen in current area generators
     def power_inter_area(model, t):
         return model.P_exchange[t] == sum(model.b[area] *(model.delta[t] - model.delta_areas[area, t]) for area in model.other_areas)
-    model.constrains_area = pyo.Constraint(model.TimeHorizon, rule= power_inter_area)
-    #We define the power balance constraint
+    model.constrains_area = pyo.Constraint(model.TimeHorizon, rule = power_inter_area)
     def power_balance_rule(model, t):
         return model.P[t] == sum(model.Pg[gen, t] for gen in model.generators)
-    model.constraints_balance = pyo.Constraint(model.TimeHorizon, rule=power_balance_rule)
+    model.constraints_balance = pyo.Constraint(model.TimeHorizon, rule = power_balance_rule)
 
 
     #We define the cost function
+    #COST 1: Linear cost related to each generator power
+    #COST 2: Cost term related to losses of active power
+    #COST 3: Frequency correction term where cost = norm(frequency - frequency_nominal)
+    #COST 4: Lagrangian multipliers of the problem  
+    # a is the error term associated with the error of what the current area thinks of the state values of the neighboring areas 
+    # b is the error term associated with the error of what the neighboring areas think of the state values of current area 
+    #COST 5: Penalty Term
     n = len(generators)
     cost = np.ones(n) + np.random.rand(n)
     cost_dict = {generator:cost[i] for i,generator in enumerate(generators)}
@@ -285,21 +315,23 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     def p_cost(model):
         return sum(model.c[i] * (model.Pg[i,t]) for i in model.generators for t in model.TimeHorizon)
     def p_exchange_cost(model):
-        return sum((model.P_exchange[t] - model.P_exchange[0])**2 for t in model.TimeHorizon)
+        return sum((model.P_exchange[t])**2 for t in model.TimeHorizon)
     def freq_cost(model):
         return sum((model.freq[t]-1)**2 for t in model.TimeHorizon)
     def lagrangian_term(model):
-        sign = 1 if self.area == 1 else -1
-        a = sum( sum(model.dual_vars[i, t]*sign*(model.delta_areas[i,t] - model.state_horizon_values[i,t]) for i in model.other_areas) for t in model.TimeHorizon)
+        a = 0
         b = 0
-        b += sum(model.dual_vars[self.area, t]*sign*(model.delta[t] - model.state_horizon_values[self.area, t])  for t in model.TimeHorizon)
-        print(f"here we have {model.dual_vars}")
-        return 100*(a + b)
+        for other_area in model.other_areas:
+            for t in model.TimeHorizon:
+                sign = np.sign(area - other_area)
+                a += model.dual_vars[other_area, self.area, t]*(-sign)*(model.delta_areas[other_area, t] - model.state_horizon_values[self.area, other_area, t])
+                b += model.dual_vars[self.area, other_area, t]*sign*(model.delta[t] - model.state_horizon_values[other_area, self.area, t]) 
+        return (a + b)
     def penalty_term(model):
-        sign = 1 if self.area == 1 else -1
-        a = 10*sum( 1*sum((model.delta_areas[i,t] - model.state_horizon_values[i,t])**2 for i in model.other_areas) for t in model.TimeHorizon)
-        b = 10*sum((model.delta[t] - model.state_horizon_values[self.area,t])**2  for t in model.TimeHorizon)
-        return a+b
+        a = 0
+        a += sum( sum((model.delta_areas[i,t] - model.state_horizon_values[self.area, i, t])**2 for i in model.other_areas) for t in model.TimeHorizon)
+        a += sum( sum((model.delta[t]         - model.state_horizon_values[i, self.area, t])**2 for i in model.other_areas) for t in model.TimeHorizon)
+        return pyo.sqrt(10*a)
         
     model.cost = pyo.Objective(rule=lambda model: freq_cost(model) + lagrangian_term(model) + penalty_term(model), sense=pyo.minimize)
     return model
@@ -309,24 +341,25 @@ class mpc_agent:
         super().__init__(*args, **kwargs)
         self.n_areas = 2
         self.alpha = 1
-        self.dt = 0.05
-        self.tol = 1e-4
+        self.dt = 0.3
+        self.tol = 1e-3
         self.andes_url = andes_url 
         self.agent_id = agent_name
         self.area = int(self.agent_id[-1])
         responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
         self.device_dict = responseAndes.json()
         self.t_start = time.time()
-        self.T = 40                       #number of timesteps when performing the MPC
+        self.T = 4                     #number of timesteps when performing the MPC
         
         self.areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         self.other_areas = [i for i in self.areas if i != self.area]
         self.first = True
         self.state_horizon_values = {}
         self.state_saved_values = {}
-        for area in self.areas:
-            for t in range(self.T +1):
-                self.state_horizon_values[area, t] = 0
+        for area_local in self.areas:
+            for area_out in self.areas:
+                for t in range(self.T +1):
+                    self.state_horizon_values[area_local, area_out, t] = 0
 
     
     def first_warm_start(self):
@@ -342,7 +375,7 @@ class mpc_agent:
         other_areas = [i for i in areas if i != self.area]
 
         for t in range(self.T+1):
-            self.state_horizon_values[self.area, t] = delta0
+            self.state_horizon_values[self.area, self.area, t] = delta0
             self.state_saved_values['f', t] = 1.0
             self.state_saved_values['P', t] = np.sum(Pe_values)
             self.state_saved_values['P_exchange', t] = 0.0
@@ -356,7 +389,7 @@ class mpc_agent:
         for t in self.model.TimeHorizon:
             
             for area in self.model.other_areas:
-                self.model.delta_areas[area, t].value = self.state_horizon_values[area, t]
+                self.model.delta_areas[area, t].value = self.state_horizon_values[area, area, t]
             
             if t+1 > self.T:
                 continue
@@ -385,25 +418,30 @@ class mpc_agent:
 class mpc:
     def __init__(self, agents, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.areas = 2
-        self.agents = agents
+        self.n_areas = 2
         self.alpha = 1
         self.T = agents[0].T
+        self.agents = {agent.area:agent for agent in agents}
         self.dual_vars = {}
-        self.areas = [int(agent.area) for agent in self.agents]
-        for i in self.areas:
-            for t in range(self.T+1):
-                self.dual_vars[i, t] = 0.0
+        self.areas = {}
+        for area in range(1, self.n_areas+1):
+            responseAndes = requests.get(andes_url + '/neighbour_area', params = {'area': str(area)})
+            self.areas[area] = responseAndes.json()['value']
+        for area_local, neighbors in self.areas.items():
+            for area_to in neighbors:
+                for t in range(self.T+1):
+                    self.dual_vars[area_local, area_to, t] = 0.0
 
 def solve_mpc(verbose = False):
+    #We first initialize the agents
     agent_1 = mpc_agent("area_1")
     agent_2 = mpc_agent("area_2")
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
-    mpc_problem.alpha = 0.1
+    mpc_problem.alpha = 0.01
     mpc_problem.dual_history = {key: [] for key in mpc_problem.dual_vars}
     other = {"area_1": agent_2, "area_2": agent_1}
-    for i in range(100):
+    for i in range(300):
         responseAndes = requests.get(agent_1.andes_url + '/sync_time')
         time_start = int(responseAndes.json()['time'])
         for agent in agents:
@@ -412,17 +450,12 @@ def solve_mpc(verbose = False):
             if agent.first:
                 agent.first_warm_start()
                 other_agent.first_warm_start()
-                state_value_other = other_agent.state_horizon_values
                 model = agent.setup_mpc(mpc_problem)
             else:
                 model = agent.model
                 for key, val in agent.state_horizon_values.items():
                     model.state_horizon_values[key].value = val
-                    if abs(val) > 0.1 and verbose:
-                        _ = 0
                 for key, val in mpc_problem.dual_vars.items():
-                    if abs(val) > 0.1 and verbose:
-                        _ = 0
                     model.dual_vars[key].value = val
             if verbose:
                 for key in model.dual_vars:
@@ -452,32 +485,35 @@ def solve_mpc(verbose = False):
                     other_area = other_agent.area
                     if other_area == agent.area:
                         continue
-                    other_agent.state_horizon_values[agent.area, t] = model.delta[t].value
-                    other_agent.state_horizon_values[other_area, t] = model.delta_areas[other_area, t].value
+                    other_agent.state_horizon_values[agent.area, agent.area, t] = model.delta[t].value
+                    other_agent.state_horizon_values[agent.area, other_area, t] = model.delta_areas[other_area, t].value
 
 
+        #We update the dual variables
         mpc_problem.delta_dual_vars = {k: 0 for k in mpc_problem.dual_vars}
         for t in range(mpc_problem.T+1):
-            for i, area in enumerate(model.areas):
-                agent = agents[i]
-                other_agent = agents[1] if i == 0 else agents[0]
-                sign = 1 if area == 1 else -1
-                mpc_problem.delta_dual_vars[area, t] = sign*(agent.model.delta[t].value - other_agent.model.delta_areas[agent.area, t].value)
-                mpc_problem.dual_vars[area, t] += mpc_problem.alpha*mpc_problem.delta_dual_vars[area, t]
-                mpc_problem.dual_history[area, t].append(mpc_problem.dual_vars[area, t])
+            for agent in mpc_problem.agents.values():
+                for neighbor_area in agent.model.other_areas:
+                    neighbor_agent = mpc_problem.agents[neighbor_area]
+                    sign = 1 if agent.area < neighbor_area  else -1
+                    mpc_problem.delta_dual_vars[agent.area, neighbor_area , t] = sign*(agent.model.delta[t].value - neighbor_agent.model.delta_areas[agent.area, t].value)
+                    mpc_problem.dual_vars[agent.area, neighbor_area , t] += mpc_problem.alpha*mpc_problem.delta_dual_vars[agent.area, neighbor_area , t]
+                    mpc_problem.dual_history[agent.area, neighbor_area , t].append(mpc_problem.dual_vars[agent.area, neighbor_area , t])
 
-                if abs(mpc_problem.delta_dual_vars[area, t]) > 0.1 and verbose:
-                    print(f"error is {mpc_problem.delta_dual_vars[area, t]}")
-                    print(f"delta_t is {agent.model.delta[t].value}")
-                    print(f"other agent delta is {other_agent.model.delta_areas[agent.area, t].value}")
-                    
 
         error = max(abs(v) for v in mpc_problem.delta_dual_vars.values())
+        if not hasattr(mpc_problem, 'error'):
+            mpc_problem.error = error
+        if error >= mpc_problem.error:
+            mpc_problem.alpha = max(0.000001, mpc_problem.alpha*0.6)
+        else:
+            _ = 0
+            #mpc_problem.alpha = mpc_problem.alpha*1.01
+        mpc_problem.error = error 
         andes_role_changes = []
         converged = False
         print("error is ", error)
-        print(f"delta_dual_vars are {mpc_problem.delta_dual_vars}")
-        print(f"dual_vars are {mpc_problem.dual_vars}")
+        #print(f"dual_vars are {mpc_problem.dual_vars}")
         if np.abs(error) < agent.tol:
             print(f"dist MPC converged")
             converged = True
@@ -485,14 +521,22 @@ def solve_mpc(verbose = False):
         agent.first = False
         responseAndes = requests.get(agent_1.andes_url + '/sync_time')
         time_start = int(responseAndes.json()['time'])
+
+        #If Converged we send all the new setpoints to the generator's governors
+        #All the new set points are sent to andes and not just the first one
         if converged:
+            for x_agent in agents:
+                generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
+                print(generators)
             responseAndes = requests.get(agent.andes_url + '/sync_time')
             time_start_bis = responseAndes.json()['time']
             for x_agent in agents:
-                for gen_id in x_agent.model.generators:
-                    id_number = gen_id[-1]
-                    if gen_id[-2] != '_':
-                        id_number = gen_id[-2:]
+                generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
+                for gen_id in generators:
+                    if type(gen_id) == str:
+                        id_number = gen_id[-1]
+                        if gen_id[-2] != '_':
+                            id_number = gen_id[-2:]
                     roleChangeDict = {}
                     roleChangeDict['model'] = 'TGOV1N'
                     roleChangeDict['idx'] = 'TGOV1_' + id_number
@@ -513,33 +557,29 @@ def solve_mpc(verbose = False):
         print(f"error is {error}")
     return converged, andes_role_changes, mpc_problem
 
-andes_url = 'http://192.168.68.71:5000'
+andes_url = 'http://192.168.10.137:5000'
 responseLoad = requests.post(andes_url + '/start_simulation')
 delta_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'GENROU', 'var':'delta'}).json()['value']
 
 time.sleep(1)
 converged, andes_role_changes, mpc_problem = solve_mpc()
-agents = mpc_problem.agents
+agents = list(mpc_problem.agents.values())
 print(f"converged is {converged}")
+print(f"alpha is {mpc_problem.alpha}")
 print(mpc_problem.dual_vars)
 model = agents[0].model
 other_model = agents[1].model
 agent = agents[0]
 for t in model.TimeHorizon:
     print(f"delta self [{t}, area1] = {model.delta[t].value}")
-    print(f"delta self other[{t}, area1] = {agent.state_horizon_values[1,t]}")
+    print(f"delta self [{t}, area1] = {model.delta_areas[2,t].value}")
+    print(f"delta self [{t}, area2] = {other_model.delta[t].value}")
+    print(f"P_exchange [{t}, area1] = {model.P_exchange[t].value}")
+    print(f"P_exchange [{t}, area1] = {model.P[t].value}")
 
 for t in model.TimeHorizon:
-    print(f"freq self [{t}, area2] = {other_model.freq[t].value}")
-    print(f"freq self [{t}, area1] = {model.freq[t].value}")
+    print(f"freq self [{t}, area2] = {other_model.delta_areas[1,t].value}")
+    print(f"freq self [{t}, area1] = {model.delta[t].value}")
 
-for t in model.TimeHorizon:
-    print(f"delta self [{t}, area2] = {model.delta_areas[2, t].value}")
-    print(f"delta self other[{t}, area2] = {agent.state_horizon_values[2,t]}")
-
-for t in model.TimeHorizon:
-    print(f"delta self [{t}, area2] = {model.P[t].value}")
-    print(f"delta self [{t}, area2] = {model.Pd[t]}")
-    print(f"delta self [{t}, area2] = {model.P_exchange[t].value}")
 
 

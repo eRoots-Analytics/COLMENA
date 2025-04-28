@@ -64,36 +64,61 @@
 The decision variables are:
 \begin{itemize}
     \item $f_t$ the area's frequency.
-    \item $\delta_{i,t}$ the area's angle.
-    \item $P^{gen}_t$ the generator power output.
-    \item $P^{i,j}_t$ the power exchanged between area i and area j.
+    \item $\delta_{i,t}$ the angle of area i.
+    \item $P^{\text{gen}_i}_t$ the generator's i power output in pu.
+    \item $P^{i,j}_t$ the power exchanged between area i and area j in pu.
 \end{itemize}
 
 The parameters are:
 \begin{itemize}
-    \item $B_{i,j}$ the susceptance between area i and arera j.
-    \item $\hat{\delta_{i,0}}$ the area's angle initial values.
-    \item $\hat{f_{0}}$ the area's frequency initial values.
+    \item $B_{i,j}$ the susceptance between area i and area j in p.u.
+    \item $\hat{\delta}_{i,j,t}$ is the previous optimal solution of the MPC of area i for the area angles $\delta_{j,t}^*$.
+    \item $\hat{\delta}_{i,0}$ the initial value of the area i in radians.
+    \item $\hat{f_{0}}$ the current area initial frequency value.
+    \item $u^{min}_{gen_i}, u^{max}_{gen_i}$ the minimum and maximum ramp up speed of generator i in pu/s.
+    \item $M_i$ the area wise inertia constant defined as $\frac{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}M_{gen_k}}{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}}$ 
+    \item $D_i$ the area wise damping coefficient defined as $\frac{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}D_{gen_k}}{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}}$ 
 \end{itemize}
 
-The MPC formulation is
+
+The dynamics of the MPC model can be expressed as the following differential equations:
+
 \begin{align}
-    \min_{f_{t}, \delta_{i,t}, P_^{gen}{t}, P^{i,j}_t} &||f - f_0||^2 + \sum_{j \in OtherAreas} \lambda_j(\delta_{j,t} - \hat{\delta}_{j,t}) + \sum_{j \in OtherAreas}(\delta_{j,t} - \hat{\delta}_{j,t})^2\\
-    \text{s.t.} \quad  &\dot{\delta}_a = 2 \pi (f_t - f_0) \quad  \forall t = 0, \dots, T\\
-    & M(\dot{f})= -D(f-f_0) + \sum_{gen \in area} P^{gen}_t +\sum_{j \in \text{other area}}P_{i,j} - P^{demand}_t \\
-    & \delta_{i,0} = \hat{\delta}_{i,0} \\
+    \dot{\delta}_i &= 2 \pi (f_t - f_0) \quad  \forall t = 0, \dots, T\\
+    M(\dot{f}) &= -D(f-f_0) + \sum_{gen \in area} P^{gen}_t +\sum_{j \in \text{other area}}P_{i,j} - P^{demand}_t 
+\end{align}
+The MPC formulation for area $i$ is.
+\begin{align}
+    \min_{f_{t}, \delta_{i,t}, P^{gen}_{t}, P^{i,j}_t} \quad 
+    & \|f - f_0\|^2 
+    + \sum_{j \in \text{NeighboringAreas}} \lambda_{j, i, t} (\delta_{j,t} - \hat{\delta}_{i,j,t}) \cdot \text{sign}(i-j) \\
+    & + \sum_{j \in \text{NeighboringAreas}} \lambda_{i,j,t} (\delta_{i,t} - \hat{\delta}_{j,i,t}) \cdot \text{sign}(j-i) \nonumber \\
+    & + \sum_{j \in \text{NeighboringAreas}} (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \nonumber \\
+    \text{s.t.} \quad 
+    & \delta_{t+1} -\delta_{t} = 2 \Delta t \pi (f_t - f_0) \quad \forall t = 0, \dots, T \\
+    & M(f_{t+1} - f_t) = -\Delta t \left(D(f-f_0) + \sum_{\text{gen} \in \text{area}} P^{gen}_t + \sum_{j \in \text{other area}} P_{i,j} - P^{demand}_t \right) \\
+    & \delta_{j,0} = \hat{\delta}_{j,0}  \forall j \in \text{Areas}\\
     & f_0 = \hat{f}_0 \\
     & P_{i,j} = \sum_{j \in \text{Areas}} B_{i,j}(\delta_{i,t} - \delta_{j,t}) \\
-    & u_{min} \leq P^{gen}_{i, t+1} - P^{gen}_{i, t} \leq u_{max} \\
-    & P_{gen}^{min} \leq P^{gen}_{i, t} \leq P_{gen}^{max}
+    & u_{\min} \leq P^{gen_k }_{t+1} - P^{gen_k }_{t} \leq u_{\max} \quad \forall gen_k \in AreaGenerators \forall t = 0,...,T-1\\
+    & P^{gen_k}_{\min} \leq P^{gen}_{i, t} \leq P^{gen_k}_{\max} \quad \forall gen_k \in AreaGenerators
 \end{align}
 
-The extended formulation would add the following equation:
+Where we have that this expression is the cost in the objective function associated to the error of the agent's data about other agents angles,
+\begin{equation}
+    \sum_{j \in NeighboringAreas}\lambda_{j, i, t}(\delta_{j,t} - \hat{\delta}_{i,j,t})(sign(i-j))
+\end{equation} 
+whereas this other expression is the error of the other agent's data tells about the value they have.
+\begin{equation}
+    \sum_{j \in NeighboringAreas}\lambda_{i,j,t}(\delta_{i,t} - \hat{\delta}_{j,i,t})(sign(j-i))
+\end{equation} 
 
+The objective of the extended formulation is to expand the current problem where we consider the areas as a simple aggregation of devices to one where the topology inside each grid is also considered. For this purpose, we add new constraints related to the power balance in each individual bus and not just in the whole area.
+ 
 \begin{align}
-    \sum_{j \in area} P_{\text{bus}_i, \text{bus}_j} + P^{gen}_{\text{bus}_i} +
+    P^{gen}_{\text{bus}_i} - P^d_{\text{bus}_i} - \sum_{j \in area} P_{\text{bus}_i, \text{bus}_j}= 0 \quad \forall \text{bus}_i \in \text{Area}\\
+    P_{\text{bus}_i, \text{bus}_j} = B_{i,j}(\theta_{i}-\theta_{j})
 \end{align}
-
 \begin{algorithm}
     \caption{Distributed MPC ADMM algorithm}
     \label{algo:ADMM}
@@ -106,9 +131,9 @@ The extended formulation would add the following equation:
                 \State Get state horizon of the other $\hat{\delta}_{\text{area}, 0} \quad \forall \text{agent}$ from other agents via \texttt{@Data(horizon)}
                 \State Solve local area MPC
                 \State Publish state horizon solution $\delta_{\text{area}_i, t}^* \forall t=0...T$ to \texttt{@Data(horizon)}
-                \State $error \gets \delta_{i} - \hat{\delta_{i}}$
-                \State $\lambda_{i} \gets \lambda_{i} + \alpha \cdot error$
             \EndFor
+            \State $error \gets \delta_{i}^* - \hat{\delta_{i}}$
+            \State $\lambda_{i} \gets \lambda_{i} + \alpha \cdot error$
         \EndWhile
         \For{gen in generators}
             \State Consider the area's MPC the generator belongs to.

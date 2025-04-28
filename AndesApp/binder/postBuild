@@ -1,3 +1,0 @@
-python -m pip install .[all]
-
-python -m andes prep

@@ -24,12 +24,10 @@ andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.68.71:5000'
+andes_url = 'http://192.168.10.137:5000'
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
 responseLoad = requests.get(andes_url + '/system_susceptance', params={'area':1})
-print(responseLoad.json())
 responseLoad = requests.get(andes_url + '/system_susceptance', params={'area':2})
-print(responseLoad.json())
 #responseAndes = requests.get(andes_url + '/device_sync', params={'model':'REDUAL', 'idx':'GENROU_1'})
 #responseAndes = requests.get(andes_url + '/specific_device_sync', params={'model':'GENROU', 'idx':'GENROU_5', 'var':'omega'})
 responseRun = requests.get(andes_url + '/run_real_time', params={'t_run':20, 'delta_t':0.2})

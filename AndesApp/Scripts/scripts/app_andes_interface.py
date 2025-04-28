@@ -58,8 +58,14 @@ def load_simulation():
         print(f"case_file is {case_file}")
         if data['redual'] is False:
             system = system_ieee
+            #system.Line.alter(src='u', idx = 'Line_7', value = 0)
+            #system.Line.alter(src='u', idx = 'Line_17', value = 0)
+            #system.Line.alter(src='u', idx = 'Line_20', value = 0)
+            #system.Line.alter(src='u', idx = 'Line_31', value = 0)
+            #system.Line.alter(src='u', idx = 'Line_32', value = 0)
             system.setup()
             system.PFlow.run()
+
             #system.TDS.init()
             print(f"system area is {system.Area}")
             return jsonify({"message": f"Simulation loaded successfully"}), 200
@@ -127,22 +133,7 @@ def assign_device():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-    
-@app.route('/assign_out', methods=['POST'])
-def assign_out():
-    try:
-        data = request.get_json()
-        idx = data['idx'] 
-        model = data['model']
-        role = data['role']
-        for item in controllable_devices:
-            if idx == item['idx'] and model == item['model'] and role == item[role]:
-                item[role] = False
-                return jsonify({'message': 'Role ended'}), 200
-        return jsonify({'message': 'Role ended'}), 200
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+
 
 # Route to run the previously loaded simulation
 @app.route('/run_simulation', methods=['POST'])
@@ -173,6 +164,55 @@ def print_var():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route('/connecting_buses', methods=['GET'])
+def neighbour_area():
+    area1 = request.args.get('area1', type=int)
+    area2 = request.args.get('area2', type=int)
+    result = set()
+    response = {}
+    try:
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area_from = system.Bus.area.v[bus1_index]
+            area_to = system.Bus.area.v[bus2_index]
+
+            if area_from in [area1,area2] and area_to in [area1,area2] and area_from != area_to:
+                if area1 == area_to:
+                    result.add(bus1)
+                else:
+                    result.add(bus2)
+        response['value'] = list(result)
+        return jsonify(response), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/neighbour_area', methods=['GET'])
+def neighbour_area():
+    area = request.args.get('area', type=int)
+    result = set()
+    response = {}
+    try:
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area2 == area or area1 == area and area2 != area1:
+                area_neighbor = area2 if area2 != area else area1
+                if area_neighbor != area:
+                    result.add(area_neighbor)
+        response['value'] = list(result)
+        return jsonify(response), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 # Route to run the previously loaded simulation
 @app.route('/lines_susceptance', methods=['GET'])
@@ -227,9 +267,10 @@ def system_susceptance():
             bi = 0
             for line in lines:
                 line_uid = system.Line.idx2uid(line)
+                connection_status = system.Line.u.v[line_uid]
                 xi = system.Line.x.v[line_uid]
                 Sn = system.Line.Sn.v[line_uid]
-                bi += (1/xi)
+                bi += (1/xi)*connection_status
                 print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
         
@@ -597,12 +638,14 @@ def plot():
         matplotlib.use('TkAgg')
         fig, ax = system.TDS_stepwise.plt.plot(system.Bus.v)
         fig.savefig('plots/bus_v.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega)
-        fig.savefig('plots/genrou_omega.png', format='png')
+        fig, ax = system.TDS_stepwise.plt.plot(system.Bus.a)
+        fig.savefig('plots/bus_a.png', format='png')
+        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta)
+        fig.savefig('plots/genrou_delta.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.Pe)
         fig.savefig('plots/genrou_pe.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta)
-        fig.savefig('plots/delta.png', format='png')
+        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega)
+        fig.savefig('plots/genrou_delta.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pout)
         fig.savefig('plots/tgov_pout.png', format='png')
         fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pref)
