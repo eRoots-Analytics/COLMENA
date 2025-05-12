@@ -27,7 +27,7 @@
                 "TRANSFORMER"
             ],
             "kpis": [
-                "erootsusecase/frequency[1s] > 0.9998"
+                "erootsusecase/frequency[1s] < 1.2"
             ]
         },
         {

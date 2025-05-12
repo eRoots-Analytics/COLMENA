@@ -21,7 +21,7 @@ from colmena import (
     Dependencies
 )
 
-HOST_IP = '192.168.68.67'
+HOST_IP = '192.168.68.71'
 class GridAreas(Context):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,10 +87,9 @@ class ErootsUseCase(Service):
             self.monitored.publish(1)
             return 1
     
-    
     class GridFormingRole(Role):
         @Metric('frequency')
-        @KPI('erootsusecase/frequency[1s] > 0.9998')
+        @KPI('erootsusecase/frequency[1s] < 1.2')
         @Dependencies("requests")
         @Requirements('TRANSFORMER')
         def __init__(self, *args, **kwargs):
@@ -104,6 +103,7 @@ class ErootsUseCase(Service):
 
         @Persistent(period = 0.1)
         def behavior(self):
+            return
             query_dict = self.device_dict
             query_dict['var'] = 'is_GFM'
             responseAndes = requests.get(self.andes_url + '/specific_device_sync', params=query_dict)

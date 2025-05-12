@@ -15,7 +15,9 @@ import andes as ad
 agent_id = 'area_1'
 andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_dict = {"case_file":andes_directory}
-andes_url = 'http://192.168.68.67:5000'
+andes_url = 'http://192.168.10.137:5000'
+andes_url = 'http://192.168.68.71:5000'
+
 andes_dict["redual"] = False
 responseRun = requests.post(andes_url + '/start_simulation')
 exit()

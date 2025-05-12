@@ -3,6 +3,11 @@ from flask import url_for, request, render_template_string, jsonify, send_file
 from typing import List, TYPE_CHECKING
 from threading import Thread
 from PIL import Image
+import pandas as pd
+import os
+
+desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", "plots")
+os.makedirs(desktop_path, exist_ok=True)
 from io import BytesIO
 import requests
 from collections import OrderedDict
@@ -70,6 +75,7 @@ def load_simulation():
             print(f"system area is {system.Area}")
             return jsonify({"message": f"Simulation loaded successfully"}), 200
 
+        app.config['redual'] = True
         print("redual is true")
         system = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
         system_initial = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
@@ -92,9 +98,6 @@ def load_simulation():
         system.TDS_stepwise.config.criteria = 0
         system.PFlow.run()
 
-        system.PQ.config.p2p = 1.0
-        system.PQ.config.p2i = 0
-        system.PQ.config.p2z = 0
 
         system_initial.find_devices()
         system_initial.REDUAL.prepare()
@@ -103,9 +106,12 @@ def load_simulation():
         system_initial.setup()
         system_initial.TDS_stepwise.config.criteria = 0
         system_initial.PFlow.run()
-        system_initial.TDS.init()
 
         system = system_initial
+        system.PQ.config.p2p = 1.0
+        system.PQ.config.p2i = 0
+        system.PQ.config.p2z = 0
+
         print(f"system area is {system.Area}")
 
         return jsonify({"message": f"Simulation loaded successfully"}), 200
@@ -165,7 +171,7 @@ def print_var():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/connecting_buses', methods=['GET'])
-def neighbour_area():
+def connecting_buses():
     area1 = request.args.get('area1', type=int)
     area2 = request.args.get('area2', type=int)
     result = set()
@@ -190,6 +196,7 @@ def neighbour_area():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+#Function that 
 @app.route('/neighbour_area', methods=['GET'])
 def neighbour_area():
     area = request.args.get('area', type=int)
@@ -280,6 +287,81 @@ def system_susceptance():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+# Route to run the previously loaded simulation
+@app.route('/delta_equivalent', methods=['GET'])
+def delta_equivalent():
+    try:
+        data = request.args.to_dict()
+        area = int(data['area'])
+        other_areas = system.Area.idx.v
+        other_areas = [x_area for x_area in other_areas if x_area != area]
+        connecting_lines = {}
+        connecting_susceptance = {}
+        delta_equivalent = {}
+        for x_area in other_areas:
+            connecting_lines[x_area] = []
+
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area1 != area2 and area in [area1, area2]:
+                connecting_area = area2 if area == area1 else area1
+                connecting_lines[connecting_area].append(line)
+                print(f"connecting")
+            
+        for x_area, lines in connecting_lines.items():
+            bi = 0
+            for line in lines:
+                line_uid = system.Line.idx2uid(line)
+                connection_status = system.Line.u.v[line_uid]
+                xi = system.Line.x.v[line_uid]
+                Sn = system.Line.Sn.v[line_uid]
+                bi += (1/xi)*connection_status
+                print(f"line is {line} bi is {bi}")
+            connecting_susceptance[int(x_area)] = bi
+        
+        for x_area, lines in connecting_lines.items():
+            p_exchanged = 0
+            p_exchanged_other = 0
+            for line in lines:
+                i = system.Line.idx2uid(line)
+                bus1 = system.Line.bus1.v[i]
+                bus2 = system.Line.bus2.v[i]
+                bus1_index = system.Bus.idx2uid(bus1)
+                bus2_index = system.Bus.idx2uid(bus2)
+                area1 = system.Bus.area.v[bus1_index]
+                area2 = system.Bus.area.v[bus2_index]
+                delta1 = system.Bus.a.v[bus1_index]
+                delta2 = system.Bus.a.v[bus2_index]
+                v1 = system.Bus.v.v[bus1_index]
+                v2 = system.Bus.v.v[bus2_index]
+                line_uid = system.Line.idx2uid(line)
+                xi = system.Line.x.v[line_uid]
+                ri = system.Line.r.v[line_uid]
+                b_shunt = system.Line.b.v[line_uid]
+                if area == area1:
+                    sign = 1
+                else:
+                    sign = -1
+                p_exchanged += 1*sign*(-1/xi)*np.sin(delta1-delta2)*v1*v2
+                p_exchanged += 0*sign*(v1*v2*((ri/xi**2)*np.cos(delta1-delta2)+(1/xi)*np.sin(delta1-delta2)) - v1*v1*((ri/xi**2)+b_shunt))
+            if connecting_susceptance[int(x_area)] != 0:
+                delta_equivalent[int(x_area)] = p_exchanged/connecting_susceptance[int(x_area)]
+            else:
+                delta_equivalent[int(x_area)] = 0
+        
+        result = {}
+        result['value'] = delta_equivalent
+        return jsonify(result), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/run_simulation_online', methods=['POST'])
 def run_simulation_online():
@@ -297,7 +379,6 @@ def run_simulation_online():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/device_role_change', methods=['POST'])
 def device_role_change():
     #method to post the new device role in the app
@@ -311,9 +392,19 @@ def device_role_change():
         value = data['value']
         agent_id = data['agent']
         agent_actions[agent_id].append(system.dae.t)
+        if param == 'p_goal':
+            param = 'paux0'
+            model = getattr(system, model_name)
+            uid = model.idx2uid(idx)
+            try:
+                gen_idx = model.gen.v[uid] 
+            except:
+                gen_idx = model.syn.v[uid] 
+            gen_model = system.GENROU
+            gen_uid = gen_model.idx2uid(gen_idx)
+            value = value - model.pout.v[gen_uid]
         model = getattr(system, model_name)
-        uid = model.idx2uid(idx)
-        param_in_andes = getattr(model,param)
+        param_in_andes = getattr(model, param)
         initial_value = param_in_andes.v[uid]
         if hasattr(data,'add'): 
             if data['add']:
@@ -601,10 +692,10 @@ def run_real_time():
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
             set_points += [{'model':'Line', 'idx':'Line_19', 't':5, 'param':'u', 'value':0, 'add':False}]
-            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.50*Ppf_pq5, 'add':False}]
-            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.30*Ppf_pq6, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
-            time.sleep(0.25)
+            time.sleep(0.2)
 
         t_0 = time.time()
         t_run = float(request.args.get('t_run', 40))  
@@ -636,20 +727,25 @@ def plot():
         var = getattr(model, var_name)
         system.TDS_stepwise.load_plotter()
         matplotlib.use('TkAgg')
-        fig, ax = system.TDS_stepwise.plt.plot(system.Bus.v)
-        fig.savefig('plots/bus_v.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.Bus.a)
-        fig.savefig('plots/bus_a.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta)
-        fig.savefig('plots/genrou_delta.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.Pe)
-        fig.savefig('plots/genrou_pe.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega)
-        fig.savefig('plots/genrou_delta.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pout)
-        fig.savefig('plots/tgov_pout.png', format='png')
-        fig, ax = system.TDS_stepwise.plt.plot(system.TGOV1N.pref)
-        fig.savefig('plots/tgov_pref.png', format='png')
+        plots = {
+            'bus_v': system.Bus.v,
+            'bus_a': system.Bus.a,
+            'genrou_delta': system.GENROU.delta,
+            'genrou_pe': system.GENROU.Pe,
+            'genrou_omega': system.GENROU.omega,
+            'tgov_pout': system.TGOV1N.pout,
+        }
+
+        if app.config['grid'] == 'kundur':
+            plots['tgov_pout']=system.TGOV1.pout
+
+        system.TDS_stepwise.plt.export_csv(path="plots/data.csv", idx=system.TDS_stepwise.plt.find('omega')[0])
+        for name, variable in plots.items():
+            fig, ax = system.TDS_stepwise.plt.plot(variable)
+            fig.savefig(f'plots/{name}.png', format='png')
+            fig.savefig(os.path.join(desktop_path, f'{name}.svg'), format='svg')
+            matplotlib.pyplot.close(fig)
+
         if app.config['redual']:
             fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.v)
             fig.savefig('plots/redual_v.png', format='png')

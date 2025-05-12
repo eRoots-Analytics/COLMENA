@@ -1,6 +1,47 @@
 import numpy as np
 from copy import deepcopy
 
+
+if alternative_update:
+    if residual_norm > residual_improvement_norm:
+        mpc_problem.alpha = mpc_problem.alpha*1.1
+    elif residual_improvement_norm >= residual_norm:
+        mpc_problem.alpha = mpc_problem.alpha*0.7
+        if not hasattr(mpc_problem, 'integrator'):
+            mpc_problem.integrator =  {k: 0 for k in mpc_problem.dual_vars}
+    else:
+        mpc_problem.alpha = mpc_problem.alpha     
+    mpc_problem.residual_save = deepcopy(mpc_problem.delta_dual_vars) 
+    for agent in agents:
+        agent.model.rho.value = mpc_problem.alpha    
+    if hasattr(mpc_problem, 'integrator') and False:
+        for t in range(mpc_problem.T+1):
+            for agent in mpc_problem.agents.values():
+                for neighbor_area in agent.model.other_areas:
+                    neighbor_agent = mpc_problem.agents[neighbor_area]
+                    mpc_problem.delta_dual_vars[agent.area, neighbor_area , t] = sign*(agent.model.delta[t].value - neighbor_agent.model.delta_areas[agent.area, t].value)
+                    mpc_problem.integrator[agent.area, neighbor_area , t] += mpc_problem.delta_dual_vars[agent.area, neighbor_area , t] 
+                    mpc_problem.dual_vars[agent.area, neighbor_area , t] -= mpc_problem.alpha*mpc_problem.delta_dual_vars[agent.area, neighbor_area , t]
+                    mpc_problem.dual_vars[agent.area, neighbor_area , t] += mpc_problem.alpha0*mpc_problem.delta_dual_vars[agent.area, neighbor_area , t]
+                    mpc_problem.dual_vars[agent.area, neighbor_area , t] += mpc_problem.Kd*residual_improvement[agent.area, neighbor_area , t]
+                    mpc_problem.dual_vars[agent.area, neighbor_area , t] += mpc_problem.Ki*mpc_problem.integrator[agent.area, neighbor_area , t]
+else:
+    error_save =  mpc_problem.error_save[-2][0] if len(mpc_problem.error_save) >= 2 else 0
+    if error > error_save:
+        _ = 0
+        for agent in agents:
+            _ = 0
+            #agent.model.rho.value = max(0.0001,agent.model.rho.value*0.1)
+    else:
+        _ = 0    
+        mpc_problem.alpha = 0.0
+error = max(abs(v) for v in mpc_problem.delta_dual_vars.values())
+real_error = max(v for v in mpc_problem.delta_dual_vars.values())
+mpc_problem.error_save.append([error, mpc_problem.alpha, real_error]
+error_save =  mpc_problem.error_save[-2][0] if len(mpc_problem.error_save) >= 2 else 0
+real_error_save =  mpc_problem.error_save[-2][2] if len(mpc_problem.error_save) >= 2 else 0
+
+
 class State:
     def __init__(self):
         self.P0 = np.ones(2)

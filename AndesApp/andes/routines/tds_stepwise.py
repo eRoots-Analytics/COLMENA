@@ -823,9 +823,21 @@ class TDS_stepwise(BaseRoutine):
         for set_point in set_points:
             model_name = set_point['model']
             param = set_point['param']
-            value = set_point['value']
+            value = float(set_point['value'])
             idx = set_point['idx']
             add = set_point['add']
+            if param == 'p_goal':
+                param = 'paux0'
+                model = getattr(self.system, model_name)
+                uid = model.idx2uid(idx)
+                try:
+                    gen_idx = model.gen.v[uid]
+                except: 
+                    gen_idx = model.syn.v[uid]
+                gen_model = self.system.GENROU
+                gen_uid = gen_model.idx2uid(gen_idx)
+                print(f"value is {value}")
+                value = value - model.pout.v[gen_uid]
             if 't' in set_point.keys():
                 t_change = set_point['t']
             else:
