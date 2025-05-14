@@ -63,6 +63,8 @@ def load_simulation():
         print(f"case_file is {case_file}")
         if data['redual'] is False:
             system = system_ieee
+            system.prepare(models = system.TGOV1N)
+            print(f"system.TGOV1N.b is {system.TGOV1N.b}")
             #system.Line.alter(src='u', idx = 'Line_7', value = 0)
             #system.Line.alter(src='u', idx = 'Line_17', value = 0)
             #system.Line.alter(src='u', idx = 'Line_20', value = 0)
@@ -288,7 +290,7 @@ def system_susceptance():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
-# Route to run the previously loaded simulation
+# Route to compute the equivalent angles of the area
 @app.route('/delta_equivalent', methods=['GET'])
 def delta_equivalent():
     try:
@@ -363,6 +365,75 @@ def delta_equivalent():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# Route to compute the equivalent angles of the area
+@app.route('/delta_equivalent_balanced', methods=['GET'])
+def delta_equivalent_balanced():
+    try:
+        data = request.args.to_dict()
+        area = int(data['area'])
+        other_areas = system.Area.idx.v
+        other_areas = [x_area for x_area in other_areas if x_area != area]
+        connecting_lines = {}
+        connecting_susceptance = {}
+        delta_equivalent = {}
+        for x_area in other_areas:
+            connecting_lines[x_area] = []
+
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area1 != area2 and area in [area1, area2]:
+                connecting_area = area2 if area == area1 else area1
+                connecting_lines[connecting_area].append(line)
+                print(f"connecting")
+            
+        for x_area, lines in connecting_lines.items():
+            bi = 0
+            for line in lines:
+                line_uid = system.Line.idx2uid(line)
+                connection_status = system.Line.u.v[line_uid]
+                xi = system.Line.x.v[line_uid]
+                Sn = system.Line.Sn.v[line_uid]
+                bi += (1/xi)*connection_status
+                print(f"line is {line} bi is {bi}")
+            connecting_susceptance[int(x_area)] = bi
+        
+            p_gen = 0
+            for i, gen_idx in enumerate(system.GENROU.idx.v):
+                bus_idx = system.GENROU.bus.v[i]
+                bus_uid = system.Bus.idx2uid(bus_idx) 
+                bus_area = system.Bus.area.v[bus_uid]
+                if bus_area == area:
+                    p_gen += system.GENROU.tm.v[i]
+            P_balance += p_gen
+
+            p_demand = 0
+            for i, gen_idx in enumerate(system.PQ.idx.v):
+                bus_idx = system.PQ.bus.v[i]
+                bus_uid = system.Bus.idx2uid(bus_idx) 
+                bus_area = system.Bus.area.v[bus_uid]
+                if bus_area == area:
+                    p_demand -= system.PQ.p0.v[i]
+            P_balance += p_demand
+
+            #This works if there are only 2 areas if not we have to solve a linear system
+            if connecting_susceptance[int(x_area)] != 0:
+                delta_equivalent[int(x_area)] = P_balance/connecting_susceptance[int(x_area)]
+            else:
+                delta_equivalent[int(x_area)] = 0
+        
+        result = {}
+        result['value'] = delta_equivalent
+        return jsonify(result), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/run_simulation_online', methods=['POST'])
 def run_simulation_online():
     global loaded_system
@@ -392,10 +463,10 @@ def device_role_change():
         value = data['value']
         agent_id = data['agent']
         agent_actions[agent_id].append(system.dae.t)
+        model = getattr(system, model_name)
+        uid = model.idx2uid(idx)
         if param == 'p_goal':
             param = 'paux0'
-            model = getattr(system, model_name)
-            uid = model.idx2uid(idx)
             try:
                 gen_idx = model.gen.v[uid] 
             except:
@@ -403,7 +474,6 @@ def device_role_change():
             gen_model = system.GENROU
             gen_uid = gen_model.idx2uid(gen_idx)
             value = value - model.pout.v[gen_uid]
-        model = getattr(system, model_name)
         param_in_andes = getattr(model, param)
         initial_value = param_in_andes.v[uid]
         if hasattr(data,'add'): 
@@ -692,16 +762,16 @@ def run_real_time():
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
             set_points += [{'model':'Line', 'idx':'Line_19', 't':5, 'param':'u', 'value':0, 'add':False}]
-            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
-            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
             time.sleep(0.2)
 
-        t_0 = time.time()
         t_run = float(request.args.get('t_run', 40))  
         delta_t = float(request.args.get('delta_t', 0.1))  
         app.config['started'] = True
         system.PFlow.run()
+        t_0 = time.time()
         while system.dae.t <= t_run:
             if time.time() - t_0 >= delta_t: 
                 system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
@@ -733,11 +803,14 @@ def plot():
             'genrou_delta': system.GENROU.delta,
             'genrou_pe': system.GENROU.Pe,
             'genrou_omega': system.GENROU.omega,
+            'genrou_tm': system.GENROU.tm,
             'tgov_pout': system.TGOV1N.pout,
+            'tgov_pref': system.TGOV1N.pref,
         }
 
         if app.config['grid'] == 'kundur':
             plots['tgov_pout']=system.TGOV1.pout
+            plots['tgov_pout']=system.TGOV1.pref
 
         system.TDS_stepwise.plt.export_csv(path="plots/data.csv", idx=system.TDS_stepwise.plt.find('omega')[0])
         for name, variable in plots.items():

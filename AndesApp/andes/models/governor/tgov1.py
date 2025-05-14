@@ -238,6 +238,9 @@ class TGOV1N(TGOV1Data, TGOV1NModel):
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1NModel.__init__(self, system, config)
+        self.b = NumParam(default = 0, info = "binary variable that defines if the pout is directly controled or not")
+        self.p_direct = NumParam(default = 0, info = "Power output with direct control")
+        self.pout.e_str = "b*p_direct + (1-b)*"+self.pout.e_str
 
 
 class TGOV1DB(TGOV1DBData, TGOV1DBModel):

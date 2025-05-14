@@ -172,6 +172,8 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     Sn_values = responseAndes.json()['value']
     responseAndes = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'Pe', 'idx':generators})
     Pe_values = responseAndes.json()['value']
+    responseAndes = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'tm', 'idx':generators})
+    tm_values = responseAndes.json()['value']
     responseAndes = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'M', 'idx':generators})
     M_values = responseAndes.json()['value']
     responseAndes = requests.post(andes_url + '/partial_variable_sync', json={'model':'GENROU', 'var':'D', 'idx':generators})
@@ -238,7 +240,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         else:
             pmax = 11
             pmin = 0
-        return (pmin, pmax)
+        return (pmin, pmax+0.2)
     
     #We define the decision variable of the problem:
         #delta (size T) the angle of the area
@@ -302,11 +304,13 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         try:
             index = generators.index(i)
             Pe = Pe_values[index]
+            tm = tm_values[index]
+            print(f"Pe is {Pe}, tm is {tm}")
         except:
             generator_bus = gen_location[i]
             index = PV_bus.index(generator_bus)
             Pe = p0_values[index]
-        return model.Pg[i,0] == Pe
+        return model.Pg[i,0] == tm
     
     def initial_delta_areas(model, i):
         #return (initial_area_values[i], model.delta_areas[i, 0], initial_area_values[i])
@@ -330,7 +334,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     #C2: the current frequency angle derivative
     #C3: the generator maximum ramp up
     #C4: the generator minimum ramp up
-    self.ramp_up = 0.12
+    self.ramp_up = 0.05
     model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.delta[t+1] - model.delta[t])==  self.dt*2*np.pi*fn*(model.freq[t]-1))
     model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.M*model.fn*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t])))
     model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
@@ -387,14 +391,22 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     def damping_term(model):
         a = 0
         a += sum((model.delta[t] - model.delta_previous[t])**2  for t in model.TimeHorizon)
-        return 15*a
+        a = 5*a
+        return 30*a
     def terminal_cost(model):
         a = 0
         a += self.T*(model.freq[self.T]-1)**2
         return 1*a 
-        
-    model.cost = pyo.Objective(rule=lambda model: 1*freq_cost(model) + 1*lagrangian_term(model) 
-                               + penalty_term(model) + damping_term(model) + 1*terminal_cost(model), sense=pyo.minimize)
+    def steady_state_condition(model):
+        a = 0
+        a += 20*(model.P[self.T]-model.Pd[self.T] - model.P_exchange[self.T])**2
+        return a 
+    def power_normalization(model):
+        a = 0
+        a += sum((model.Pg[gen, t+1] - model.Pg[gen, t])**2 for gen in model.generators for t in model.TimeDynamics)
+        return a
+    model.cost = pyo.Objective(rule=lambda model: 1*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
+                               + penalty_term(model) + damping_term(model) + 0*terminal_cost(model), sense=pyo.minimize)
     return model
 
 class mpc_agent:
@@ -402,7 +414,7 @@ class mpc_agent:
         super().__init__(*args, **kwargs)
         self.n_areas = 2
         self.alpha0 = 0.01
-        self.dt = 0.2
+        self.dt = 0.1
         self.tol = 1e-4
         self.andes_url = andes_url 
         self.agent_id = agent_name
@@ -410,7 +422,7 @@ class mpc_agent:
         responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
         self.device_dict = responseAndes.json()
         self.t_start = time.time()
-        self.T = 10             #number of timesteps when performing the MPC
+        self.T = 15             #number of timesteps when performing the MPC
         
         self.areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         self.other_areas = [i for i in self.areas if i != self.area]
@@ -434,6 +446,8 @@ class mpc_agent:
 
         responseAndes = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'Pe', 'area':self.area})
         Pe_values = responseAndes.json()['value']
+        responseAndes = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'tm', 'area':self.area})
+        tm_values = responseAndes.json()['value']
 
         areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         other_areas = [i for i in areas if i != self.area]
@@ -441,17 +455,16 @@ class mpc_agent:
         for t in range(self.T+1):
             self.state_horizon_values[self.area, self.area, t] = delta0
             self.state_saved_values['f', t] = 1.0
-            self.state_saved_values['P', t] = np.sum(Pe_values)
+            self.state_saved_values['P', t] = np.sum(tm_values)
             self.state_saved_values['P_exchange', t] = 0.0
             for i, gen in enumerate(generators):
-                self.state_saved_values['Pg', gen, t] = Pe_values[i]
+                self.state_saved_values['Pg', gen, t] = tm_values[i]
             for area in other_areas:
                 self.state_saved_values['delta_areas', t] = 0.0
         return 1
 
     def warm_start(self):
         for t in self.model.TimeHorizon:
-            
             for area in self.model.other_areas:
                 if t != 0:
                     self.model.delta_areas[area, t].value = self.state_horizon_values[area, area, t]
@@ -491,6 +504,8 @@ class mpc:
         self.n_areas = 2
         self.areas = list(range(1, self.n_areas +1))
         self.alpha = {}
+        self.alpha = 1
+        self.rho = 1
         self.alpha0 = 0.001
         self.T = agents[0].T
         self.agents = {agent.area:agent for agent in agents}
@@ -521,10 +536,7 @@ def solve_mpc(verbose = False):
     agent_2 = mpc_agent("area_2")
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
-    mpc_problem.iter = 100
-    mpc_problem.alpha = 2
-    mpc_problem.rho = 0.9
-    mpc_problem.alpha0 = 0.03
+    mpc_problem.iter = 400
     other = {"area_1": agent_2, "area_2": agent_1}
     for i in range(mpc_problem.iter):
         responseAndes = requests.get(agent_1.andes_url + '/sync_time')
@@ -619,8 +631,10 @@ def solve_mpc(verbose = False):
         elif 3*norm2_error < norm2_dual_error:
             mpc_problem.rho *= 0.8
             mpc_problem.alpha *= 0.8
-        mpc_problem.rho = 5
-        mpc_problem.alpha = 5
+        mpc_problem.rho = 20
+        #mpc_problem.rho = 350
+        mpc_problem.alpha = 40
+        #mpc_problem.alpha = 600
         for agent in agents:
             _ = 0
             agent.model.rho.value = mpc_problem.rho 
@@ -645,48 +659,47 @@ def solve_mpc(verbose = False):
                 generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
                 print(generators)
             responseAndes = requests.get(agent.andes_url + '/sync_time')
-            time_start_bis = responseAndes.json()['time']
+            responseAndes = requests.get(agent_1.andes_url + '/sync_time')
+            time_start = int(responseAndes.json()['time'])
             for x_agent in agents:
                 generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
+                params = ['pref0', 'p_goal', 'paux0', 'tm0']
+                params = ['p_direct', 'b', ]
                 for gen_id in generators:
-                    if type(gen_id) == str:
-                        kundur = False
-                        id_number = gen_id[-1]
-                        if gen_id[-2] != '_':
-                            id_number = gen_id[-2:]
-                    else:
-                        kundur = True
-                        id_number = gen_id
-                    roleChangeDict = {}
-                    if not kundur:
-                        roleChangeDict['model'] = 'TGOV1N'
-                        roleChangeDict['idx'] = 'TGOV1_' + id_number
-                    else:
-                        roleChangeDict['model'] = 'TGOV1'
-                        roleChangeDict['idx'] = id_number
-                    roleChangeDict['var'] = 'p_goal'
-                    if roleChangeDict['var'] == 'pref0':
-                        roleChangeDict['value'] = x_agent.model.Pg[gen_id, 0].value
-                    elif roleChangeDict['var'] == 'paux0':
-                        roleChangeDict['value'] = x_agent.model.Pg[gen_id, 0].value - x_agent.model.Pg[gen_id, 0].value 
-                    elif roleChangeDict['var'] == 'p_goal':
-                        roleChangeDict['value'] = x_agent.model.Pg[gen_id, 0].value
-                    roleChangeDict['agent'] = agent.agent_id
-                    responseAndes = requests.post(x_agent.andes_url + '/device_role_change', json = roleChangeDict)
-                    responseAndes = requests.get(agent.andes_url + '/sync_time')
-                    time_now = responseAndes.json()['time']
                     for t in range(1, x_agent.T+1):
-                        if roleChangeDict['var'] == 'pref0':
-                            roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value
-                        elif roleChangeDict['var'] == 'p_goal':
-                            roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value 
-                        elif roleChangeDict['var'] == 'paux0':
-                            roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value - x_agent.model.Pg[gen_id, 0].value 
-                        roleChangeDict['t'] = time_start + x_agent.dt*t
-                        print(f't is {roleChangeDict['t']}')
-                        a = deepcopy(roleChangeDict)
-                        andes_role_changes.append(a)
-                        responseAndes = requests.get(x_agent.andes_url + '/add_set_point', params = roleChangeDict)
+                        for param in params:
+                            if type(gen_id) == str:
+                                kundur = False
+                                id_number = gen_id[-1]
+                                if gen_id[-2] != '_':
+                                    id_number = gen_id[-2:]
+                            else:
+                                kundur = True
+                                id_number = gen_id
+                            roleChangeDict = {}
+                            roleChangeDict['var'] = param
+                            if roleChangeDict['var'] == 'tm0':
+                                roleChangeDict['model'] = 'GENROU'
+                                roleChangeDict['idx'] = 'GENROU_' + id_number
+                            else:    
+                                if not kundur:
+                                    roleChangeDict['model'] = 'TGOV1N'
+                                    roleChangeDict['idx'] = 'TGOV1_' + id_number
+                                else:
+                                    roleChangeDict['model'] = 'TGOV1'
+                                    roleChangeDict['idx'] = id_number
+                            
+                            if roleChangeDict['var'] == 'paux0':
+                                roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value - x_agent.model.Pg[gen_id, 0].value 
+                            elif roleChangeDict['var'] == 'b':
+                                roleChangeDict['value'] = 1
+                            else:
+                                roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value
+                            roleChangeDict['t'] = time_start + x_agent.dt*t
+                            a = deepcopy(roleChangeDict)
+                            andes_role_changes.append(a)
+                            responseAndes = requests.get(x_agent.andes_url + '/add_set_point', params = roleChangeDict)
+                            print(f"change is {roleChangeDict['value']} at time {roleChangeDict['t']}")
             return converged, andes_role_changes, mpc_problem
         print(f"error is {error}")
     return converged, andes_role_changes, mpc_problem
@@ -786,7 +799,18 @@ plot_primal_history(agent.delta_areas_primal_vars, title = 'Angle primal vars 1'
 plot_primal_history(agent2.delta_primal_vars, title = 'Angle Others primal vars 2')
 
 plt.plot([row[0] for row in mpc_problem.error_save[:mpc_problem.iter]])
+plt.yscale("log")   
+plt.grid(True)    
+plt.tight_layout()
 # Plot column 1 (second value of each entry) for the first 80 entries
 plt.show()
 plt.plot([row[1] for row in mpc_problem.error_save[:mpc_problem.iter]])
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+plt.plot([row[2] for row in mpc_problem.error_save[:mpc_problem.iter]])
+plt.yscale("log")   
+plt.grid(True)
+plt.tight_layout()
 plt.show()

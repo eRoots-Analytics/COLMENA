@@ -546,7 +546,7 @@ class TDS_stepwise(BaseRoutine):
                     controller = self.system.TGOV1.Stabilizers[uid]
                     input_signal = (self.system.GENROU.omega.v[uid] - 1)
                     new_set_point = controller.get_set_point(input_signal)
-                    self.set_set_points(new_set_point)
+                    self.set_set_points(new_set_point, dt=batch_size)
                     _=0
         return
 
@@ -613,7 +613,7 @@ class TDS_stepwise(BaseRoutine):
             if changes_done is False and self.system.dae.t > t_change and apply_set_points:
                 new_set_points = self.get_set_points(set_points)
                 new_set_points += set_points_dict
-                self.set_set_points(new_set_points)
+                self.set_set_points(new_set_points, dt = batch_size)
                 role_data = []
                 self.save_roles.append((role_data))
                 if unique_change is True:
@@ -664,7 +664,7 @@ class TDS_stepwise(BaseRoutine):
                                 new_set_point = self.secondary_response_role(idx)
                                 ctrl_input = ctrl_input_omega
                             new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                            self.set_set_points(new_set_point)
+                            self.set_set_points(new_set_point, dt = batch_size)
 
             #We check if REDUAL need to be reinitialized
             is_GFM = (system.REDUAL.is_GFM.v == 1)
@@ -695,7 +695,7 @@ class TDS_stepwise(BaseRoutine):
                         controller = self.system.GENROU.controller[i]
                         ctrl_input = self.system.GENROU.Pe.v[i]
                         new_set_point = controller.get_set_point(ctrl_input, self.system)
-                        self.set_set_points(new_set_point)
+                        self.set_set_points(new_set_point, dt = batch_size)
         return
     
     def run_opf_setpoints(self, system, opf_res, batch_size = 0.1, t_max =10, models = []):
@@ -731,7 +731,7 @@ class TDS_stepwise(BaseRoutine):
                     elif controller.target_var in ['vref0', 'wref0'] :
                         ctrl_input = system.GENROU.v.v[uid]
                     new_set_point = controller.get_set_point(ctrl_input, feedback = True)
-                    self.set_set_points(new_set_point)
+                    self.set_set_points(new_set_point, dt = batch_size)
         return
 
     def secondary_response_condition(self, idx):
@@ -816,7 +816,7 @@ class TDS_stepwise(BaseRoutine):
         self.config.shrinkt = 1
         return self.run(t_run = t_run, no_summary= no_summary, verbose = verbose, kwargs=kwargs) 
     
-    def set_set_points(self, set_points):
+    def set_set_points(self, set_points, dt = 0.1):
         if type(set_points) == dict:
             set_points = [set_points]
             print(set_points)
@@ -843,7 +843,7 @@ class TDS_stepwise(BaseRoutine):
             else:
                 t_change = self.system.dae.t
             
-            if not (t_change-1<self.system.dae.t<t_change+0.1):
+            if not (t_change-dt<=self.system.dae.t<=t_change+dt):
                 continue
 
             model = getattr(self.system, model_name)

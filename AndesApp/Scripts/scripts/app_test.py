@@ -27,14 +27,22 @@ andes_url = 'http://192.168.10.137:5000'
 andes_url = 'http://192.168.68.71:5000'
 
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
-delta_equivalent = requests.get(andes_url + '/delta_equivalent', params={'area':1}).json()['value']
-#responseAndes = requests.get(andes_url + '/device_sync', params={'model':'REDUAL', 'idx':'GENROU_1'})
-#responseAndes = requests.get(andes_url + '/specific_device_sync', params={'model':'GENROU', 'idx':'GENROU_5', 'var':'omega'})
-responseRun = requests.get(andes_url + '/run_real_time', params={'t_run':40, 'delta_t':0.2})
-response = requests.get(andes_url + '/complete_variable_sync', params={'model':'TGOV1N', 'var':'pref0'})
-pref0 = response.json()['value']
+
+queries = [('GENROU', 'tm0'), ('GENROU', 'tm'), ('TGOV1N', 'b'), ('TGOV1N', 'p_direct'), ('TGOV1N', 'pout')]
+for key,val in queries:
+    response = requests.get(andes_url + '/complete_variable_sync', params={'model':key, 'var':val})
+    value = response.json()['value']
+    print(f"final {val} is {value}")
+    print(f" sum is {sum(value)}")
+responseRun = requests.get(andes_url + '/run_real_time', params={'t_run':50, 'delta_t':0.1})
+for key,val in queries:
+    response = requests.get(andes_url + '/complete_variable_sync', params={'model':key, 'var':val})
+    value = response.json()['value']
+    print(f"final {val} is {value}")
+    print(f" sum is {sum(value)}")
+
 responseAndes = requests.get(andes_url + '/plot', params={'model': 'Bus', 'var':'v'})
-print(f"final pref0 is {pref0}")
+
 if response.status_code == 200:
     json_data = response.json()
     GFM_values = json_data.get('value', None)
