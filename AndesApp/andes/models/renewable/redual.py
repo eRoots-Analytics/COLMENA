@@ -82,7 +82,7 @@ class REDUAL(REGF1, REGCP1):
                 v_eq_new = '(1-is_GFM)*(' + not_none(v_eq_GFL) + ') + (is_GFM)*(' + not_none(v_eq_GFM) + ')' 
                 setattr(var, 'v_str', v_eq_new)
         
-        system.to_reinitialize = np.zeros(self.n)
+        self.to_reinitialize = np.zeros(self.n)
 
     def reinitialize(self, idx, type='no_change'):
         #Function that reinitializes the states

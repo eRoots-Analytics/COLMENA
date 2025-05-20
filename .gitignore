@@ -1,3 +1,100 @@
-AndesRoles/roles_tests/build/LayerOne/Ipopt
+# ================================
+# Python bytecode and cache
+# ================================
+__pycache__/
+*.py[cod]
+*$py.class
+.history/
+
+# C extensions
+*.so
+
+# VS and IDE project files
+*.pyproj
+*.sln
+.vs/
+.idea/
+.vscode/
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+venv/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Logs and test outputs
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Temporary/Editor/OS files
+.DS_Store
+*~
+*.swp
+*.swo
+~$*.xlsx
+
+# IPython/Jupyter
+.ipynb_checkpoints
+
+# PyBuilder
+target/
+
+# Andes-specific files (adjusted for AndesApp/)
+AndesApp/andes/cases/*/*.txt
+AndesApp/*.dat
+AndesApp/*.lst
+AndesApp/*.npy
+AndesApp/*.npz
+AndesApp/*.prof
+AndesApp/benchmarks/.asv
+AndesApp/benchmarks/andes
+AndesApp/docs/source/modelref.rst
+AndesApp/docs/source/configref.rst
+AndesApp/docs/source/groupdoc
+AndesApp/docs/source/_examples
+AndesApp/docs/build/
+AndesApp/docs/jupyter_execute/
+AndesApp/docs/source/_build/
+AndesApp/_generated
+AndesApp/icebar
+
+# Your project-specific files
 /venv/
 /plots/
+AndesRoles/roles_tests/build/LayerOne/Ipopt
+pycode
+.png
