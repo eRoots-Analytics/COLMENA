@@ -24,10 +24,10 @@ andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
 andes_url = 'http://192.168.10.137:5000'
-andes_url = 'http://192.168.68.71:5000'
+andes_url = 'http://192.168.68.54:5000'
 
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
-
+print(responseLoad)
 queries = [('GENROU', 'tm0'), ('GENROU', 'tm'), ('TGOV1N', 'b'), ('TGOV1N', 'p_direct'), ('TGOV1N', 'pout')]
 for key,val in queries:
     response = requests.get(andes_url + '/complete_variable_sync', params={'model':key, 'var':val})
