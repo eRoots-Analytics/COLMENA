@@ -1,16 +1,10 @@
 from flask import Flask
-from flask import url_for, request, render_template_string, jsonify, send_file
-from typing import List, TYPE_CHECKING
-from threading import Thread
-from PIL import Image
-import pandas as pd
+from flask import request, jsonify, send_file
 import os
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", "plots")
 os.makedirs(desktop_path, exist_ok=True)
-from io import BytesIO
 import requests
-from collections import OrderedDict
 import os, sys, io
 import time
 import numpy as np
@@ -18,11 +12,10 @@ import traceback
 import aux_function as aux
 import matplotlib.pyplot as plt
 import matplotlib
-from copy import deepcopy
 current_directory = os.path.dirname(os.path.abspath(__file__))
 two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
-from andes.utils.paths import get_case, cases_root, list_cases
+# from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
 
 started = None  
@@ -63,13 +56,8 @@ def load_simulation():
         print(f"case_file is {case_file}")
         if data['redual'] is False:
             system = system_ieee
-            #system.prepare(models = system.TGOV1N)
+            system.prepare(models = system.TGOV1N)
             print(f"system.TGOV1N.b is {system.TGOV1N.b}")
-            #system.Line.alter(src='u', idx = 'Line_7', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_17', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_20', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_31', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_32', value = 0)
             system.setup()
             system.PFlow.run()
 
@@ -142,62 +130,6 @@ def assign_device():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-
-# Route to run the previously loaded simulation
-@app.route('/run_simulation', methods=['POST'])
-def run_simulation():
-    try:
-        if not loaded_system:
-            return jsonify({"error": "No simulation loaded. Load a simulation first."}), 400
-
-        # Run the loaded simulation
-        system.PFlow.run()
-        sim_output = system.PFlow.run()
-        # Return success and results (e.g., output directory or status)
-        return jsonify({"message": "Simulation ran successfully", "output": str(sim_output)}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/print_var', methods=['POST'])
-def print_var():
-    try:
-        data = request.get_json()
-        for i in data['keys']:
-            var = getattr(system.REDUAL, i)
-            print('Var value is', var.v)
-        return jsonify({"message": 'printed'}), 200
-    except Exception as e:
-        change = 'printed'
-        print(change)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/connecting_buses', methods=['GET'])
-def connecting_buses():
-    area1 = request.args.get('area1', type=int)
-    area2 = request.args.get('area2', type=int)
-    result = set()
-    response = {}
-    try:
-        for i, line in enumerate(system.Line.idx.v):
-            bus1 = system.Line.bus1.v[i]
-            bus2 = system.Line.bus2.v[i]
-            bus1_index = system.Bus.idx2uid(bus1)
-            bus2_index = system.Bus.idx2uid(bus2)
-            area_from = system.Bus.area.v[bus1_index]
-            area_to = system.Bus.area.v[bus2_index]
-
-            if area_from in [area1,area2] and area_to in [area1,area2] and area_from != area_to:
-                if area1 == area_to:
-                    result.add(bus1)
-                else:
-                    result.add(bus2)
-        response['value'] = list(result)
-        return jsonify(response), 200
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
 #Function that 
 @app.route('/neighbour_area', methods=['GET'])
 def neighbour_area():
@@ -222,106 +154,6 @@ def neighbour_area():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
-# Route to run the previously loaded simulation
-@app.route('/lines_susceptance', methods=['GET'])
-def lines_susceptance():
-    data = request.get_json()
-    area = data['area']
-    result = {}
-    response = {}
-    try:
-        for i, bus_to, bus_from in enumerate(zip(system.Line.bus1.v, system.Line.bus2.v)):
-            bus_to_uid = system.Bus.idx2uid[bus_to]       
-            bus_from_uid = system.Bus.idx2uid[bus_from]    
-            area_to = system.Bus.area.v[bus_to_uid]   
-            area_from = system.Bus.area.v[bus_from_uid]   
-            if area_to == area and area_from == area:
-                result[bus_to, bus_from] = system.Line.b.v[i]
-                result[bus_from, bus_to] = system.Line.b.v[i]
-
-        response['value'] = result
-        return jsonify(response), 200
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-# Get interface lines and buses
-@app.route('/areas_interface', methods=['GET'])
-def areas_interface():
-    try:
-        data = request.args.to_dict()
-        area = int(data['area'])
-
-        # Gather other area indices
-        other_areas = [x_area for x_area in system.Area.idx.v if x_area != area]
-
-        # Initialize data containers
-        connecting_lines = {x_area: [] for x_area in other_areas}
-        connecting_susceptance = {}
-        line_details = []
-        interface_buses = set()
-
-        # Loop through all lines
-        for i, line in enumerate(system.Line.idx.v):
-            bus1 = system.Line.bus1.v[i]
-            bus2 = system.Line.bus2.v[i]
-            bus1_uid = system.Bus.idx2uid(bus1)
-            bus2_uid = system.Bus.idx2uid(bus2)
-
-            area1 = system.Bus.area.v[bus1_uid]
-            area2 = system.Bus.area.v[bus2_uid]
-
-            if area1 != area2 and area in [area1, area2]:
-                connecting_area = area2 if area == area1 else area1
-                line_uid = system.Line.idx2uid(line)
-                connection_status = system.Line.u.v[line_uid]
-                xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
-
-                if xi == 0:
-                    continue  # Avoid division by zero
-
-                susceptance = (1 / xi) * connection_status
-
-                # Add interface bus in *this* area
-                if area1 == area:
-                    interface_buses.add(int(bus1))
-                elif area2 == area:
-                    interface_buses.add(int(bus2))
-
-                # Collect line-level detail
-                line_info = {
-                    "line_idx": int(line),
-                    "line_uid": int(line_uid),
-                    "from_bus": int(bus1),
-                    "to_bus": int(bus2),
-                    "from_area": int(area1),
-                    "to_area": int(area2),
-                    "x": float(xi),
-                    "u": int(connection_status),
-                    "Sn": float(Sn),
-                    "susceptance": susceptance
-                }
-                line_details.append(line_info)
-                connecting_lines[connecting_area].append(line_info)
-
-        # Sum susceptance per area
-        for x_area, lines in connecting_lines.items():
-            total_b = sum(line['susceptance'] for line in lines)
-            connecting_susceptance[int(x_area)] = total_b
-
-        return jsonify({
-            "connecting_susceptance": connecting_susceptance,
-            "line_details": line_details,
-            "interface_areas": other_areas,
-            "interface_buses": sorted(interface_buses)
-        }), 200
-
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
 
 # Route to run the previously loaded simulation
 @app.route('/system_susceptance', methods=['GET'])
@@ -366,166 +198,6 @@ def system_susceptance():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-    
-# Route to compute the equivalent angles of the area
-@app.route('/delta_equivalent', methods=['GET'])
-def delta_equivalent():
-    try:
-        data = request.args.to_dict()
-        area = int(data['area'])
-        other_areas = system.Area.idx.v
-        other_areas = [x_area for x_area in other_areas if x_area != area]
-        connecting_lines = {}
-        connecting_susceptance = {}
-        delta_equivalent = {}
-        for x_area in other_areas:
-            connecting_lines[x_area] = []
-
-        for i, line in enumerate(system.Line.idx.v):
-            bus1 = system.Line.bus1.v[i]
-            bus2 = system.Line.bus2.v[i]
-            bus1_index = system.Bus.idx2uid(bus1)
-            bus2_index = system.Bus.idx2uid(bus2)
-            area1 = system.Bus.area.v[bus1_index]
-            area2 = system.Bus.area.v[bus2_index]
-
-            if area1 != area2 and area in [area1, area2]:
-                connecting_area = area2 if area == area1 else area1
-                connecting_lines[connecting_area].append(line)
-                print(f"connecting")
-            
-        for x_area, lines in connecting_lines.items():
-            bi = 0
-            for line in lines:
-                line_uid = system.Line.idx2uid(line)
-                connection_status = system.Line.u.v[line_uid]
-                xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
-                bi += (1/xi)*connection_status
-                print(f"line is {line} bi is {bi}")
-            connecting_susceptance[int(x_area)] = bi
-        
-        for x_area, lines in connecting_lines.items():
-            p_exchanged = 0
-            p_exchanged_other = 0
-            for line in lines:
-                i = system.Line.idx2uid(line)
-                bus1 = system.Line.bus1.v[i]
-                bus2 = system.Line.bus2.v[i]
-                bus1_index = system.Bus.idx2uid(bus1)
-                bus2_index = system.Bus.idx2uid(bus2)
-                area1 = system.Bus.area.v[bus1_index]
-                area2 = system.Bus.area.v[bus2_index]
-                delta1 = system.Bus.a.v[bus1_index]
-                delta2 = system.Bus.a.v[bus2_index]
-                v1 = system.Bus.v.v[bus1_index]
-                v2 = system.Bus.v.v[bus2_index]
-                line_uid = system.Line.idx2uid(line)
-                xi = system.Line.x.v[line_uid]
-                ri = system.Line.r.v[line_uid]
-                b_shunt = system.Line.b.v[line_uid]
-                if area == area1:
-                    sign = 1
-                else:
-                    sign = -1
-                p_exchanged += 1*sign*(-1/xi)*np.sin(delta1-delta2)*v1*v2
-                p_exchanged += 0*sign*(v1*v2*((ri/xi**2)*np.cos(delta1-delta2)+(1/xi)*np.sin(delta1-delta2)) - v1*v1*((ri/xi**2)+b_shunt))
-            if connecting_susceptance[int(x_area)] != 0:
-                delta_equivalent[int(x_area)] = p_exchanged/connecting_susceptance[int(x_area)]
-            else:
-                delta_equivalent[int(x_area)] = 0
-        
-        result = {}
-        result['value'] = delta_equivalent
-        return jsonify(result), 200
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-# Route to compute the equivalent angles of the area
-@app.route('/delta_equivalent_balanced', methods=['GET'])
-def delta_equivalent_balanced():
-    try:
-        data = request.args.to_dict()
-        area = int(data['area'])
-        other_areas = system.Area.idx.v
-        other_areas = [x_area for x_area in other_areas if x_area != area]
-        connecting_lines = {}
-        connecting_susceptance = {}
-        delta_equivalent = {}
-        for x_area in other_areas:
-            connecting_lines[x_area] = []
-
-        for i, line in enumerate(system.Line.idx.v):
-            bus1 = system.Line.bus1.v[i]
-            bus2 = system.Line.bus2.v[i]
-            bus1_index = system.Bus.idx2uid(bus1)
-            bus2_index = system.Bus.idx2uid(bus2)
-            area1 = system.Bus.area.v[bus1_index]
-            area2 = system.Bus.area.v[bus2_index]
-
-            if area1 != area2 and area in [area1, area2]:
-                connecting_area = area2 if area == area1 else area1
-                connecting_lines[connecting_area].append(line)
-                print(f"connecting")
-            
-        for x_area, lines in connecting_lines.items():
-            bi = 0
-            for line in lines:
-                line_uid = system.Line.idx2uid(line)
-                connection_status = system.Line.u.v[line_uid]
-                xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
-                bi += (1/xi)*connection_status
-                print(f"line is {line} bi is {bi}")
-            connecting_susceptance[int(x_area)] = bi
-        
-            p_gen = 0
-            for i, gen_idx in enumerate(system.GENROU.idx.v):
-                bus_idx = system.GENROU.bus.v[i]
-                bus_uid = system.Bus.idx2uid(bus_idx) 
-                bus_area = system.Bus.area.v[bus_uid]
-                if bus_area == area:
-                    p_gen += system.GENROU.tm.v[i]
-            P_balance += p_gen
-
-            p_demand = 0
-            for i, gen_idx in enumerate(system.PQ.idx.v):
-                bus_idx = system.PQ.bus.v[i]
-                bus_uid = system.Bus.idx2uid(bus_idx) 
-                bus_area = system.Bus.area.v[bus_uid]
-                if bus_area == area:
-                    p_demand -= system.PQ.p0.v[i]
-            P_balance += p_demand
-
-            #This works if there are only 2 areas if not we have to solve a linear system
-            if connecting_susceptance[int(x_area)] != 0:
-                delta_equivalent[int(x_area)] = P_balance/connecting_susceptance[int(x_area)]
-            else:
-                delta_equivalent[int(x_area)] = 0
-        
-        result = {}
-        result['value'] = delta_equivalent
-        return jsonify(result), 200
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/run_simulation_online', methods=['POST'])
-def run_simulation_online():
-    global loaded_system
-    try:
-        if not loaded_system:
-            return jsonify({"error": "No simulation loaded. Load a simulation first."}), 400
-
-        # Run the loaded simulation
-        system.PFlow.run()
-        sim_output = system.PFlow.run()
-
-        # Return success and results (e.g., output directory or status)
-        return jsonify({"message": "Simulation ran successfully", "output": str(sim_output)}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/device_role_change', methods=['POST'])
 def device_role_change():
@@ -562,98 +234,6 @@ def device_role_change():
         print(f"role changed successfully from {initial_value} to {value}")
         print(f'value is {param_in_andes.v[uid]}')
         return jsonify({'message': 'success'}), 200
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/set_point_change', methods=['POST'])
-def set_point_change():
-    #method to post the new device role in the app
-    try:
-        set_points_data = request.get_json()
-        for set_point in set_points_data:
-            system.TDS_stepwise.set_set_points(set_point)
-        return jsonify({'message': 'success'}), 200
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/device_sync', methods=['GET'])
-def device_sync(all_devices = False):
-    #method to post the new device role in the app
-    app.config['await_start'] = False
-    try:
-        data = request.args.to_dict()
-        if data is None:
-            return jsonify({"error": "No JSON data received!"}), 400
-        response = {}
-
-        print('data keys are', data.keys())
-        idx = data['idx']
-        model_name = data['model']
-        model = getattr(system_initial, model_name)
-        uid = model.idx2uid(idx)
-        response = model.as_dict()
-
-        for key in response.keys():
-            var_value = response[key][uid]
-            if isinstance(var_value, np.generic):
-                var_value = var_value.item()
-            elif isinstance(var_value, np.ndarray):
-                var_value = var_value.tolist()
-            response[key] = var_value
-
-        states = model._states_and_ext() 
-        algebs = model._algebs_and_ext()
-        othervars = OrderedDict(states)
-        othervars.update(algebs)
-
-        for var_name in othervars:
-            var = getattr(model, var_name)
-            uid = int(uid)
-            if len(var.v) == 0:
-                continue
-            var_value = var.v[uid]
-            if isinstance(var_value, np.generic):
-                var_value = var_value.item()
-            elif isinstance(var_value, np.ndarray):
-                var_value = var_value.tolist()
-            response[var_name] = var_value
-        #Since this is used at the very beginning to initialize the agents we can now start the simulation 
-        return jsonify(response), 200
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/specific_device_sync', methods=['GET'])
-def specific_device_sync(all_devices = False):
-    #method to post the new device role in the app
-    try:
-        data = request.args.to_dict()
-        if data is None:
-            return jsonify({"error": "No JSON data received!"}), 400
-        response = {}
-        idx = data['idx']
-        model_name = data['model']
-        var_name = data['var']
-        print(model_name)
-        model = getattr(system, model_name, None)
-        var = getattr(model, var_name)
-        if len(var.v) == 0:
-            model = getattr(system_initial, model_name, None)
-            var = getattr(model, var_name)
-        uid = model.idx2uid(idx)
-        value = var.v[uid]
-        print(f"value is {var}")
-        try:
-            response['value'] = value
-        except:
-            response['value'] = None
-        return jsonify(response), 200
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -766,35 +346,6 @@ def area_variable_sync(all_devices = False):
             response['value'] = res.tolist()
 
         print(f"response is {response}")
-        return jsonify(response), 200
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/specific_variable_sync', methods=['GET'])
-def specific_variable_sync(all_devices = False):
-    #method to post the new device role in the app
-    try:
-        data = request.args.to_dict()
-        if data is None:
-            return jsonify({"error": "No JSON data received!"}), 400
-        response = {}
-        uid = data['uid']
-        model_name = data['model']
-        var_name = data['var']
-       
-        model = getattr(system, model_name, None)
-        var = getattr(model, var_name)
-        if len(var.v) == 0:
-            model = getattr(system_initial, model_name, None)
-            var = getattr(model, var_name)
-        value = var.v[uid]
-        print(f"value is {var}")
-        try:
-            response['value'] = value
-        except:
-            response['value'] = None
         return jsonify(response), 200
     except Exception as e:
         print(e)

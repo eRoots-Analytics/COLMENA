@@ -1,14 +1,11 @@
 from PIL import Image
 from io import BytesIO
 import requests
-import os, sys, io
-import numpy as np
-import matplotlib.pyplot as plt
+import os, sys
 current_directory = os.path.dirname(os.path.abspath(__file__))
 two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
-from andes.utils.paths import get_case, cases_root, list_cases
-import andes as ad
+import andes
 
 def plot_response(responseAndes, filename):
     if responseAndes.status_code == 200:
@@ -18,13 +15,12 @@ def plot_response(responseAndes, filename):
     else:
         print("Failed to get plot:", responseAndes.text)
 
-andes_directory = ad.get_case("ieee14/ieee14_gentrip.xlsx")
-andes_directory = ad.get_case("kundur/kundur_full.xlsx")
-andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
+# andes_directory = ad.get_case("ieee14/ieee14_gentrip.xlsx")
+# andes_directory = ad.get_case("kundur/kundur_full.xlsx")
+andes_directory = andes.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.10.137:5000'
-andes_url = 'http://192.168.68.54:5000'
+andes_url = 'http://192.168.68.63:5000'
 
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
 print(responseLoad)

@@ -1,0 +1,721 @@
+     0,                  Time [s],                            Time [s]
+     1,            delta GENROU 1,                   $\delta$ GENROU 1
+     2,            delta GENROU 2,                   $\delta$ GENROU 2
+     3,            delta GENROU 3,                   $\delta$ GENROU 3
+     4,            delta GENROU 4,                   $\delta$ GENROU 4
+     5,            delta GENROU 5,                   $\delta$ GENROU 5
+     6,            delta GENROU 6,                   $\delta$ GENROU 6
+     7,            delta GENROU 7,                   $\delta$ GENROU 7
+     8,            delta GENROU 8,                   $\delta$ GENROU 8
+     9,            delta GENROU 9,                   $\delta$ GENROU 9
+    10,           delta GENROU 10,                  $\delta$ GENROU 10
+    11,            omega GENROU 1,                   $\omega$ GENROU 1
+    12,            omega GENROU 2,                   $\omega$ GENROU 2
+    13,            omega GENROU 3,                   $\omega$ GENROU 3
+    14,            omega GENROU 4,                   $\omega$ GENROU 4
+    15,            omega GENROU 5,                   $\omega$ GENROU 5
+    16,            omega GENROU 6,                   $\omega$ GENROU 6
+    17,            omega GENROU 7,                   $\omega$ GENROU 7
+    18,            omega GENROU 8,                   $\omega$ GENROU 8
+    19,            omega GENROU 9,                   $\omega$ GENROU 9
+    20,           omega GENROU 10,                  $\omega$ GENROU 10
+    21,              e1q GENROU 1,                   ${e'_q}$ GENROU 1
+    22,              e1q GENROU 2,                   ${e'_q}$ GENROU 2
+    23,              e1q GENROU 3,                   ${e'_q}$ GENROU 3
+    24,              e1q GENROU 4,                   ${e'_q}$ GENROU 4
+    25,              e1q GENROU 5,                   ${e'_q}$ GENROU 5
+    26,              e1q GENROU 6,                   ${e'_q}$ GENROU 6
+    27,              e1q GENROU 7,                   ${e'_q}$ GENROU 7
+    28,              e1q GENROU 8,                   ${e'_q}$ GENROU 8
+    29,              e1q GENROU 9,                   ${e'_q}$ GENROU 9
+    30,             e1q GENROU 10,                  ${e'_q}$ GENROU 10
+    31,              e1d GENROU 1,                   ${e'_d}$ GENROU 1
+    32,              e1d GENROU 2,                   ${e'_d}$ GENROU 2
+    33,              e1d GENROU 3,                   ${e'_d}$ GENROU 3
+    34,              e1d GENROU 4,                   ${e'_d}$ GENROU 4
+    35,              e1d GENROU 5,                   ${e'_d}$ GENROU 5
+    36,              e1d GENROU 6,                   ${e'_d}$ GENROU 6
+    37,              e1d GENROU 7,                   ${e'_d}$ GENROU 7
+    38,              e1d GENROU 8,                   ${e'_d}$ GENROU 8
+    39,              e1d GENROU 9,                   ${e'_d}$ GENROU 9
+    40,             e1d GENROU 10,                  ${e'_d}$ GENROU 10
+    41,              e2d GENROU 1,                  ${e''_d}$ GENROU 1
+    42,              e2d GENROU 2,                  ${e''_d}$ GENROU 2
+    43,              e2d GENROU 3,                  ${e''_d}$ GENROU 3
+    44,              e2d GENROU 4,                  ${e''_d}$ GENROU 4
+    45,              e2d GENROU 5,                  ${e''_d}$ GENROU 5
+    46,              e2d GENROU 6,                  ${e''_d}$ GENROU 6
+    47,              e2d GENROU 7,                  ${e''_d}$ GENROU 7
+    48,              e2d GENROU 8,                  ${e''_d}$ GENROU 8
+    49,              e2d GENROU 9,                  ${e''_d}$ GENROU 9
+    50,             e2d GENROU 10,                 ${e''_d}$ GENROU 10
+    51,              e2q GENROU 1,                  ${e''_q}$ GENROU 1
+    52,              e2q GENROU 2,                  ${e''_q}$ GENROU 2
+    53,              e2q GENROU 3,                  ${e''_q}$ GENROU 3
+    54,              e2q GENROU 4,                  ${e''_q}$ GENROU 4
+    55,              e2q GENROU 5,                  ${e''_q}$ GENROU 5
+    56,              e2q GENROU 6,                  ${e''_q}$ GENROU 6
+    57,              e2q GENROU 7,                  ${e''_q}$ GENROU 7
+    58,              e2q GENROU 8,                  ${e''_q}$ GENROU 8
+    59,              e2q GENROU 9,                  ${e''_q}$ GENROU 9
+    60,             e2q GENROU 10,                 ${e''_q}$ GENROU 10
+    61,      LAG_y TGOV1N TGOV1 1,            $y_{LAG}$ TGOV1N TGOV1 1
+    62,      LAG_y TGOV1N TGOV1 2,            $y_{LAG}$ TGOV1N TGOV1 2
+    63,      LAG_y TGOV1N TGOV1 3,            $y_{LAG}$ TGOV1N TGOV1 3
+    64,      LAG_y TGOV1N TGOV1 4,            $y_{LAG}$ TGOV1N TGOV1 4
+    65,      LAG_y TGOV1N TGOV1 5,            $y_{LAG}$ TGOV1N TGOV1 5
+    66,      LAG_y TGOV1N TGOV1 6,            $y_{LAG}$ TGOV1N TGOV1 6
+    67,      LAG_y TGOV1N TGOV1 7,            $y_{LAG}$ TGOV1N TGOV1 7
+    68,      LAG_y TGOV1N TGOV1 8,            $y_{LAG}$ TGOV1N TGOV1 8
+    69,      LAG_y TGOV1N TGOV1 9,            $y_{LAG}$ TGOV1N TGOV1 9
+    70,     LAG_y TGOV1N TGOV1 10,           $y_{LAG}$ TGOV1N TGOV1 10
+    71,       LL_x TGOV1N TGOV1 1,            $x'_{LL}$ TGOV1N TGOV1 1
+    72,       LL_x TGOV1N TGOV1 2,            $x'_{LL}$ TGOV1N TGOV1 2
+    73,       LL_x TGOV1N TGOV1 3,            $x'_{LL}$ TGOV1N TGOV1 3
+    74,       LL_x TGOV1N TGOV1 4,            $x'_{LL}$ TGOV1N TGOV1 4
+    75,       LL_x TGOV1N TGOV1 5,            $x'_{LL}$ TGOV1N TGOV1 5
+    76,       LL_x TGOV1N TGOV1 6,            $x'_{LL}$ TGOV1N TGOV1 6
+    77,       LL_x TGOV1N TGOV1 7,            $x'_{LL}$ TGOV1N TGOV1 7
+    78,       LL_x TGOV1N TGOV1 8,            $x'_{LL}$ TGOV1N TGOV1 8
+    79,       LL_x TGOV1N TGOV1 9,            $x'_{LL}$ TGOV1N TGOV1 9
+    80,      LL_x TGOV1N TGOV1 10,           $x'_{LL}$ TGOV1N TGOV1 10
+    81,               vp IEEEX1 1,                      $V_p$ IEEEX1 1
+    82,               vp IEEEX1 2,                      $V_p$ IEEEX1 2
+    83,               vp IEEEX1 3,                      $V_p$ IEEEX1 3
+    84,               vp IEEEX1 4,                      $V_p$ IEEEX1 4
+    85,               vp IEEEX1 5,                      $V_p$ IEEEX1 5
+    86,               vp IEEEX1 6,                      $V_p$ IEEEX1 6
+    87,               vp IEEEX1 7,                      $V_p$ IEEEX1 7
+    88,               vp IEEEX1 8,                      $V_p$ IEEEX1 8
+    89,               vp IEEEX1 9,                      $V_p$ IEEEX1 9
+    90,              vp IEEEX1 10,                     $V_p$ IEEEX1 10
+    91,             LS_y IEEEX1 1,                   $y_{LS}$ IEEEX1 1
+    92,             LS_y IEEEX1 2,                   $y_{LS}$ IEEEX1 2
+    93,             LS_y IEEEX1 3,                   $y_{LS}$ IEEEX1 3
+    94,             LS_y IEEEX1 4,                   $y_{LS}$ IEEEX1 4
+    95,             LS_y IEEEX1 5,                   $y_{LS}$ IEEEX1 5
+    96,             LS_y IEEEX1 6,                   $y_{LS}$ IEEEX1 6
+    97,             LS_y IEEEX1 7,                   $y_{LS}$ IEEEX1 7
+    98,             LS_y IEEEX1 8,                   $y_{LS}$ IEEEX1 8
+    99,             LS_y IEEEX1 9,                   $y_{LS}$ IEEEX1 9
+   100,            LS_y IEEEX1 10,                  $y_{LS}$ IEEEX1 10
+   101,             LL_x IEEEX1 1,                  $x'_{LL}$ IEEEX1 1
+   102,             LL_x IEEEX1 2,                  $x'_{LL}$ IEEEX1 2
+   103,             LL_x IEEEX1 3,                  $x'_{LL}$ IEEEX1 3
+   104,             LL_x IEEEX1 4,                  $x'_{LL}$ IEEEX1 4
+   105,             LL_x IEEEX1 5,                  $x'_{LL}$ IEEEX1 5
+   106,             LL_x IEEEX1 6,                  $x'_{LL}$ IEEEX1 6
+   107,             LL_x IEEEX1 7,                  $x'_{LL}$ IEEEX1 7
+   108,             LL_x IEEEX1 8,                  $x'_{LL}$ IEEEX1 8
+   109,             LL_x IEEEX1 9,                  $x'_{LL}$ IEEEX1 9
+   110,            LL_x IEEEX1 10,                 $x'_{LL}$ IEEEX1 10
+   111,             LA_y IEEEX1 1,                   $y_{LA}$ IEEEX1 1
+   112,             LA_y IEEEX1 2,                   $y_{LA}$ IEEEX1 2
+   113,             LA_y IEEEX1 3,                   $y_{LA}$ IEEEX1 3
+   114,             LA_y IEEEX1 4,                   $y_{LA}$ IEEEX1 4
+   115,             LA_y IEEEX1 5,                   $y_{LA}$ IEEEX1 5
+   116,             LA_y IEEEX1 6,                   $y_{LA}$ IEEEX1 6
+   117,             LA_y IEEEX1 7,                   $y_{LA}$ IEEEX1 7
+   118,             LA_y IEEEX1 8,                   $y_{LA}$ IEEEX1 8
+   119,             LA_y IEEEX1 9,                   $y_{LA}$ IEEEX1 9
+   120,            LA_y IEEEX1 10,                  $y_{LA}$ IEEEX1 10
+   121,              W_x IEEEX1 1,                   $x'_{W}$ IEEEX1 1
+   122,              W_x IEEEX1 2,                   $x'_{W}$ IEEEX1 2
+   123,              W_x IEEEX1 3,                   $x'_{W}$ IEEEX1 3
+   124,              W_x IEEEX1 4,                   $x'_{W}$ IEEEX1 4
+   125,              W_x IEEEX1 5,                   $x'_{W}$ IEEEX1 5
+   126,              W_x IEEEX1 6,                   $x'_{W}$ IEEEX1 6
+   127,              W_x IEEEX1 7,                   $x'_{W}$ IEEEX1 7
+   128,              W_x IEEEX1 8,                   $x'_{W}$ IEEEX1 8
+   129,              W_x IEEEX1 9,                   $x'_{W}$ IEEEX1 9
+   130,             W_x IEEEX1 10,                  $x'_{W}$ IEEEX1 10
+   131,             F1_x IEEEST 1,                  $x'_{F1}$ IEEEST 1
+   132,             F1_x IEEEST 2,                  $x'_{F1}$ IEEEST 2
+   133,             F1_x IEEEST 3,                  $x'_{F1}$ IEEEST 3
+   134,             F1_x IEEEST 4,                  $x'_{F1}$ IEEEST 4
+   135,             F1_x IEEEST 5,                  $x'_{F1}$ IEEEST 5
+   136,             F1_x IEEEST 6,                  $x'_{F1}$ IEEEST 6
+   137,             F1_x IEEEST 7,                  $x'_{F1}$ IEEEST 7
+   138,             F1_x IEEEST 8,                  $x'_{F1}$ IEEEST 8
+   139,             F1_x IEEEST 9,                  $x'_{F1}$ IEEEST 9
+   140,            F1_x IEEEST 10,                 $x'_{F1}$ IEEEST 10
+   141,             F1_y IEEEST 1,                   $y_{F1}$ IEEEST 1
+   142,             F1_y IEEEST 2,                   $y_{F1}$ IEEEST 2
+   143,             F1_y IEEEST 3,                   $y_{F1}$ IEEEST 3
+   144,             F1_y IEEEST 4,                   $y_{F1}$ IEEEST 4
+   145,             F1_y IEEEST 5,                   $y_{F1}$ IEEEST 5
+   146,             F1_y IEEEST 6,                   $y_{F1}$ IEEEST 6
+   147,             F1_y IEEEST 7,                   $y_{F1}$ IEEEST 7
+   148,             F1_y IEEEST 8,                   $y_{F1}$ IEEEST 8
+   149,             F1_y IEEEST 9,                   $y_{F1}$ IEEEST 9
+   150,            F1_y IEEEST 10,                  $y_{F1}$ IEEEST 10
+   151,            F2_x1 IEEEST 1,                  $x'_{F2}$ IEEEST 1
+   152,            F2_x1 IEEEST 2,                  $x'_{F2}$ IEEEST 2
+   153,            F2_x1 IEEEST 3,                  $x'_{F2}$ IEEEST 3
+   154,            F2_x1 IEEEST 4,                  $x'_{F2}$ IEEEST 4
+   155,            F2_x1 IEEEST 5,                  $x'_{F2}$ IEEEST 5
+   156,            F2_x1 IEEEST 6,                  $x'_{F2}$ IEEEST 6
+   157,            F2_x1 IEEEST 7,                  $x'_{F2}$ IEEEST 7
+   158,            F2_x1 IEEEST 8,                  $x'_{F2}$ IEEEST 8
+   159,            F2_x1 IEEEST 9,                  $x'_{F2}$ IEEEST 9
+   160,           F2_x1 IEEEST 10,                 $x'_{F2}$ IEEEST 10
+   161,            F2_x2 IEEEST 1,                 $x''_{F2}$ IEEEST 1
+   162,            F2_x2 IEEEST 2,                 $x''_{F2}$ IEEEST 2
+   163,            F2_x2 IEEEST 3,                 $x''_{F2}$ IEEEST 3
+   164,            F2_x2 IEEEST 4,                 $x''_{F2}$ IEEEST 4
+   165,            F2_x2 IEEEST 5,                 $x''_{F2}$ IEEEST 5
+   166,            F2_x2 IEEEST 6,                 $x''_{F2}$ IEEEST 6
+   167,            F2_x2 IEEEST 7,                 $x''_{F2}$ IEEEST 7
+   168,            F2_x2 IEEEST 8,                 $x''_{F2}$ IEEEST 8
+   169,            F2_x2 IEEEST 9,                 $x''_{F2}$ IEEEST 9
+   170,           F2_x2 IEEEST 10,                $x''_{F2}$ IEEEST 10
+   171,            LL1_x IEEEST 1,                 $x'_{LL1}$ IEEEST 1
+   172,            LL1_x IEEEST 2,                 $x'_{LL1}$ IEEEST 2
+   173,            LL1_x IEEEST 3,                 $x'_{LL1}$ IEEEST 3
+   174,            LL1_x IEEEST 4,                 $x'_{LL1}$ IEEEST 4
+   175,            LL1_x IEEEST 5,                 $x'_{LL1}$ IEEEST 5
+   176,            LL1_x IEEEST 6,                 $x'_{LL1}$ IEEEST 6
+   177,            LL1_x IEEEST 7,                 $x'_{LL1}$ IEEEST 7
+   178,            LL1_x IEEEST 8,                 $x'_{LL1}$ IEEEST 8
+   179,            LL1_x IEEEST 9,                 $x'_{LL1}$ IEEEST 9
+   180,           LL1_x IEEEST 10,                $x'_{LL1}$ IEEEST 10
+   181,            LL2_x IEEEST 1,                 $x'_{LL2}$ IEEEST 1
+   182,            LL2_x IEEEST 2,                 $x'_{LL2}$ IEEEST 2
+   183,            LL2_x IEEEST 3,                 $x'_{LL2}$ IEEEST 3
+   184,            LL2_x IEEEST 4,                 $x'_{LL2}$ IEEEST 4
+   185,            LL2_x IEEEST 5,                 $x'_{LL2}$ IEEEST 5
+   186,            LL2_x IEEEST 6,                 $x'_{LL2}$ IEEEST 6
+   187,            LL2_x IEEEST 7,                 $x'_{LL2}$ IEEEST 7
+   188,            LL2_x IEEEST 8,                 $x'_{LL2}$ IEEEST 8
+   189,            LL2_x IEEEST 9,                 $x'_{LL2}$ IEEEST 9
+   190,           LL2_x IEEEST 10,                $x'_{LL2}$ IEEEST 10
+   191,             WO_x IEEEST 1,                  $x'_{WO}$ IEEEST 1
+   192,             WO_x IEEEST 2,                  $x'_{WO}$ IEEEST 2
+   193,             WO_x IEEEST 3,                  $x'_{WO}$ IEEEST 3
+   194,             WO_x IEEEST 4,                  $x'_{WO}$ IEEEST 4
+   195,             WO_x IEEEST 5,                  $x'_{WO}$ IEEEST 5
+   196,             WO_x IEEEST 6,                  $x'_{WO}$ IEEEST 6
+   197,             WO_x IEEEST 7,                  $x'_{WO}$ IEEEST 7
+   198,             WO_x IEEEST 8,                  $x'_{WO}$ IEEEST 8
+   199,             WO_x IEEEST 9,                  $x'_{WO}$ IEEEST 9
+   200,            WO_x IEEEST 10,                 $x'_{WO}$ IEEEST 10
+   201,             L_y BusFreq 1,                   $y_{L}$ BusFreq 1
+   202,             L_y BusFreq 2,                   $y_{L}$ BusFreq 2
+   203,             L_y BusFreq 3,                   $y_{L}$ BusFreq 3
+   204,             L_y BusFreq 4,                   $y_{L}$ BusFreq 4
+   205,             L_y BusFreq 5,                   $y_{L}$ BusFreq 5
+   206,             L_y BusFreq 6,                   $y_{L}$ BusFreq 6
+   207,             L_y BusFreq 7,                   $y_{L}$ BusFreq 7
+   208,             L_y BusFreq 8,                   $y_{L}$ BusFreq 8
+   209,             L_y BusFreq 9,                   $y_{L}$ BusFreq 9
+   210,            L_y BusFreq 10,                  $y_{L}$ BusFreq 10
+   211,            WO_x BusFreq 1,                 $x'_{WO}$ BusFreq 1
+   212,            WO_x BusFreq 2,                 $x'_{WO}$ BusFreq 2
+   213,            WO_x BusFreq 3,                 $x'_{WO}$ BusFreq 3
+   214,            WO_x BusFreq 4,                 $x'_{WO}$ BusFreq 4
+   215,            WO_x BusFreq 5,                 $x'_{WO}$ BusFreq 5
+   216,            WO_x BusFreq 6,                 $x'_{WO}$ BusFreq 6
+   217,            WO_x BusFreq 7,                 $x'_{WO}$ BusFreq 7
+   218,            WO_x BusFreq 8,                 $x'_{WO}$ BusFreq 8
+   219,            WO_x BusFreq 9,                 $x'_{WO}$ BusFreq 9
+   220,           WO_x BusFreq 10,                $x'_{WO}$ BusFreq 10
+   221,                   a Bus 1,                      $\theta$ Bus 1
+   222,                   a Bus 2,                      $\theta$ Bus 2
+   223,                   a Bus 3,                      $\theta$ Bus 3
+   224,                   a Bus 4,                      $\theta$ Bus 4
+   225,                   a Bus 5,                      $\theta$ Bus 5
+   226,                   a Bus 6,                      $\theta$ Bus 6
+   227,                   a Bus 7,                      $\theta$ Bus 7
+   228,                   a Bus 8,                      $\theta$ Bus 8
+   229,                   a Bus 9,                      $\theta$ Bus 9
+   230,                  a Bus 10,                     $\theta$ Bus 10
+   231,                  a Bus 11,                     $\theta$ Bus 11
+   232,                  a Bus 12,                     $\theta$ Bus 12
+   233,                  a Bus 13,                     $\theta$ Bus 13
+   234,                  a Bus 14,                     $\theta$ Bus 14
+   235,                  a Bus 15,                     $\theta$ Bus 15
+   236,                  a Bus 16,                     $\theta$ Bus 16
+   237,                  a Bus 17,                     $\theta$ Bus 17
+   238,                  a Bus 18,                     $\theta$ Bus 18
+   239,                  a Bus 19,                     $\theta$ Bus 19
+   240,                  a Bus 20,                     $\theta$ Bus 20
+   241,                  a Bus 21,                     $\theta$ Bus 21
+   242,                  a Bus 22,                     $\theta$ Bus 22
+   243,                  a Bus 23,                     $\theta$ Bus 23
+   244,                  a Bus 24,                     $\theta$ Bus 24
+   245,                  a Bus 25,                     $\theta$ Bus 25
+   246,                  a Bus 26,                     $\theta$ Bus 26
+   247,                  a Bus 27,                     $\theta$ Bus 27
+   248,                  a Bus 28,                     $\theta$ Bus 28
+   249,                  a Bus 29,                     $\theta$ Bus 29
+   250,                  a Bus 30,                     $\theta$ Bus 30
+   251,                  a Bus 31,                     $\theta$ Bus 31
+   252,                  a Bus 32,                     $\theta$ Bus 32
+   253,                  a Bus 33,                     $\theta$ Bus 33
+   254,                  a Bus 34,                     $\theta$ Bus 34
+   255,                  a Bus 35,                     $\theta$ Bus 35
+   256,                  a Bus 36,                     $\theta$ Bus 36
+   257,                  a Bus 37,                     $\theta$ Bus 37
+   258,                  a Bus 38,                     $\theta$ Bus 38
+   259,                  a Bus 39,                     $\theta$ Bus 39
+   260,                   v Bus 1,                           $V$ Bus 1
+   261,                   v Bus 2,                           $V$ Bus 2
+   262,                   v Bus 3,                           $V$ Bus 3
+   263,                   v Bus 4,                           $V$ Bus 4
+   264,                   v Bus 5,                           $V$ Bus 5
+   265,                   v Bus 6,                           $V$ Bus 6
+   266,                   v Bus 7,                           $V$ Bus 7
+   267,                   v Bus 8,                           $V$ Bus 8
+   268,                   v Bus 9,                           $V$ Bus 9
+   269,                  v Bus 10,                          $V$ Bus 10
+   270,                  v Bus 11,                          $V$ Bus 11
+   271,                  v Bus 12,                          $V$ Bus 12
+   272,                  v Bus 13,                          $V$ Bus 13
+   273,                  v Bus 14,                          $V$ Bus 14
+   274,                  v Bus 15,                          $V$ Bus 15
+   275,                  v Bus 16,                          $V$ Bus 16
+   276,                  v Bus 17,                          $V$ Bus 17
+   277,                  v Bus 18,                          $V$ Bus 18
+   278,                  v Bus 19,                          $V$ Bus 19
+   279,                  v Bus 20,                          $V$ Bus 20
+   280,                  v Bus 21,                          $V$ Bus 21
+   281,                  v Bus 22,                          $V$ Bus 22
+   282,                  v Bus 23,                          $V$ Bus 23
+   283,                  v Bus 24,                          $V$ Bus 24
+   284,                  v Bus 25,                          $V$ Bus 25
+   285,                  v Bus 26,                          $V$ Bus 26
+   286,                  v Bus 27,                          $V$ Bus 27
+   287,                  v Bus 28,                          $V$ Bus 28
+   288,                  v Bus 29,                          $V$ Bus 29
+   289,                  v Bus 30,                          $V$ Bus 30
+   290,                  v Bus 31,                          $V$ Bus 31
+   291,                  v Bus 32,                          $V$ Bus 32
+   292,                  v Bus 33,                          $V$ Bus 33
+   293,                  v Bus 34,                          $V$ Bus 34
+   294,                  v Bus 35,                          $V$ Bus 35
+   295,                  v Bus 36,                          $V$ Bus 36
+   296,                  v Bus 37,                          $V$ Bus 37
+   297,                  v Bus 38,                          $V$ Bus 38
+   298,                  v Bus 39,                          $V$ Bus 39
+   299,                    q PV 1,                            $q$ PV 1
+   300,                    q PV 2,                            $q$ PV 2
+   301,                    q PV 3,                            $q$ PV 3
+   302,                    q PV 4,                            $q$ PV 4
+   303,                    q PV 5,                            $q$ PV 5
+   304,                    q PV 6,                            $q$ PV 6
+   305,                    q PV 7,                            $q$ PV 7
+   306,                    q PV 8,                            $q$ PV 8
+   307,                    q PV 9,                            $q$ PV 9
+   308,                q Slack 10,                        $q$ Slack 10
+   309,                p Slack 10,                        $p$ Slack 10
+   310,                ace ACEc 1,                        $ace$ ACEc 1
+   311,               Id GENROU 1,                      $I_d$ GENROU 1
+   312,               Id GENROU 2,                      $I_d$ GENROU 2
+   313,               Id GENROU 3,                      $I_d$ GENROU 3
+   314,               Id GENROU 4,                      $I_d$ GENROU 4
+   315,               Id GENROU 5,                      $I_d$ GENROU 5
+   316,               Id GENROU 6,                      $I_d$ GENROU 6
+   317,               Id GENROU 7,                      $I_d$ GENROU 7
+   318,               Id GENROU 8,                      $I_d$ GENROU 8
+   319,               Id GENROU 9,                      $I_d$ GENROU 9
+   320,              Id GENROU 10,                     $I_d$ GENROU 10
+   321,               Iq GENROU 1,                      $I_q$ GENROU 1
+   322,               Iq GENROU 2,                      $I_q$ GENROU 2
+   323,               Iq GENROU 3,                      $I_q$ GENROU 3
+   324,               Iq GENROU 4,                      $I_q$ GENROU 4
+   325,               Iq GENROU 5,                      $I_q$ GENROU 5
+   326,               Iq GENROU 6,                      $I_q$ GENROU 6
+   327,               Iq GENROU 7,                      $I_q$ GENROU 7
+   328,               Iq GENROU 8,                      $I_q$ GENROU 8
+   329,               Iq GENROU 9,                      $I_q$ GENROU 9
+   330,              Iq GENROU 10,                     $I_q$ GENROU 10
+   331,               vd GENROU 1,                      $V_d$ GENROU 1
+   332,               vd GENROU 2,                      $V_d$ GENROU 2
+   333,               vd GENROU 3,                      $V_d$ GENROU 3
+   334,               vd GENROU 4,                      $V_d$ GENROU 4
+   335,               vd GENROU 5,                      $V_d$ GENROU 5
+   336,               vd GENROU 6,                      $V_d$ GENROU 6
+   337,               vd GENROU 7,                      $V_d$ GENROU 7
+   338,               vd GENROU 8,                      $V_d$ GENROU 8
+   339,               vd GENROU 9,                      $V_d$ GENROU 9
+   340,              vd GENROU 10,                     $V_d$ GENROU 10
+   341,               vq GENROU 1,                      $V_q$ GENROU 1
+   342,               vq GENROU 2,                      $V_q$ GENROU 2
+   343,               vq GENROU 3,                      $V_q$ GENROU 3
+   344,               vq GENROU 4,                      $V_q$ GENROU 4
+   345,               vq GENROU 5,                      $V_q$ GENROU 5
+   346,               vq GENROU 6,                      $V_q$ GENROU 6
+   347,               vq GENROU 7,                      $V_q$ GENROU 7
+   348,               vq GENROU 8,                      $V_q$ GENROU 8
+   349,               vq GENROU 9,                      $V_q$ GENROU 9
+   350,              vq GENROU 10,                     $V_q$ GENROU 10
+   351,               tm GENROU 1,                   $\tau_m$ GENROU 1
+   352,               tm GENROU 2,                   $\tau_m$ GENROU 2
+   353,               tm GENROU 3,                   $\tau_m$ GENROU 3
+   354,               tm GENROU 4,                   $\tau_m$ GENROU 4
+   355,               tm GENROU 5,                   $\tau_m$ GENROU 5
+   356,               tm GENROU 6,                   $\tau_m$ GENROU 6
+   357,               tm GENROU 7,                   $\tau_m$ GENROU 7
+   358,               tm GENROU 8,                   $\tau_m$ GENROU 8
+   359,               tm GENROU 9,                   $\tau_m$ GENROU 9
+   360,              tm GENROU 10,                  $\tau_m$ GENROU 10
+   361,               te GENROU 1,                   $\tau_e$ GENROU 1
+   362,               te GENROU 2,                   $\tau_e$ GENROU 2
+   363,               te GENROU 3,                   $\tau_e$ GENROU 3
+   364,               te GENROU 4,                   $\tau_e$ GENROU 4
+   365,               te GENROU 5,                   $\tau_e$ GENROU 5
+   366,               te GENROU 6,                   $\tau_e$ GENROU 6
+   367,               te GENROU 7,                   $\tau_e$ GENROU 7
+   368,               te GENROU 8,                   $\tau_e$ GENROU 8
+   369,               te GENROU 9,                   $\tau_e$ GENROU 9
+   370,              te GENROU 10,                  $\tau_e$ GENROU 10
+   371,               vf GENROU 1,                      $v_f$ GENROU 1
+   372,               vf GENROU 2,                      $v_f$ GENROU 2
+   373,               vf GENROU 3,                      $v_f$ GENROU 3
+   374,               vf GENROU 4,                      $v_f$ GENROU 4
+   375,               vf GENROU 5,                      $v_f$ GENROU 5
+   376,               vf GENROU 6,                      $v_f$ GENROU 6
+   377,               vf GENROU 7,                      $v_f$ GENROU 7
+   378,               vf GENROU 8,                      $v_f$ GENROU 8
+   379,               vf GENROU 9,                      $v_f$ GENROU 9
+   380,              vf GENROU 10,                     $v_f$ GENROU 10
+   381,           XadIfd GENROU 1,             $X_{ad}I_{fd}$ GENROU 1
+   382,           XadIfd GENROU 2,             $X_{ad}I_{fd}$ GENROU 2
+   383,           XadIfd GENROU 3,             $X_{ad}I_{fd}$ GENROU 3
+   384,           XadIfd GENROU 4,             $X_{ad}I_{fd}$ GENROU 4
+   385,           XadIfd GENROU 5,             $X_{ad}I_{fd}$ GENROU 5
+   386,           XadIfd GENROU 6,             $X_{ad}I_{fd}$ GENROU 6
+   387,           XadIfd GENROU 7,             $X_{ad}I_{fd}$ GENROU 7
+   388,           XadIfd GENROU 8,             $X_{ad}I_{fd}$ GENROU 8
+   389,           XadIfd GENROU 9,             $X_{ad}I_{fd}$ GENROU 9
+   390,          XadIfd GENROU 10,            $X_{ad}I_{fd}$ GENROU 10
+   391,               Pe GENROU 1,                      $P_e$ GENROU 1
+   392,               Pe GENROU 2,                      $P_e$ GENROU 2
+   393,               Pe GENROU 3,                      $P_e$ GENROU 3
+   394,               Pe GENROU 4,                      $P_e$ GENROU 4
+   395,               Pe GENROU 5,                      $P_e$ GENROU 5
+   396,               Pe GENROU 6,                      $P_e$ GENROU 6
+   397,               Pe GENROU 7,                      $P_e$ GENROU 7
+   398,               Pe GENROU 8,                      $P_e$ GENROU 8
+   399,               Pe GENROU 9,                      $P_e$ GENROU 9
+   400,              Pe GENROU 10,                     $P_e$ GENROU 10
+   401,               Qe GENROU 1,                      $Q_e$ GENROU 1
+   402,               Qe GENROU 2,                      $Q_e$ GENROU 2
+   403,               Qe GENROU 3,                      $Q_e$ GENROU 3
+   404,               Qe GENROU 4,                      $Q_e$ GENROU 4
+   405,               Qe GENROU 5,                      $Q_e$ GENROU 5
+   406,               Qe GENROU 6,                      $Q_e$ GENROU 6
+   407,               Qe GENROU 7,                      $Q_e$ GENROU 7
+   408,               Qe GENROU 8,                      $Q_e$ GENROU 8
+   409,               Qe GENROU 9,                      $Q_e$ GENROU 9
+   410,              Qe GENROU 10,                     $Q_e$ GENROU 10
+   411,             psid GENROU 1,                   $\psi_d$ GENROU 1
+   412,             psid GENROU 2,                   $\psi_d$ GENROU 2
+   413,             psid GENROU 3,                   $\psi_d$ GENROU 3
+   414,             psid GENROU 4,                   $\psi_d$ GENROU 4
+   415,             psid GENROU 5,                   $\psi_d$ GENROU 5
+   416,             psid GENROU 6,                   $\psi_d$ GENROU 6
+   417,             psid GENROU 7,                   $\psi_d$ GENROU 7
+   418,             psid GENROU 8,                   $\psi_d$ GENROU 8
+   419,             psid GENROU 9,                   $\psi_d$ GENROU 9
+   420,            psid GENROU 10,                  $\psi_d$ GENROU 10
+   421,             psiq GENROU 1,                   $\psi_q$ GENROU 1
+   422,             psiq GENROU 2,                   $\psi_q$ GENROU 2
+   423,             psiq GENROU 3,                   $\psi_q$ GENROU 3
+   424,             psiq GENROU 4,                   $\psi_q$ GENROU 4
+   425,             psiq GENROU 5,                   $\psi_q$ GENROU 5
+   426,             psiq GENROU 6,                   $\psi_q$ GENROU 6
+   427,             psiq GENROU 7,                   $\psi_q$ GENROU 7
+   428,             psiq GENROU 8,                   $\psi_q$ GENROU 8
+   429,             psiq GENROU 9,                   $\psi_q$ GENROU 9
+   430,            psiq GENROU 10,                  $\psi_q$ GENROU 10
+   431,            psi2q GENROU 1,                $\psi_{aq}$ GENROU 1
+   432,            psi2q GENROU 2,                $\psi_{aq}$ GENROU 2
+   433,            psi2q GENROU 3,                $\psi_{aq}$ GENROU 3
+   434,            psi2q GENROU 4,                $\psi_{aq}$ GENROU 4
+   435,            psi2q GENROU 5,                $\psi_{aq}$ GENROU 5
+   436,            psi2q GENROU 6,                $\psi_{aq}$ GENROU 6
+   437,            psi2q GENROU 7,                $\psi_{aq}$ GENROU 7
+   438,            psi2q GENROU 8,                $\psi_{aq}$ GENROU 8
+   439,            psi2q GENROU 9,                $\psi_{aq}$ GENROU 9
+   440,           psi2q GENROU 10,               $\psi_{aq}$ GENROU 10
+   441,            psi2d GENROU 1,                $\psi_{ad}$ GENROU 1
+   442,            psi2d GENROU 2,                $\psi_{ad}$ GENROU 2
+   443,            psi2d GENROU 3,                $\psi_{ad}$ GENROU 3
+   444,            psi2d GENROU 4,                $\psi_{ad}$ GENROU 4
+   445,            psi2d GENROU 5,                $\psi_{ad}$ GENROU 5
+   446,            psi2d GENROU 6,                $\psi_{ad}$ GENROU 6
+   447,            psi2d GENROU 7,                $\psi_{ad}$ GENROU 7
+   448,            psi2d GENROU 8,                $\psi_{ad}$ GENROU 8
+   449,            psi2d GENROU 9,                $\psi_{ad}$ GENROU 9
+   450,           psi2d GENROU 10,               $\psi_{ad}$ GENROU 10
+   451,             psi2 GENROU 1,                   $\psi_a$ GENROU 1
+   452,             psi2 GENROU 2,                   $\psi_a$ GENROU 2
+   453,             psi2 GENROU 3,                   $\psi_a$ GENROU 3
+   454,             psi2 GENROU 4,                   $\psi_a$ GENROU 4
+   455,             psi2 GENROU 5,                   $\psi_a$ GENROU 5
+   456,             psi2 GENROU 6,                   $\psi_a$ GENROU 6
+   457,             psi2 GENROU 7,                   $\psi_a$ GENROU 7
+   458,             psi2 GENROU 8,                   $\psi_a$ GENROU 8
+   459,             psi2 GENROU 9,                   $\psi_a$ GENROU 9
+   460,            psi2 GENROU 10,                  $\psi_a$ GENROU 10
+   461,               Se GENROU 1,          $S_e(|\psi_{a}|)$ GENROU 1
+   462,               Se GENROU 2,          $S_e(|\psi_{a}|)$ GENROU 2
+   463,               Se GENROU 3,          $S_e(|\psi_{a}|)$ GENROU 3
+   464,               Se GENROU 4,          $S_e(|\psi_{a}|)$ GENROU 4
+   465,               Se GENROU 5,          $S_e(|\psi_{a}|)$ GENROU 5
+   466,               Se GENROU 6,          $S_e(|\psi_{a}|)$ GENROU 6
+   467,               Se GENROU 7,          $S_e(|\psi_{a}|)$ GENROU 7
+   468,               Se GENROU 8,          $S_e(|\psi_{a}|)$ GENROU 8
+   469,               Se GENROU 9,          $S_e(|\psi_{a}|)$ GENROU 9
+   470,              Se GENROU 10,         $S_e(|\psi_{a}|)$ GENROU 10
+   471,           XaqI1q GENROU 1,             $X_{aq}I_{1q}$ GENROU 1
+   472,           XaqI1q GENROU 2,             $X_{aq}I_{1q}$ GENROU 2
+   473,           XaqI1q GENROU 3,             $X_{aq}I_{1q}$ GENROU 3
+   474,           XaqI1q GENROU 4,             $X_{aq}I_{1q}$ GENROU 4
+   475,           XaqI1q GENROU 5,             $X_{aq}I_{1q}$ GENROU 5
+   476,           XaqI1q GENROU 6,             $X_{aq}I_{1q}$ GENROU 6
+   477,           XaqI1q GENROU 7,             $X_{aq}I_{1q}$ GENROU 7
+   478,           XaqI1q GENROU 8,             $X_{aq}I_{1q}$ GENROU 8
+   479,           XaqI1q GENROU 9,             $X_{aq}I_{1q}$ GENROU 9
+   480,          XaqI1q GENROU 10,            $X_{aq}I_{1q}$ GENROU 10
+   481,       paux TGOV1N TGOV1 1,            $P_{aux}$ TGOV1N TGOV1 1
+   482,       paux TGOV1N TGOV1 2,            $P_{aux}$ TGOV1N TGOV1 2
+   483,       paux TGOV1N TGOV1 3,            $P_{aux}$ TGOV1N TGOV1 3
+   484,       paux TGOV1N TGOV1 4,            $P_{aux}$ TGOV1N TGOV1 4
+   485,       paux TGOV1N TGOV1 5,            $P_{aux}$ TGOV1N TGOV1 5
+   486,       paux TGOV1N TGOV1 6,            $P_{aux}$ TGOV1N TGOV1 6
+   487,       paux TGOV1N TGOV1 7,            $P_{aux}$ TGOV1N TGOV1 7
+   488,       paux TGOV1N TGOV1 8,            $P_{aux}$ TGOV1N TGOV1 8
+   489,       paux TGOV1N TGOV1 9,            $P_{aux}$ TGOV1N TGOV1 9
+   490,      paux TGOV1N TGOV1 10,           $P_{aux}$ TGOV1N TGOV1 10
+   491,       pout TGOV1N TGOV1 1,            $P_{out}$ TGOV1N TGOV1 1
+   492,       pout TGOV1N TGOV1 2,            $P_{out}$ TGOV1N TGOV1 2
+   493,       pout TGOV1N TGOV1 3,            $P_{out}$ TGOV1N TGOV1 3
+   494,       pout TGOV1N TGOV1 4,            $P_{out}$ TGOV1N TGOV1 4
+   495,       pout TGOV1N TGOV1 5,            $P_{out}$ TGOV1N TGOV1 5
+   496,       pout TGOV1N TGOV1 6,            $P_{out}$ TGOV1N TGOV1 6
+   497,       pout TGOV1N TGOV1 7,            $P_{out}$ TGOV1N TGOV1 7
+   498,       pout TGOV1N TGOV1 8,            $P_{out}$ TGOV1N TGOV1 8
+   499,       pout TGOV1N TGOV1 9,            $P_{out}$ TGOV1N TGOV1 9
+   500,      pout TGOV1N TGOV1 10,           $P_{out}$ TGOV1N TGOV1 10
+   501,       wref TGOV1N TGOV1 1,       $\omega_{ref}$ TGOV1N TGOV1 1
+   502,       wref TGOV1N TGOV1 2,       $\omega_{ref}$ TGOV1N TGOV1 2
+   503,       wref TGOV1N TGOV1 3,       $\omega_{ref}$ TGOV1N TGOV1 3
+   504,       wref TGOV1N TGOV1 4,       $\omega_{ref}$ TGOV1N TGOV1 4
+   505,       wref TGOV1N TGOV1 5,       $\omega_{ref}$ TGOV1N TGOV1 5
+   506,       wref TGOV1N TGOV1 6,       $\omega_{ref}$ TGOV1N TGOV1 6
+   507,       wref TGOV1N TGOV1 7,       $\omega_{ref}$ TGOV1N TGOV1 7
+   508,       wref TGOV1N TGOV1 8,       $\omega_{ref}$ TGOV1N TGOV1 8
+   509,       wref TGOV1N TGOV1 9,       $\omega_{ref}$ TGOV1N TGOV1 9
+   510,      wref TGOV1N TGOV1 10,      $\omega_{ref}$ TGOV1N TGOV1 10
+   511,       pref TGOV1N TGOV1 1,            $P_{ref}$ TGOV1N TGOV1 1
+   512,       pref TGOV1N TGOV1 2,            $P_{ref}$ TGOV1N TGOV1 2
+   513,       pref TGOV1N TGOV1 3,            $P_{ref}$ TGOV1N TGOV1 3
+   514,       pref TGOV1N TGOV1 4,            $P_{ref}$ TGOV1N TGOV1 4
+   515,       pref TGOV1N TGOV1 5,            $P_{ref}$ TGOV1N TGOV1 5
+   516,       pref TGOV1N TGOV1 6,            $P_{ref}$ TGOV1N TGOV1 6
+   517,       pref TGOV1N TGOV1 7,            $P_{ref}$ TGOV1N TGOV1 7
+   518,       pref TGOV1N TGOV1 8,            $P_{ref}$ TGOV1N TGOV1 8
+   519,       pref TGOV1N TGOV1 9,            $P_{ref}$ TGOV1N TGOV1 9
+   520,      pref TGOV1N TGOV1 10,           $P_{ref}$ TGOV1N TGOV1 10
+   521,         wd TGOV1N TGOV1 1,       $\omega_{dev}$ TGOV1N TGOV1 1
+   522,         wd TGOV1N TGOV1 2,       $\omega_{dev}$ TGOV1N TGOV1 2
+   523,         wd TGOV1N TGOV1 3,       $\omega_{dev}$ TGOV1N TGOV1 3
+   524,         wd TGOV1N TGOV1 4,       $\omega_{dev}$ TGOV1N TGOV1 4
+   525,         wd TGOV1N TGOV1 5,       $\omega_{dev}$ TGOV1N TGOV1 5
+   526,         wd TGOV1N TGOV1 6,       $\omega_{dev}$ TGOV1N TGOV1 6
+   527,         wd TGOV1N TGOV1 7,       $\omega_{dev}$ TGOV1N TGOV1 7
+   528,         wd TGOV1N TGOV1 8,       $\omega_{dev}$ TGOV1N TGOV1 8
+   529,         wd TGOV1N TGOV1 9,       $\omega_{dev}$ TGOV1N TGOV1 9
+   530,        wd TGOV1N TGOV1 10,      $\omega_{dev}$ TGOV1N TGOV1 10
+   531,         pd TGOV1N TGOV1 1,                $P_d$ TGOV1N TGOV1 1
+   532,         pd TGOV1N TGOV1 2,                $P_d$ TGOV1N TGOV1 2
+   533,         pd TGOV1N TGOV1 3,                $P_d$ TGOV1N TGOV1 3
+   534,         pd TGOV1N TGOV1 4,                $P_d$ TGOV1N TGOV1 4
+   535,         pd TGOV1N TGOV1 5,                $P_d$ TGOV1N TGOV1 5
+   536,         pd TGOV1N TGOV1 6,                $P_d$ TGOV1N TGOV1 6
+   537,         pd TGOV1N TGOV1 7,                $P_d$ TGOV1N TGOV1 7
+   538,         pd TGOV1N TGOV1 8,                $P_d$ TGOV1N TGOV1 8
+   539,         pd TGOV1N TGOV1 9,                $P_d$ TGOV1N TGOV1 9
+   540,        pd TGOV1N TGOV1 10,               $P_d$ TGOV1N TGOV1 10
+   541,       LL_y TGOV1N TGOV1 1,             $y_{LL}$ TGOV1N TGOV1 1
+   542,       LL_y TGOV1N TGOV1 2,             $y_{LL}$ TGOV1N TGOV1 2
+   543,       LL_y TGOV1N TGOV1 3,             $y_{LL}$ TGOV1N TGOV1 3
+   544,       LL_y TGOV1N TGOV1 4,             $y_{LL}$ TGOV1N TGOV1 4
+   545,       LL_y TGOV1N TGOV1 5,             $y_{LL}$ TGOV1N TGOV1 5
+   546,       LL_y TGOV1N TGOV1 6,             $y_{LL}$ TGOV1N TGOV1 6
+   547,       LL_y TGOV1N TGOV1 7,             $y_{LL}$ TGOV1N TGOV1 7
+   548,       LL_y TGOV1N TGOV1 8,             $y_{LL}$ TGOV1N TGOV1 8
+   549,       LL_y TGOV1N TGOV1 9,             $y_{LL}$ TGOV1N TGOV1 9
+   550,      LL_y TGOV1N TGOV1 10,            $y_{LL}$ TGOV1N TGOV1 10
+   551,                v IEEEX1 1,                 $E_{term}$ IEEEX1 1
+   552,                v IEEEX1 2,                 $E_{term}$ IEEEX1 2
+   553,                v IEEEX1 3,                 $E_{term}$ IEEEX1 3
+   554,                v IEEEX1 4,                 $E_{term}$ IEEEX1 4
+   555,                v IEEEX1 5,                 $E_{term}$ IEEEX1 5
+   556,                v IEEEX1 6,                 $E_{term}$ IEEEX1 6
+   557,                v IEEEX1 7,                 $E_{term}$ IEEEX1 7
+   558,                v IEEEX1 8,                 $E_{term}$ IEEEX1 8
+   559,                v IEEEX1 9,                 $E_{term}$ IEEEX1 9
+   560,               v IEEEX1 10,                $E_{term}$ IEEEX1 10
+   561,             vout IEEEX1 1,                  $v_{out}$ IEEEX1 1
+   562,             vout IEEEX1 2,                  $v_{out}$ IEEEX1 2
+   563,             vout IEEEX1 3,                  $v_{out}$ IEEEX1 3
+   564,             vout IEEEX1 4,                  $v_{out}$ IEEEX1 4
+   565,             vout IEEEX1 5,                  $v_{out}$ IEEEX1 5
+   566,             vout IEEEX1 6,                  $v_{out}$ IEEEX1 6
+   567,             vout IEEEX1 7,                  $v_{out}$ IEEEX1 7
+   568,             vout IEEEX1 8,                  $v_{out}$ IEEEX1 8
+   569,             vout IEEEX1 9,                  $v_{out}$ IEEEX1 9
+   570,            vout IEEEX1 10,                 $v_{out}$ IEEEX1 10
+   571,             vref IEEEX1 1,                  $V_{ref}$ IEEEX1 1
+   572,             vref IEEEX1 2,                  $V_{ref}$ IEEEX1 2
+   573,             vref IEEEX1 3,                  $V_{ref}$ IEEEX1 3
+   574,             vref IEEEX1 4,                  $V_{ref}$ IEEEX1 4
+   575,             vref IEEEX1 5,                  $V_{ref}$ IEEEX1 5
+   576,             vref IEEEX1 6,                  $V_{ref}$ IEEEX1 6
+   577,             vref IEEEX1 7,                  $V_{ref}$ IEEEX1 7
+   578,             vref IEEEX1 8,                  $V_{ref}$ IEEEX1 8
+   579,             vref IEEEX1 9,                  $V_{ref}$ IEEEX1 9
+   580,            vref IEEEX1 10,                 $V_{ref}$ IEEEX1 10
+   581,               Se IEEEX1 1,           $S_e(|V_{out}|)$ IEEEX1 1
+   582,               Se IEEEX1 2,           $S_e(|V_{out}|)$ IEEEX1 2
+   583,               Se IEEEX1 3,           $S_e(|V_{out}|)$ IEEEX1 3
+   584,               Se IEEEX1 4,           $S_e(|V_{out}|)$ IEEEX1 4
+   585,               Se IEEEX1 5,           $S_e(|V_{out}|)$ IEEEX1 5
+   586,               Se IEEEX1 6,           $S_e(|V_{out}|)$ IEEEX1 6
+   587,               Se IEEEX1 7,           $S_e(|V_{out}|)$ IEEEX1 7
+   588,               Se IEEEX1 8,           $S_e(|V_{out}|)$ IEEEX1 8
+   589,               Se IEEEX1 9,           $S_e(|V_{out}|)$ IEEEX1 9
+   590,              Se IEEEX1 10,          $S_e(|V_{out}|)$ IEEEX1 10
+   591,               vi IEEEX1 1,                      $V_i$ IEEEX1 1
+   592,               vi IEEEX1 2,                      $V_i$ IEEEX1 2
+   593,               vi IEEEX1 3,                      $V_i$ IEEEX1 3
+   594,               vi IEEEX1 4,                      $V_i$ IEEEX1 4
+   595,               vi IEEEX1 5,                      $V_i$ IEEEX1 5
+   596,               vi IEEEX1 6,                      $V_i$ IEEEX1 6
+   597,               vi IEEEX1 7,                      $V_i$ IEEEX1 7
+   598,               vi IEEEX1 8,                      $V_i$ IEEEX1 8
+   599,               vi IEEEX1 9,                      $V_i$ IEEEX1 9
+   600,              vi IEEEX1 10,                     $V_i$ IEEEX1 10
+   601,             LL_y IEEEX1 1,                   $y_{LL}$ IEEEX1 1
+   602,             LL_y IEEEX1 2,                   $y_{LL}$ IEEEX1 2
+   603,             LL_y IEEEX1 3,                   $y_{LL}$ IEEEX1 3
+   604,             LL_y IEEEX1 4,                   $y_{LL}$ IEEEX1 4
+   605,             LL_y IEEEX1 5,                   $y_{LL}$ IEEEX1 5
+   606,             LL_y IEEEX1 6,                   $y_{LL}$ IEEEX1 6
+   607,             LL_y IEEEX1 7,                   $y_{LL}$ IEEEX1 7
+   608,             LL_y IEEEX1 8,                   $y_{LL}$ IEEEX1 8
+   609,             LL_y IEEEX1 9,                   $y_{LL}$ IEEEX1 9
+   610,            LL_y IEEEX1 10,                  $y_{LL}$ IEEEX1 10
+   611,              W_y IEEEX1 1,                    $y_{W}$ IEEEX1 1
+   612,              W_y IEEEX1 2,                    $y_{W}$ IEEEX1 2
+   613,              W_y IEEEX1 3,                    $y_{W}$ IEEEX1 3
+   614,              W_y IEEEX1 4,                    $y_{W}$ IEEEX1 4
+   615,              W_y IEEEX1 5,                    $y_{W}$ IEEEX1 5
+   616,              W_y IEEEX1 6,                    $y_{W}$ IEEEX1 6
+   617,              W_y IEEEX1 7,                    $y_{W}$ IEEEX1 7
+   618,              W_y IEEEX1 8,                    $y_{W}$ IEEEX1 8
+   619,              W_y IEEEX1 9,                    $y_{W}$ IEEEX1 9
+   620,             W_y IEEEX1 10,                   $y_{W}$ IEEEX1 10
+   621,            vsout IEEEST 1,                 $v_{sout}$ IEEEST 1
+   622,            vsout IEEEST 2,                 $v_{sout}$ IEEEST 2
+   623,            vsout IEEEST 3,                 $v_{sout}$ IEEEST 3
+   624,            vsout IEEEST 4,                 $v_{sout}$ IEEEST 4
+   625,            vsout IEEEST 5,                 $v_{sout}$ IEEEST 5
+   626,            vsout IEEEST 6,                 $v_{sout}$ IEEEST 6
+   627,            vsout IEEEST 7,                 $v_{sout}$ IEEEST 7
+   628,            vsout IEEEST 8,                 $v_{sout}$ IEEEST 8
+   629,            vsout IEEEST 9,                 $v_{sout}$ IEEEST 9
+   630,           vsout IEEEST 10,                $v_{sout}$ IEEEST 10
+   631,              sig IEEEST 1,                   $S_{ig}$ IEEEST 1
+   632,              sig IEEEST 2,                   $S_{ig}$ IEEEST 2
+   633,              sig IEEEST 3,                   $S_{ig}$ IEEEST 3
+   634,              sig IEEEST 4,                   $S_{ig}$ IEEEST 4
+   635,              sig IEEEST 5,                   $S_{ig}$ IEEEST 5
+   636,              sig IEEEST 6,                   $S_{ig}$ IEEEST 6
+   637,              sig IEEEST 7,                   $S_{ig}$ IEEEST 7
+   638,              sig IEEEST 8,                   $S_{ig}$ IEEEST 8
+   639,              sig IEEEST 9,                   $S_{ig}$ IEEEST 9
+   640,             sig IEEEST 10,                  $S_{ig}$ IEEEST 10
+   641,             F2_y IEEEST 1,                   $y_{F2}$ IEEEST 1
+   642,             F2_y IEEEST 2,                   $y_{F2}$ IEEEST 2
+   643,             F2_y IEEEST 3,                   $y_{F2}$ IEEEST 3
+   644,             F2_y IEEEST 4,                   $y_{F2}$ IEEEST 4
+   645,             F2_y IEEEST 5,                   $y_{F2}$ IEEEST 5
+   646,             F2_y IEEEST 6,                   $y_{F2}$ IEEEST 6
+   647,             F2_y IEEEST 7,                   $y_{F2}$ IEEEST 7
+   648,             F2_y IEEEST 8,                   $y_{F2}$ IEEEST 8
+   649,             F2_y IEEEST 9,                   $y_{F2}$ IEEEST 9
+   650,            F2_y IEEEST 10,                  $y_{F2}$ IEEEST 10
+   651,            LL1_y IEEEST 1,                  $y_{LL1}$ IEEEST 1
+   652,            LL1_y IEEEST 2,                  $y_{LL1}$ IEEEST 2
+   653,            LL1_y IEEEST 3,                  $y_{LL1}$ IEEEST 3
+   654,            LL1_y IEEEST 4,                  $y_{LL1}$ IEEEST 4
+   655,            LL1_y IEEEST 5,                  $y_{LL1}$ IEEEST 5
+   656,            LL1_y IEEEST 6,                  $y_{LL1}$ IEEEST 6
+   657,            LL1_y IEEEST 7,                  $y_{LL1}$ IEEEST 7
+   658,            LL1_y IEEEST 8,                  $y_{LL1}$ IEEEST 8
+   659,            LL1_y IEEEST 9,                  $y_{LL1}$ IEEEST 9
+   660,           LL1_y IEEEST 10,                 $y_{LL1}$ IEEEST 10
+   661,            LL2_y IEEEST 1,                  $y_{LL2}$ IEEEST 1
+   662,            LL2_y IEEEST 2,                  $y_{LL2}$ IEEEST 2
+   663,            LL2_y IEEEST 3,                  $y_{LL2}$ IEEEST 3
+   664,            LL2_y IEEEST 4,                  $y_{LL2}$ IEEEST 4
+   665,            LL2_y IEEEST 5,                  $y_{LL2}$ IEEEST 5
+   666,            LL2_y IEEEST 6,                  $y_{LL2}$ IEEEST 6
+   667,            LL2_y IEEEST 7,                  $y_{LL2}$ IEEEST 7
+   668,            LL2_y IEEEST 8,                  $y_{LL2}$ IEEEST 8
+   669,            LL2_y IEEEST 9,                  $y_{LL2}$ IEEEST 9
+   670,           LL2_y IEEEST 10,                 $y_{LL2}$ IEEEST 10
+   671,            Vks_y IEEEST 1,                  $y_{Vks}$ IEEEST 1
+   672,            Vks_y IEEEST 2,                  $y_{Vks}$ IEEEST 2
+   673,            Vks_y IEEEST 3,                  $y_{Vks}$ IEEEST 3
+   674,            Vks_y IEEEST 4,                  $y_{Vks}$ IEEEST 4
+   675,            Vks_y IEEEST 5,                  $y_{Vks}$ IEEEST 5
+   676,            Vks_y IEEEST 6,                  $y_{Vks}$ IEEEST 6
+   677,            Vks_y IEEEST 7,                  $y_{Vks}$ IEEEST 7
+   678,            Vks_y IEEEST 8,                  $y_{Vks}$ IEEEST 8
+   679,            Vks_y IEEEST 9,                  $y_{Vks}$ IEEEST 9
+   680,           Vks_y IEEEST 10,                 $y_{Vks}$ IEEEST 10
+   681,             WO_y IEEEST 1,                   $y_{WO}$ IEEEST 1
+   682,             WO_y IEEEST 2,                   $y_{WO}$ IEEEST 2
+   683,             WO_y IEEEST 3,                   $y_{WO}$ IEEEST 3
+   684,             WO_y IEEEST 4,                   $y_{WO}$ IEEEST 4
+   685,             WO_y IEEEST 5,                   $y_{WO}$ IEEEST 5
+   686,             WO_y IEEEST 6,                   $y_{WO}$ IEEEST 6
+   687,             WO_y IEEEST 7,                   $y_{WO}$ IEEEST 7
+   688,             WO_y IEEEST 8,                   $y_{WO}$ IEEEST 8
+   689,             WO_y IEEEST 9,                   $y_{WO}$ IEEEST 9
+   690,            WO_y IEEEST 10,                  $y_{WO}$ IEEEST 10
+   691,              Vss IEEEST 1,                   $V_{ss}$ IEEEST 1
+   692,              Vss IEEEST 2,                   $V_{ss}$ IEEEST 2
+   693,              Vss IEEEST 3,                   $V_{ss}$ IEEEST 3
+   694,              Vss IEEEST 4,                   $V_{ss}$ IEEEST 4
+   695,              Vss IEEEST 5,                   $V_{ss}$ IEEEST 5
+   696,              Vss IEEEST 6,                   $V_{ss}$ IEEEST 6
+   697,              Vss IEEEST 7,                   $V_{ss}$ IEEEST 7
+   698,              Vss IEEEST 8,                   $V_{ss}$ IEEEST 8
+   699,              Vss IEEEST 9,                   $V_{ss}$ IEEEST 9
+   700,             Vss IEEEST 10,                  $V_{ss}$ IEEEST 10
+   701,            WO_y BusFreq 1,                  $y_{WO}$ BusFreq 1
+   702,            WO_y BusFreq 2,                  $y_{WO}$ BusFreq 2
+   703,            WO_y BusFreq 3,                  $y_{WO}$ BusFreq 3
+   704,            WO_y BusFreq 4,                  $y_{WO}$ BusFreq 4
+   705,            WO_y BusFreq 5,                  $y_{WO}$ BusFreq 5
+   706,            WO_y BusFreq 6,                  $y_{WO}$ BusFreq 6
+   707,            WO_y BusFreq 7,                  $y_{WO}$ BusFreq 7
+   708,            WO_y BusFreq 8,                  $y_{WO}$ BusFreq 8
+   709,            WO_y BusFreq 9,                  $y_{WO}$ BusFreq 9
+   710,           WO_y BusFreq 10,                 $y_{WO}$ BusFreq 10
+   711,               f BusFreq 1,                       $f$ BusFreq 1
+   712,               f BusFreq 2,                       $f$ BusFreq 2
+   713,               f BusFreq 3,                       $f$ BusFreq 3
+   714,               f BusFreq 4,                       $f$ BusFreq 4
+   715,               f BusFreq 5,                       $f$ BusFreq 5
+   716,               f BusFreq 6,                       $f$ BusFreq 6
+   717,               f BusFreq 7,                       $f$ BusFreq 7
+   718,               f BusFreq 8,                       $f$ BusFreq 8
+   719,               f BusFreq 9,                       $f$ BusFreq 9
+   720,              f BusFreq 10,                      $f$ BusFreq 10

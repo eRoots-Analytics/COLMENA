@@ -1,15 +1,17 @@
 import requests
-
+import time
 class AndesInterface:
     def __init__(self, andes_url):
         self.andes_url = andes_url
 
-    def start_simulation(self):
+    def set_simulation(self):
         """
         Start the simulation by sending a POST request to the Andes server.
         """
-        return requests.post(f"{self.andes_url}/start_simulation")
-
+        response = requests.post(f"{self.andes_url}/start_simulation")
+        time.sleep(0.1)
+        return response
+    
     def sync_time(self):
         """
         Synchronize the time with the Andes server by sending a GET request.
@@ -54,13 +56,32 @@ class AndesInterface:
         )
         raw_dict = response.json()
         return {int(k): v for k, v in raw_dict.items()}
-
-    def get_delta_equivalent(self, area: int = 1):
+    
+    def get_theta_equivalent(self, area: int): #NOTE: Hard coded, needs to be changed
         response = requests.get(
-            f"{self.andes_url}/delta_equivalent",
-            params={"area": area}
+            f"{self.andes_url}/delta_equivalent", #NOTE: name needs to be changed
+            params={"area": 1}
         )
-        return response.json()['value']
+        response.raise_for_status() 
+        raw = response.json()
+
+        return [float(v) for v in raw["value"].values()]
+
+
+    # def get_areas_interface(self, area: int):
+    #     response = requests.get(
+    #         f"{self.andes_url}/areas_interface",
+    #         params={"area": area}
+    #     )
+    #     response.raise_for_status()
+
+    #     raw = response.json()
+    #     return {
+    #         "connecting_susceptance": {int(k): v for k, v in raw["connecting_susceptance"].items()},
+    #         "line_details": raw["line_details"],
+    #         "interface_areas": [int(a) for a in raw["interface_areas"]],
+    #         "interface_buses": [int(b) for b in raw["interface_buses"]]
+    #     }
 
     def get_device_dict(self):
         response = requests.get(f"{self.andes_url}/assign_device", params={"agent": self.agent_id})

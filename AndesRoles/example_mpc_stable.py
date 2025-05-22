@@ -706,7 +706,7 @@ def solve_mpc(verbose = False):
     return converged, andes_role_changes, mpc_problem
 
 andes_url = 'http://192.168.10.137:5000'
-andes_url = 'http://192.168.68.54:5000'
+andes_url = 'http://192.168.68.55:5000'
 
 responseLoad = requests.post(andes_url + '/start_simulation')
 delta_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'GENROU', 'var':'delta'}).json()['value']

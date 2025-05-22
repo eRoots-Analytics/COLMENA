@@ -97,4 +97,6 @@ AndesApp/icebar
 /plots/
 AndesRoles/roles_tests/build/LayerOne/Ipopt
 pycode
-.png
+*.png
+*.pyc
+*.txt
