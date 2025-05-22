@@ -54,6 +54,8 @@ def load_simulation():
             app.config['grid'] = 'ieee14'
 
         agent_actions = {}
+        app.config['stop'] = False
+        app.config['last_control_time'] = 0
         for agent_name in agent_names:
             agent_actions[agent_name] = []
         app.config['started'] = False
@@ -72,7 +74,6 @@ def load_simulation():
             #system.Line.alter(src='u', idx = 'Line_32', value = 0)
             system.setup()
             system.PFlow.run()
-
             #system.TDS.init()
             print(f"system area is {system.Area}")
             return jsonify({"message": f"Simulation loaded successfully"}), 200
@@ -99,7 +100,6 @@ def load_simulation():
         system.setup()
         system.TDS_stepwise.config.criteria = 0
         system.PFlow.run()
-
 
         system_initial.find_devices()
         system_initial.REDUAL.prepare()
@@ -403,6 +403,7 @@ def delta_equivalent_balanced():
                 print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
         
+            P_balance = 0
             p_gen = 0
             for i, gen_idx in enumerate(system.GENROU.idx.v):
                 bus_idx = system.GENROU.bus.v[i]
@@ -731,6 +732,11 @@ def sync_time():
     print(app_t)
     return jsonify({"time": app_t}) 
 
+@app.route('/simulation_started', methods=['GET'])
+def simulation_started():
+    started = app.config['started'] 
+    return jsonify({'result': started}) 
+
 @app.route('/start_simulation', methods=['POST'])
 def start_simulation():
     app.config['await_start'] = False
@@ -754,7 +760,6 @@ def add_set_point():
 @app.route('/run_real_time', methods=['GET'])
 def run_real_time():
     global set_points
-    
     try:
         set_points = []
         speed_factor = float(request.args.get('speed', 1))
@@ -765,16 +770,17 @@ def run_real_time():
             #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
+            print('Awaiting Simulation start')
             time.sleep(0.2)
 
         t_run = float(request.args.get('t_run', 40))  
         delta_t = float(request.args.get('delta_t', 0.1))  
         app.config['started'] = True
-        system.PFlow.run()
         t_0 = time.time()
         while system.dae.t <= t_run:
             if time.time() - t_0 >= delta_t: 
                 system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+                app.config['started'] = True
                 print(f't_run is {t_run}')
                 print(f'delta_t is {delta_t}')
                 print(f't_dae is {system.dae.t}')
@@ -785,6 +791,73 @@ def run_real_time():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+@app.route('/stop_simulation', methods=['GET'])
+def stop_simulation():
+    try: 
+        app.config['stop'] = True
+        return jsonify({"Message": 'Success'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/set_last_control_time', methods=['GET'])
+def set_last_control_time():
+    try: 
+        t = float(request.args.get('t', None))  
+        app.config['last_control_time'] = t
+        return jsonify({"Message": 'Success'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/run_stopping_time', methods=['GET'])
+def run_stopping_time():
+    global set_points
+    
+    try:
+        print(f"Running Simulation 1")
+        set_points = []
+        speed_factor = float(request.args.get('speed', 1))
+        if app.config['grid'] == 'ieee39':
+            Ppf_pq5 = system.PQ.Ppf.v[4]
+            Ppf_pq6 = system.PQ.Ppf.v[5]
+            #set_points += [{'model':'Line', 'idx':'Line_19', 't':8, 'param':'u', 'value':0, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
+        while app.config['await_start']:
+            time.sleep(0.2)
+
+        print(f"Running Simulation 2")
+        t_run = float(request.args.get('t_run', 40))  
+        delta_t = float(request.args.get('delta_t', 0.1))  
+        app.config['started'] = True
+        system.PFlow.run()
+        t_0 = time.time()
+        while system.dae.t <= t_run:
+            if app.config['stop']:
+                time_started = time.time()
+                while app.config['last_control_time'] <= system.dae.t:  
+                    if time.time() - time_started > 20 or False:
+                        return jsonify({"Message": 'Wait time exceeded'}), 200
+                    time.sleep(0.02)
+            start_time = time.time()
+            print(f"Running Simulation 3")
+            system.TDS_stepwise.set_set_points(set_points)
+            system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+            app.config['started'] = True
+            print(f't_run is {t_run}')
+            print(f'delta_t is {delta_t}')
+            print(f't_dae is {system.dae.t}')
+            time.sleep(max(0,delta_t-(time.time()-start_time)))
+            t_0 = time.time()
+            
+        app.config['await_start'] = True
+        return jsonify({"Message": 'Success', "Time":t_run}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/plot', methods=['GET'])
 def plot():
@@ -851,6 +924,5 @@ if __name__ == '__main__':
     andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
     andes_dict = {"case_file":andes_directory}
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
-    time.sleep(2)
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
     responseLoad = requests.post(andes_url + '/run', json=andes_dict)

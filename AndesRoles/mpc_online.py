@@ -47,7 +47,7 @@ def print_all_variables(model):
 
     print("==== END OF VARIABLES ====")
 
-def check_constraint_violations(model, tolerance=1e-4):
+def check_constraint_violations(model, tolerance=23e-4):
     print("\nConstraint violations (abs residual > {:.1e}):".format(tolerance))
     for constr in model.component_objects(Constraint, active=True):
         for index in constr:
@@ -326,7 +326,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     #C2: the current frequency angle derivative
     #C3: the generator maximum ramp up
     #C4: the generator minimum ramp up
-    self.ramp_up = 0.05
+    self.ramp_up = 0.2
     model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.delta[t+1] - model.delta[t])==  self.dt*2*np.pi*fn*(model.freq[t]-1))
     model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.M*model.fn*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t])))
     model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
@@ -392,12 +392,12 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         a = 0
         a += 20*(model.P[self.T]-model.Pd[self.T] - model.P_exchange[self.T])**2
         return 1*a 
-    def power_normalization(model):
+    def frequency_normalizer(model):
         a = 0
-        a += sum((model.Pg[gen, t+1] - model.Pg[gen, t])**2 for gen in model.generators for t in model.TimeDynamics)
+        a += 100*sum((model.freq[t+1] - model.freq[t])**2 for t in model.TimeDynamics)
         return a
     model.cost = pyo.Objective(rule=lambda model: 1*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
-                               + penalty_term(model) + 1*damping_term(model) + 0*terminal_cost(model), sense=pyo.minimize)
+                               + penalty_term(model) + 1*damping_term(model) + 0*terminal_cost(model) + frequency_normalizer(model), sense=pyo.minimize)
     return model
 
 class mpc_agent:
@@ -406,7 +406,7 @@ class mpc_agent:
         self.n_areas = 2
         self.alpha0 = 0.01
         self.dt = 0.1
-        self.tol = 1e-4
+        self.tol = 2.4e-4
         self.andes_url = andes_url 
         self.agent_id = agent_name
         self.area = int(self.agent_id[-1])
@@ -554,7 +554,7 @@ def solve_mpc(mpc_problem, verbose = False):
     agent_1 = mpc_problem.agents[1]
     agent_2 = mpc_problem.agents[2]
     other = {"area_1": agent_2, "area_2": agent_1}
-    mpc_problem.iter = 70
+    mpc_problem.iter = 50
     for i in range(mpc_problem.iter):
         responseAndes = requests.get(agent_1.andes_url + '/sync_time')
         for agent in agents:
@@ -564,6 +564,7 @@ def solve_mpc(mpc_problem, verbose = False):
                 agent.first_warm_start()
                 other_agent.first_warm_start()
                 model = agent.setup_mpc(mpc_problem)
+                agent.first = False
             else:
                 model = agent.model
                 for key, val in agent.state_horizon_values.items():
@@ -601,7 +602,6 @@ def solve_mpc(mpc_problem, verbose = False):
                 # Optional: check constraint violations or log dual residuals
                 raise RuntimeError(f"[{agent.agent_id}] MPC problem did not converge (max iterations)")
 
-            agent.first = False
             delta_dict = {t:model.delta[t].value for t in agent.model.TimeHorizon}
             delta_areas_dict = {t:model.delta_areas[area, t].value for t in model.TimeHorizon for area in agent.model.other_areas}
             agent.delta_primal_vars.append(delta_dict)
@@ -639,20 +639,15 @@ def solve_mpc(mpc_problem, verbose = False):
         #Now update the alpha
         error = max(abs(v) for v in mpc_problem.delta_dual_vars.values())
         norm2_error = max(v**2 for v in mpc_problem.delta_dual_vars.values())
-        mpc_problem.error_save.append([error, mpc_problem.rho, norm2_error])
 
         if len(next(iter(mpc_problem.delta_dual_history.values()))) > 2:
             norm2_dual_error = sum((v[-1] - v[-2])**2 for k, v in mpc_problem.delta_dual_history.items())
         else:
             norm2_dual_error = 0
+        mpc_problem.error_save.append([error, mpc_problem.rho, norm2_dual_error])
 
-        if norm2_error > 3*norm2_dual_error:
-            mpc_problem.rho *= 1.3
-            mpc_problem.alpha *= 1.3
-        elif 3*norm2_error < norm2_dual_error:
-            mpc_problem.rho *= 0.8
-            mpc_problem.alpha *= 0.8
-        mpc_problem.rho = 20
+
+        mpc_problem.rho = 15
         mpc_problem.alpha = 40
         for agent in agents:
             _ = 0
@@ -662,21 +657,18 @@ def solve_mpc(mpc_problem, verbose = False):
         converged = False
         print(f"error is {error} in iteration {i}")
         print("rho is ", mpc_problem.alpha)
-        #print(f"dual_vars are {mpc_problem.dual_vars}")
         if np.abs(error) < agent.tol:
             print(f"dist MPC converged")
             converged = True
 
         agent.first = False
-        responseAndes = requests.get(andes_url + '/sync_time')
-        time_start = int(responseAndes.json()['time'])
-
+    
         #If Converged we send all the new setpoints to the generator's governors
         #All the new set points are sent to andes and not just the first one
         if converged or i >= mpc_problem.iter-1:
             mpc_problem.iter_converge = i            
             responseAndes = requests.get(agent.andes_url + '/sync_time')
-            time_start_bis = responseAndes.json()['time']
+            time_start = responseAndes.json()['time']
             for x_agent in agents:
                 generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
                 params = ['pref0', 'p_goal', 'paux0', 'tm0']
@@ -710,12 +702,13 @@ def solve_mpc(mpc_problem, verbose = False):
                             roleChangeDict['value'] = 1
                         else:
                             roleChangeDict['value'] = x_agent.model.Pg[gen_id, 1].value
-                        roleChangeDict['t'] = time_start + x_agent.dt*t
+                        roleChangeDict['t'] = time_start + x_agent.dt*1
                         a = deepcopy(roleChangeDict)
                         andes_role_changes.append(a)
                         responseAndes = requests.get(x_agent.andes_url + '/add_set_point', params = roleChangeDict)
                         #print(f"change is {roleChangeDict['value']} at time {roleChangeDict['t']}")
-
+            
+            responseAndes = requests.get(x_agent.andes_url + '/set_last_control_time', params = {'t':roleChangeDict['t']})
             return converged, andes_role_changes, mpc_problem
         print(f"error is {error}")
     return converged, andes_role_changes, mpc_problem
@@ -725,6 +718,7 @@ def online_mpc():
     #We first initialize the agents
     agent_1 = mpc_agent("area_1")
     agent_2 = mpc_agent("area_2")
+    responseAndes = requests.get(agent_1.andes_url + '/stop_simulation')
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
     mpc_problem.iter = 400
@@ -734,10 +728,11 @@ def online_mpc():
     converged, andes_role_changes, mpc_problem = solve_mpc(mpc_problem)
     agent = mpc_problem.agents[1]
     dt = agent.dt
-    t_max = 20
+    t_max = 60
     print('hi')
     for i in range(t_max):
         time_start = time.time()
+        responseAndes = requests.get(agent_1.andes_url + '/stop_simulation')
         for agent in mpc_problem.agents.values():
             agent.reset_starting_points = True
         solve_mpc(mpc_problem)
@@ -755,7 +750,7 @@ andes_url = 'http://192.168.68.71:5000'
 responseLoad = requests.post(andes_url + '/start_simulation')
 delta_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'GENROU', 'var':'delta'}).json()['value']
 
-time.sleep(10)
+time.sleep(1.01)
 #We run the first iteration of the MPC
 
 converged, andes_role_changes, mpc_problem = online_mpc()
@@ -767,7 +762,6 @@ model = agents[0].model
 other_model = agents[1].model
 agent = agents[0]
 agent2 = agents[1]
-exit()
 for t in model.TimeHorizon:
     print(f"delta self [{t}, area1] = {model.delta[t].value}")
     print(f"delta self [{t}, area1] = {model.delta_areas[2,t].value}")
@@ -805,6 +799,46 @@ def plot_dual_history(dual_history, title=None):
     plt.tight_layout()
     plt.show()
 
+def plot_freq_and_angle(model, other_model):
+    """
+    Plot the frequency and angle (delta) trajectories for model (Area 1)
+    and frequency trajectory for other_model (Area 2).
+
+    Assumes:
+    - model.delta[t] and model.freq[t] exist for Area 1
+    - other_model.freq[t] exists for Area 2
+    """
+    time = sorted(model.TimeHorizon)
+
+    # Extract trajectories
+    delta_area1 = [model.delta[t].value for t in time]
+    delta_area2 = [other_model.delta[t].value for t in time]
+    freq_area1 = [model.freq[t].value for t in time]
+    freq_area2 = [other_model.freq[t].value for t in time]  # relies on other_model in scope
+
+    # Plot angle trajectory
+    plt.figure()
+    plt.plot(time, delta_area1, label="Angle (delta) - Area 1")
+    plt.plot(time, delta_area2, label="Angle (delta) - Area 2", linestyle="--")
+    plt.xlabel("Time")
+    plt.ylabel("Angle (rad)")
+    plt.title("Angle Trajectory (Area 1)")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # Plot frequency trajectories
+    plt.figure()
+    plt.plot(time, freq_area1, label="Frequency - Area 1")
+    plt.plot(time, freq_area2, label="Frequency - Area 2", linestyle="--")
+    plt.xlabel("Time")
+    plt.ylabel("Frequency (Hz)")
+    plt.title("Frequency Trajectories")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 def plot_primal_history(primal_history, title="Delta Primal Variable History"):
     """
@@ -846,13 +880,14 @@ plot_primal_history(agent2.delta_areas_primal_vars, title = 'Angle Others primal
 plot_primal_history(agent.delta_areas_primal_vars, title = 'Angle primal vars 1')
 plot_primal_history(agent2.delta_primal_vars, title = 'Angle Others primal vars 2')
 
-plt.plot([row[0] for row in mpc_problem.error_save[:mpc_problem.iter]])
-plt.yscale("log")   
-plt.grid(True)    
-plt.tight_layout()
-# Plot column 1 (second value of each entry) for the first 80 entries
-plt.show()
-plt.plot([row[1] for row in mpc_problem.error_save[:mpc_problem.iter]])
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+
+# Assuming model and other_model are already defined and solved
+plot_freq_and_angle(agent.model, agent2.model)
+
+for i in range(3):
+    plt.plot([row[i] for row in mpc_problem.error_save[:]])
+    plt.yscale("log")   
+    plt.grid(True)    
+    plt.tight_layout()
+    # Plot column 1 (second value of each entry) for the first 80 entries
+    plt.show()
