@@ -7,6 +7,8 @@ class Config:
     ramp_up = 0.05
     ramp_down = 0.05
 
+    freq_ref = 1.0
+
     q = 1
     alpha = 10
     rho = 10

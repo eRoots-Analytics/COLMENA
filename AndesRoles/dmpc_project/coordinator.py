@@ -5,6 +5,7 @@ class Coordinator:
     
     def __init__(self, agents, andes_interface):
         # Constants
+        self.dt =       Config.dt
         self.T =        Config.T
         self.q =        Config.q
         self.alpha =    Config.alpha
@@ -48,13 +49,23 @@ class Coordinator:
 
         self.admm = ADMM(self)
 
+        self.run_simulation()
+
     def run_admm(self):
         return self.admm.solve()
     
     def run_simulation(self):
-        t = 0
-        while t < self.T:
+        self.t = 0
+        while self.t <= self.dt * self.T:
 
-            converged, role_changes, problem_state = self.run_admm()
-            
-            t += 1
+            # Solve ADMM-based optimization
+            _, role_change_dict, _ = self.run_admm() #NOTE return necessary?
+
+            # Send updated controls to ANDES
+            self.andes.send_setpoint(role_change_dict)
+
+            # Let ANDES continue
+            self.andes.set_last_control_time(self.t)
+
+            # Update time
+            self.t += self.dt

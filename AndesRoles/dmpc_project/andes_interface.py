@@ -4,6 +4,8 @@ class AndesInterface:
     def __init__(self, andes_url):
         self.andes_url = andes_url
 
+        self.set_simulation()
+
     def set_simulation(self):
         """
         Start the simulation by sending a POST request to the Andes server.
@@ -89,3 +91,6 @@ class AndesInterface:
 
     def send_setpoint(self, role_change_dict : dict):
         return requests.get(f"{self.andes_url}/add_set_point", params=role_change_dict)
+    
+    def set_last_control_time(self, t: float):
+        return requests.get(f"{self.andes_url}/set_last_control_time", params={'t': t})

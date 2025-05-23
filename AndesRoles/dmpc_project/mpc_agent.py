@@ -11,18 +11,22 @@ class MPCAgent:
         self.T =         Config.T
         self.ramp_up =   Config.ramp_up
         self.ramp_down = Config.ramp_down
+        self.freq_ref =  Config.freq_ref 
 
         self.agent_id = 'Agent_' + str(agent_id)
         self.area = agent_id
         self.andes = andes_interface  
+
+        self.setup = True
 
         # self.variables_horizon_values = {} 
         self.variables_saved_values = {}
         self.gen_location = {}
         self.bus2idgen = {}
 
-        # Get system data
+        # Get system data and state values
         self._get_system_data()
+        # self.get_state_values() #NOTE: could be useless
 
         self.model = pyo.ConcreteModel()
 
@@ -59,6 +63,8 @@ class MPCAgent:
                                                           initialize=coordinator.dual_vars, mutable=True)
         self.model.variables_horizon_values =   pyo.Param(self.model.areas, self.model.areas, self.model.TimeHorizon,
                                                           initialize=coordinator.variables_horizon_values, mutable=True)
+        self.model.freq0 =  pyo.Param(mutable=True)
+        self.model.theta0 = pyo.Param(mutable=True)
         
         # Params: tuning 
         self.model.q =   pyo.Param(initialize=coordinator.q, mutable=True)
@@ -92,9 +98,9 @@ class MPCAgent:
             idx = self.generators.index(i)
             return model.Pg[i, 0] == self.tm_values[idx]
 
-        self.model.constraint_initial_conditions2 = pyo.Constraint(expr=self.model.freq[0] == self.freq0)
-        self.model.terminal_constraint1 = pyo.Constraint(expr=self.model.freq[self.T] == 1.0)
-        self.model.constraint_initial_conditions1 = pyo.Constraint(expr=self.model.theta[0] == self.theta0)
+        self.model.terminal_constraint1 = pyo.Constraint(expr=self.model.freq[self.T] == self.freq_ref)
+        self.model.constraint_initial_conditions2 = pyo.Constraint(expr=self.model.freq[0] == self.model.freq0)
+        self.model.constraint_initial_conditions1 = pyo.Constraint(expr=self.model.theta[0] == self.model.theta0)
         self.model.constraint_initial_conditions3 = pyo.Constraint(self.model.other_areas, rule=_initial_angle_areas)
         self.model.constraint_initial_conditions4 = pyo.Constraint(self.model.generators, rule=_initial_p)
 
@@ -212,16 +218,17 @@ class MPCAgent:
     def _get_theta_equivalent(self): #NOTE: change the name
         self.delta_theta = self.andes.get_theta_equivalent(self.area)
 
-    def _get_variables_values(self):
+    def get_state_values(self):
         if self.area == 1:
-            self.theta0 = 0.0
+            self.model.theta0.set_value(0.0)
         else:
             self._get_theta_equivalent()
-            self.theta0 = self.delta_theta[0]                     #NOTE: this is a hard coded value, needs to be changed
+            self.model.theta0.set_value(self.delta_theta)                     #NOTE: this is a hard coded value, needs to be changed
 
         freq_values = self.andes.get_partial_variable("GENROU", "omega", self.generators)
         weight = np.array(self.M_values) * np.array(self.Sn_values)
-        self.freq0 = np.dot(weight, np.array(freq_values)) / np.sum(weight)
+        freq0 = np.dot(weight, np.array(freq_values)) / np.sum(weight)
+        self.model.freq0.set_value(freq0) 
         
 
     def first_warm_start(self): #NOTE: can be improved

@@ -11,8 +11,12 @@ class ADMM:
 
         for i in range(self.coordinator.max_iter):
             for agent in agents:
+
+                if i==0: 
+                    # Initialize the model for the first iteration
+                    agent.get_state_values()
                 
-                self._solve_agent(agent, i)
+                self._solve_agent(agent)
 
             primal_residual = self._compute_primal_residual_inf()
             self.coordinator.error_save.append(primal_residual) 
@@ -21,20 +25,22 @@ class ADMM:
 
             if primal_residual < self.coordinator.tol:
                 print("Distributed MPC converged (via primal residual)")
-                return True, self._collect_role_changes(), self.coordinator
+                return True, self._collect_role_changes(), self.coordinator #NOTE return necessary?
 
             self._update_duals()
             self._update_pyomo_params() # NOTE: convergence can be improved by updating only the changed agents
 
-        return False, self._collect_role_changes(), self.coordinator
+        return False, self._collect_role_changes(), self.coordinator #NOTE return necessary?
 
-    def _solve_agent(self, agent, i):
-        if i==0: #NOTE: in online setup needs to changed
+    def _solve_agent(self, agent):
+        if agent.setup: #NOTE: in online setup needs to changed
             model = agent.setup_mpc(self.coordinator) 
             agent.first_warm_start() 
         else:
             model = agent.model
         
+        agent.setup = False #NOTE realiability check
+
         agent.warm_start() 
 
         solver = pyo.SolverFactory('ipopt')
