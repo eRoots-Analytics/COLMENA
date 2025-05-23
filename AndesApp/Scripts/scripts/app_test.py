@@ -20,7 +20,7 @@ def plot_response(responseAndes, filename):
 andes_directory = andes.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.68.63:5000'
+andes_url = 'http://10.5.214.147:5000'
 
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
 print(responseLoad)
@@ -30,7 +30,7 @@ for key,val in queries:
     value = response.json()['value']
     print(f"final {val} is {value}")
     print(f" sum is {sum(value)}")
-responseRun = requests.get(andes_url + '/run_real_time', params={'t_run':50, 'delta_t':0.1})
+responseRun = requests.get(andes_url + '/run_stopping_time', params={'t_run':50, 'delta_t':0.1})
 for key,val in queries:
     response = requests.get(andes_url + '/complete_variable_sync', params={'model':key, 'var':val})
     value = response.json()['value']

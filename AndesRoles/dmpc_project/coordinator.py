@@ -48,5 +48,13 @@ class Coordinator:
 
         self.admm = ADMM(self)
 
-    def run(self):
+    def run_admm(self):
         return self.admm.solve()
+    
+    def run_simulation(self):
+        t = 0
+        while t < self.T:
+
+            converged, role_changes, problem_state = self.run_admm()
+            
+            t += 1

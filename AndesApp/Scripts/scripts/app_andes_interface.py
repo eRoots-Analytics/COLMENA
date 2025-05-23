@@ -1,14 +1,10 @@
 from flask import Flask
 from flask import url_for, request, render_template_string, jsonify, send_file
-from typing import List, TYPE_CHECKING
-from threading import Thread
-from PIL import Image
 import pandas as pd
 import os
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", "plots")
 os.makedirs(desktop_path, exist_ok=True)
-from io import BytesIO
 import requests
 from collections import OrderedDict
 import os, sys, io
@@ -18,11 +14,9 @@ import traceback
 import aux_function as aux
 import matplotlib.pyplot as plt
 import matplotlib
-from copy import deepcopy
 current_directory = os.path.dirname(os.path.abspath(__file__))
 two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
-from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
 
 started = None  
@@ -54,6 +48,8 @@ def load_simulation():
             app.config['grid'] = 'ieee14'
 
         agent_actions = {}
+        app.config['stop'] = False
+        app.config['last_control_time'] = 0
         for agent_name in agent_names:
             agent_actions[agent_name] = []
         app.config['started'] = False
@@ -63,7 +59,7 @@ def load_simulation():
         print(f"case_file is {case_file}")
         if data['redual'] is False:
             system = system_ieee
-            #system.prepare(models = system.TGOV1N)
+            system.prepare(models = system.TGOV1N)
             print(f"system.TGOV1N.b is {system.TGOV1N.b}")
             #system.Line.alter(src='u', idx = 'Line_7', value = 0)
             #system.Line.alter(src='u', idx = 'Line_17', value = 0)
@@ -72,7 +68,6 @@ def load_simulation():
             #system.Line.alter(src='u', idx = 'Line_32', value = 0)
             system.setup()
             system.PFlow.run()
-
             #system.TDS.init()
             print(f"system area is {system.Area}")
             return jsonify({"message": f"Simulation loaded successfully"}), 200
@@ -99,7 +94,6 @@ def load_simulation():
         system.setup()
         system.TDS_stepwise.config.criteria = 0
         system.PFlow.run()
-
 
         system_initial.find_devices()
         system_initial.REDUAL.prepare()
@@ -245,83 +239,6 @@ def lines_susceptance():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
-# Get interface lines and buses
-@app.route('/areas_interface', methods=['GET'])
-def areas_interface():
-    try:
-        data = request.args.to_dict()
-        area = int(data['area'])
-
-        # Gather other area indices
-        other_areas = [x_area for x_area in system.Area.idx.v if x_area != area]
-
-        # Initialize data containers
-        connecting_lines = {x_area: [] for x_area in other_areas}
-        connecting_susceptance = {}
-        line_details = []
-        interface_buses = set()
-
-        # Loop through all lines
-        for i, line in enumerate(system.Line.idx.v):
-            bus1 = system.Line.bus1.v[i]
-            bus2 = system.Line.bus2.v[i]
-            bus1_uid = system.Bus.idx2uid(bus1)
-            bus2_uid = system.Bus.idx2uid(bus2)
-
-            area1 = system.Bus.area.v[bus1_uid]
-            area2 = system.Bus.area.v[bus2_uid]
-
-            if area1 != area2 and area in [area1, area2]:
-                connecting_area = area2 if area == area1 else area1
-                line_uid = system.Line.idx2uid(line)
-                connection_status = system.Line.u.v[line_uid]
-                xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
-
-                if xi == 0:
-                    continue  # Avoid division by zero
-
-                susceptance = (1 / xi) * connection_status
-
-                # Add interface bus in *this* area
-                if area1 == area:
-                    interface_buses.add(int(bus1))
-                elif area2 == area:
-                    interface_buses.add(int(bus2))
-
-                # Collect line-level detail
-                line_info = {
-                    "line_idx": int(line),
-                    "line_uid": int(line_uid),
-                    "from_bus": int(bus1),
-                    "to_bus": int(bus2),
-                    "from_area": int(area1),
-                    "to_area": int(area2),
-                    "x": float(xi),
-                    "u": int(connection_status),
-                    "Sn": float(Sn),
-                    "susceptance": susceptance
-                }
-                line_details.append(line_info)
-                connecting_lines[connecting_area].append(line_info)
-
-        # Sum susceptance per area
-        for x_area, lines in connecting_lines.items():
-            total_b = sum(line['susceptance'] for line in lines)
-            connecting_susceptance[int(x_area)] = total_b
-
-        return jsonify({
-            "connecting_susceptance": connecting_susceptance,
-            "line_details": line_details,
-            "interface_areas": other_areas,
-            "interface_buses": sorted(interface_buses)
-        }), 200
-
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
 
 # Route to run the previously loaded simulation
 @app.route('/system_susceptance', methods=['GET'])
@@ -480,6 +397,7 @@ def delta_equivalent_balanced():
                 print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
         
+            P_balance = 0
             p_gen = 0
             for i, gen_idx in enumerate(system.GENROU.idx.v):
                 bus_idx = system.GENROU.bus.v[i]
@@ -808,6 +726,11 @@ def sync_time():
     print(app_t)
     return jsonify({"time": app_t}) 
 
+@app.route('/simulation_started', methods=['GET'])
+def simulation_started():
+    started = app.config['started'] 
+    return jsonify({'result': started}) 
+
 @app.route('/start_simulation', methods=['POST'])
 def start_simulation():
     app.config['await_start'] = False
@@ -831,7 +754,6 @@ def add_set_point():
 @app.route('/run_real_time', methods=['GET'])
 def run_real_time():
     global set_points
-    
     try:
         set_points = []
         speed_factor = float(request.args.get('speed', 1))
@@ -842,16 +764,17 @@ def run_real_time():
             #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
+            print('Awaiting Simulation start')
             time.sleep(0.2)
 
         t_run = float(request.args.get('t_run', 40))  
         delta_t = float(request.args.get('delta_t', 0.1))  
         app.config['started'] = True
-        system.PFlow.run()
         t_0 = time.time()
         while system.dae.t <= t_run:
             if time.time() - t_0 >= delta_t: 
                 system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+                app.config['started'] = True
                 print(f't_run is {t_run}')
                 print(f'delta_t is {delta_t}')
                 print(f't_dae is {system.dae.t}')
@@ -862,6 +785,73 @@ def run_real_time():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+@app.route('/stop_simulation', methods=['GET'])
+def stop_simulation():
+    try: 
+        app.config['stop'] = True
+        return jsonify({"Message": 'Success'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/set_last_control_time', methods=['GET'])
+def set_last_control_time():
+    try: 
+        t = float(request.args.get('t', None))  
+        app.config['last_control_time'] = t
+        return jsonify({"Message": 'Success'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/run_stopping_time', methods=['GET'])
+def run_stopping_time():
+    global set_points
+    
+    try:
+        print(f"Running Simulation 1")
+        set_points = []
+        speed_factor = float(request.args.get('speed', 1))
+        if app.config['grid'] == 'ieee39':
+            Ppf_pq5 = system.PQ.Ppf.v[4]
+            Ppf_pq6 = system.PQ.Ppf.v[5]
+            #set_points += [{'model':'Line', 'idx':'Line_19', 't':8, 'param':'u', 'value':0, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
+        while app.config['await_start']:
+            time.sleep(0.2)
+
+        print(f"Running Simulation 2")
+        t_run = float(request.args.get('t_run', 40))  
+        delta_t = float(request.args.get('delta_t', 0.1))  
+        app.config['started'] = True
+        system.PFlow.run()
+        t_0 = time.time()
+        while system.dae.t <= t_run:
+            if app.config['stop']:
+                time_started = time.time()
+                while app.config['last_control_time'] <= system.dae.t:  
+                    if time.time() - time_started > 20 or False:
+                        return jsonify({"Message": 'Wait time exceeded'}), 200
+                    time.sleep(0.02)
+            start_time = time.time()
+            print(f"Running Simulation 3")
+            system.TDS_stepwise.set_set_points(set_points)
+            system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+            app.config['started'] = True
+            print(f't_run is {t_run}')
+            print(f'delta_t is {delta_t}')
+            print(f't_dae is {system.dae.t}')
+            time.sleep(max(0,delta_t-(time.time()-start_time)))
+            t_0 = time.time()
+            
+        app.config['await_start'] = True
+        return jsonify({"Message": 'Success', "Time":t_run}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/plot', methods=['GET'])
 def plot():
@@ -924,10 +914,8 @@ if __name__ == '__main__':
     host = "0.0.0.0"
     app.run(host=host, port=5000, debug=False, threaded=True)
     andes_url = 'http://127.0.0.1:5000'
-    andes_directory = ad.get_case("kundur/kundur_full.xlsx")
     andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
     andes_dict = {"case_file":andes_directory}
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
-    time.sleep(2)
     responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
     responseLoad = requests.post(andes_url + '/run', json=andes_dict)

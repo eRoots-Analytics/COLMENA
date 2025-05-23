@@ -17,7 +17,7 @@ agent2 = MPCAgent(2, andes)
 
 coordinator = Coordinator([agent1, agent2], andes)
 
-converged, role_changes, problem_state = coordinator.run()
+converged, role_changes, problem_state = coordinator.run_admm()
 
 plot_error_trajectories(coordinator.error_save)
 plot_frequency_trajectories(agent1, agent2)

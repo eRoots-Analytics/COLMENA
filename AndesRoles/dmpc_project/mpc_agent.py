@@ -21,13 +21,8 @@ class MPCAgent:
         self.gen_location = {}
         self.bus2idgen = {}
 
-        # Get everything from Andes
-        self._get_area_devices()
-        self._get_neighbour_areas() #NOTE: again build neighbours..
-        self._get_area_device_params()
-        self._get_system_susceptance()
-        self._get_theta_equivalent()
-        self._get_initial_states()
+        # Get system data
+        self._get_system_data()
 
         self.model = pyo.ConcreteModel()
 
@@ -181,25 +176,7 @@ class MPCAgent:
     def _get_system_susceptance(self):
         self.b_areas = self.andes.get_system_susceptance(self.area)
     
-    def _get_areas_interface(self): #NOTE: not used
-        result = self.andes.get_areas_interface(self.area)
-        self.b_areas = result["connecting_susceptance"]
-        self.line_details = result["line_details"]
-        self.interface_areas = result["interface_areas"]
-        self.interface_buses = result["interface_buses"]
-
-    def _get_initial_states(self):
-        if self.area == 1:
-            self.theta0 = 0.0
-        else:
-            self._get_theta_equivalent()
-            self.theta0 = self.delta_theta[0]                     #NOTE: this is a hard coded value, needs to be changed
-
-        freq_values = self.andes.get_partial_variable("GENROU", "omega", self.generators)
-        weight = np.array(self.M_values) * np.array(self.Sn_values)
-        self.freq0 = np.dot(weight, np.array(freq_values)) / np.sum(weight)
-
-    def _compute_coi_parameters(self):
+    def _compute_coi_parameters(self): #NOTE to move
         """
         Compute the COI model parameters for the area.
         """
@@ -225,12 +202,29 @@ class MPCAgent:
             self.fn_coi = 60.0  # Set nominal frequency explicitly
 
         self.Pe_base = {gen: self.Pe_values[i] for i, gen in enumerate(self.generators)} 
+
+    def _get_system_data(self):
+        self._get_area_devices()
+        self._get_neighbour_areas() 
+        self._get_area_device_params()
+        self._get_system_susceptance()
     
     def _get_theta_equivalent(self): #NOTE: change the name
         self.delta_theta = self.andes.get_theta_equivalent(self.area)
 
-    def first_warm_start(self): #NOTE: can be improved
+    def _get_variables_values(self):
+        if self.area == 1:
+            self.theta0 = 0.0
+        else:
+            self._get_theta_equivalent()
+            self.theta0 = self.delta_theta[0]                     #NOTE: this is a hard coded value, needs to be changed
 
+        freq_values = self.andes.get_partial_variable("GENROU", "omega", self.generators)
+        weight = np.array(self.M_values) * np.array(self.Sn_values)
+        self.freq0 = np.dot(weight, np.array(freq_values)) / np.sum(weight)
+        
+
+    def first_warm_start(self): #NOTE: can be improved
         for t in range(self.T + 1):
             self.vars_saved['freq'][t] = self.freq0
             self.vars_saved['P'][t] = sum(self.tm_values)
@@ -246,7 +240,6 @@ class MPCAgent:
         self.warm_start()
         
     def warm_start(self):
-
         for t in range(self.T + 1):
             self.model.freq[t].value = self.vars_saved['freq'][t] #max(self.vars_saved['freq'][t], 0.85)
             self.model.P[t].value = self.vars_saved['P'][t]
@@ -260,7 +253,6 @@ class MPCAgent:
                 self.model.Pg[gen, t].value = self.vars_saved['Pg'][(gen, t)]
     
     def save_warm_start(self):
-
         for t in range(self.T + 1):
             self.vars_saved['freq'][t] = self.model.freq[t].value
             self.vars_saved['P'][t] = self.model.P[t].value
