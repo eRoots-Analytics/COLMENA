@@ -1,5 +1,6 @@
 import requests
 import time
+
 class AndesInterface:
     def __init__(self, andes_url):
         self.andes_url = andes_url
@@ -59,7 +60,7 @@ class AndesInterface:
         raw_dict = response.json()
         return {int(k): v for k, v in raw_dict.items()}
     
-    def get_theta_equivalent(self, area: int): #NOTE: Hard coded, needs to be changed
+    def get_theta_equivalent(self, area: int):    #NOTE: Hard coded, needs to be changed
         response = requests.get(
             f"{self.andes_url}/delta_equivalent", #NOTE: name needs to be changed
             params={"area": 1}
@@ -68,22 +69,6 @@ class AndesInterface:
         raw = response.json()
 
         return [float(v) for v in raw["value"].values()]
-
-
-    # def get_areas_interface(self, area: int):
-    #     response = requests.get(
-    #         f"{self.andes_url}/areas_interface",
-    #         params={"area": area}
-    #     )
-    #     response.raise_for_status()
-
-    #     raw = response.json()
-    #     return {
-    #         "connecting_susceptance": {int(k): v for k, v in raw["connecting_susceptance"].items()},
-    #         "line_details": raw["line_details"],
-    #         "interface_areas": [int(a) for a in raw["interface_areas"]],
-    #         "interface_buses": [int(b) for b in raw["interface_buses"]]
-    #     }
 
     def get_device_dict(self):
         response = requests.get(f"{self.andes_url}/assign_device", params={"agent": self.agent_id})

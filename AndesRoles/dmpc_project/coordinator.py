@@ -1,23 +1,20 @@
 from admm import ADMM
 from config import Config
+import pdb
 
 class Coordinator:
     
     def __init__(self, agents, andes_interface):
         # Constants
-        self.dt =       Config.dt
-        self.T =        Config.T
-        self.q =        Config.q
-        self.alpha =    Config.alpha
-        self.rho =      Config.rho
-        self.max_iter = Config.max_iter
-        self.tol =      Config.tol
+        self.dt = Config.dt
+        self.T =  Config.T
 
         # Andes interface
         self.andes = andes_interface
 
         # System agents and cache 
         self.agents = {agent.area: agent for agent in agents}
+        self.thetas = {}
 
         self.neighbours = {
             area: self.andes.get_neighbour_areas(area)
@@ -58,6 +55,9 @@ class Coordinator:
         self.t = 0
         while self.t <= self.dt * self.T:
 
+            # Get grid global variables (thetas)
+            self._initialize_theta_values()
+
             # Solve ADMM-based optimization
             _, role_change_dict, _ = self.run_admm() #NOTE return necessary?
 
@@ -69,3 +69,22 @@ class Coordinator:
 
             # Update time
             self.t += self.dt
+
+    def _initialize_theta_values(self): #NOTE hardcoded, needs to be changed
+        # Theta 
+        for agent in self.agents:
+            if agent == 1:
+                self.thetas[agent] = 0.0
+            else:
+                self.thetas[agent] = self.andes.get_theta_equivalent(agent)[0] #NOTE: get_theta_equivalent needs to be modified 
+
+        for agent in self.agents.values(): 
+            agent.model.theta0.set_value(self.thetas[agent.area])
+            for nbr in self.neighbours[agent.area]:
+                agent.model.theta0_areas[nbr].set_value(self.thetas[nbr])
+
+
+        
+
+
+

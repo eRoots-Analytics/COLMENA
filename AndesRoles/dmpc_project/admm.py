@@ -1,29 +1,35 @@
 import numpy as np
 import pyomo.environ as pyo
+from config import Config
 import pdb
 
 class ADMM:
     def __init__(self, coordinator):
+        self.alpha =    Config.alpha
+        self.max_iter = Config.max_iter
+        self.tol =      Config.tol
+
         self.coordinator = coordinator
 
     def solve(self):
         agents = self.coordinator.agents.values()
 
-        for i in range(self.coordinator.max_iter):
+        for i in range(self.max_iter):
             for agent in agents:
 
                 if i==0: 
                     # Initialize the model for the first iteration
-                    agent.get_state_values()
+                    agent.initialize_variables_values()
                 
-                self._solve_agent(agent)
+                pdb.set_trace()
+                self._solve_agent(agent, i)
 
             primal_residual = self._compute_primal_residual_inf()
             self.coordinator.error_save.append(primal_residual) 
 
             print(f"Iteration {i}, Primal Residual: {primal_residual}")
 
-            if primal_residual < self.coordinator.tol:
+            if primal_residual < self.tol:
                 print("Distributed MPC converged (via primal residual)")
                 return True, self._collect_role_changes(), self.coordinator #NOTE return necessary?
 
@@ -32,9 +38,9 @@ class ADMM:
 
         return False, self._collect_role_changes(), self.coordinator #NOTE return necessary?
 
-    def _solve_agent(self, agent):
+    def _solve_agent(self, agent, i):
         if agent.setup: #NOTE: in online setup needs to changed
-            model = agent.setup_mpc(self.coordinator) 
+            model = agent.setup_dmpc(self.coordinator) 
             agent.first_warm_start() 
         else:
             model = agent.model
@@ -60,7 +66,7 @@ class ADMM:
                   
 
     def _update_duals(self):
-        alpha = self.coordinator.alpha
+        alpha = self.alpha
         vars_dict = self.coordinator.variables_horizon_values
 
         for (area, nbrs) in self.coordinator.neighbours.items():

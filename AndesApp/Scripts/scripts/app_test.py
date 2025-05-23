@@ -20,7 +20,7 @@ def plot_response(responseAndes, filename):
 andes_directory = andes.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://10.5.214.147:5000'
+andes_url = 'http://192.168.68.58:5000'
 
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
 print(responseLoad)

@@ -1,5 +1,5 @@
 class Config:
-    andes_url = 'http://10.5.214.147:5000'
+    andes_url = 'http://192.168.68.58:5000'
 
     dt = 0.1
     T = 50
