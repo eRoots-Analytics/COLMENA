@@ -20,25 +20,22 @@ def plot_response(responseAndes, filename):
 andes_directory = andes.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.68.58:5000'
+andes_url = 'http://192.168.68.59:5000'
+
+queries = [('GENROU', 'tm0'), ('GENROU', 'tm'), ('TGOV1N', 'b'), ('TGOV1N', 'p_direct'), ('TGOV1N', 'pout')]
 
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
 print(responseLoad)
-queries = [('GENROU', 'tm0'), ('GENROU', 'tm'), ('TGOV1N', 'b'), ('TGOV1N', 'p_direct'), ('TGOV1N', 'pout')]
-for key,val in queries:
-    response = requests.get(andes_url + '/complete_variable_sync', params={'model':key, 'var':val})
+for mdl, var in queries:
+    response = requests.get(andes_url + '/complete_variable_sync', params={'model':mdl, 'var':var})
     value = response.json()['value']
-    print(f"final {val} is {value}")
-    print(f" sum is {sum(value)}")
+
 responseRun = requests.get(andes_url + '/run_stopping_time', params={'t_run':50, 'delta_t':0.1})
-for key,val in queries:
-    response = requests.get(andes_url + '/complete_variable_sync', params={'model':key, 'var':val})
+for mdl, var in queries:
+    response = requests.get(andes_url + '/complete_variable_sync', params={'model':mdl, 'var':var})
     value = response.json()['value']
-    print(f"final {val} is {value}")
-    print(f" sum is {sum(value)}")
 
 responseAndes = requests.get(andes_url + '/plot', params={'model': 'Bus', 'var':'v'})
-
 if response.status_code == 200:
     json_data = response.json()
     GFM_values = json_data.get('value', None)
@@ -57,5 +54,6 @@ if responseAndes.status_code == 200:
     img.show()  # This will open the default image viewer to display the image
 else:
     print("Failed to retrieve image:", responseAndes.status_code)
+
 
 

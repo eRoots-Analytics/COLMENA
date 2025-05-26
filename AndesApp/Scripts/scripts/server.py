@@ -110,26 +110,6 @@ def load_simulation():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-@app.route('/assign_device', methods=['GET'])
-def assign_device():
-    try:
-
-        agent_id = request.args.get('agent')
-        gen1 = {'idx':"GENROU_5", 'model':'GENROU'}
-        gen2 = {'idx':"GENROU_6", 'model':'GENROU'}
-        transf1 = {'idx':"GENROU_2", 'model':'REDUAL'}
-        transf2 = {'idx':"GENROU_3", 'model':'REDUAL'}
-        area1 = {'idx':"1", 'model':'area'}
-        area2 = {'idx':"2", 'model':'area'}
-
-        device_dict = {'agent_a':gen1, 'agent_b':gen2, 'agent_c':transf1, 'agent_d':transf2, 'area_1':area1, 'area_2':area2}
-        app.config['await_start'] = False
-        response = device_dict[agent_id]
-        return jsonify(response), 200
-    except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
 #Function that 
 @app.route('/neighbour_area', methods=['GET'])
 def neighbour_area():
@@ -196,46 +176,6 @@ def system_susceptance():
         print(f"other_areas is {other_areas}")
         return jsonify(connecting_susceptance), 200
     except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/device_role_change', methods=['POST'])
-def device_role_change():
-    #method to post the new device role in the app
-    try:
-        data = request.get_json()
-        print(data)
-        print(system.TGOV1N.idx.v)
-        idx = data['idx']
-        model_name = data['model']
-        param = data['var']
-        value = data['value']
-        agent_id = data['agent']
-        agent_actions[agent_id].append(system.dae.t)
-        model = getattr(system, model_name)
-        uid = model.idx2uid(idx)
-        if param == 'p_goal':
-            param = 'paux0'
-            try:
-                gen_idx = model.gen.v[uid] 
-            except:
-                gen_idx = model.syn.v[uid] 
-            gen_model = system.GENROU
-            gen_uid = gen_model.idx2uid(gen_idx)
-            value = value - model.pout.v[gen_uid]
-        param_in_andes = getattr(model, param)
-        initial_value = param_in_andes.v[uid]
-        if hasattr(data,'add'): 
-            if data['add']:
-                param_in_andes = getattr(model,param)
-                param_in_andes = param_in_andes.v[uid]
-                value = param_in_andes + value 
-        model.alter(idx =idx, src=param, value = value)
-        print(f"role changed successfully from {initial_value} to {value}")
-        print(f'value is {param_in_andes.v[uid]}')
-        return jsonify({'message': 'success'}), 200
-    except Exception as e:
-        print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
@@ -356,8 +296,7 @@ def area_variable_sync(all_devices = False):
 def sync_time():
     app_t = system.dae.t
     app_t = float(app_t)
-    print(app_t)
-    return jsonify({"time": app_t}) 
+    return jsonify({"Simuation time": app_t}) 
 
 @app.route('/start_simulation', methods=['POST'])
 def start_simulation():
@@ -378,42 +317,77 @@ def add_set_point():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
-@app.route('/run_real_time', methods=['GET'])
-def run_real_time():
-    global set_points
     
+@app.route('/run_stopping_time', methods=['GET'])
+def run_stopping_time():
+    global set_points
     try:
+        print(f"Running Simulation 1")
         set_points = []
         speed_factor = float(request.args.get('speed', 1))
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            set_points += [{'model':'Line', 'idx':'Line_19', 't':5, 'param':'u', 'value':0, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+        
         while app.config['await_start']:
             time.sleep(0.2)
 
+        print(f"Running Simulation 2")
         t_run = float(request.args.get('t_run', 40))  
         delta_t = float(request.args.get('delta_t', 0.1))  
         app.config['started'] = True
         system.PFlow.run()
         t_0 = time.time()
         while system.dae.t <= t_run:
-            if time.time() - t_0 >= delta_t: 
-                system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
-                print(f't_run is {t_run}')
-                print(f'delta_t is {delta_t}')
-                print(f't_dae is {system.dae.t}')
-                t_0 = time.time()
-                system.TDS_stepwise.set_set_points(set_points)
+            if app.config['stop']:
+                time_started = time.time()
+                while app.config['last_control_time'] <= system.dae.t:  
+                    if time.time() - time_started > 20 or False:
+                        return jsonify({"Message": 'Wait time exceeded'}), 200
+                    time.sleep(0.02)
+            start_time = time.time()
+            print(f"Running Simulation 3")
+            system.TDS_stepwise.set_set_points(set_points)
+            system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+            app.config['started'] = True
+            print(f't_run is {t_run}')
+            print(f'delta_t is {delta_t}')
+            print(f't_dae is {system.dae.t}')
+            time.sleep(max(0,delta_t-(time.time()-start_time)))
+            t_0 = time.time()
+            
         app.config['await_start'] = True
         return jsonify({"Message": 'Success', "Time":t_run}), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/run_step', methods=['POST'])
+def run_step():
+    global set_points
+    try:
+        data = request.get_json()
+        delta_t = float(data.get('delta_t', 0.1))   # Default step size: 0.1s
+        speed_factor = float(data.get('speed', 1))  # Optional speed-up for testing
 
+        # Apply scheduled setpoints before stepping
+        if set_points:
+            system.TDS_stepwise.set_set_points(set_points)
+
+        # Run just one individual step
+        system.TDS_stepwise.run_individual_batch(t_sim=delta_t * speed_factor)
+
+        # Return the new simulation time
+        return jsonify({
+            "message": "Step completed",
+            "t": float(system.dae.t)
+        }), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/plot', methods=['GET'])
 def plot():
     try:
@@ -464,11 +438,12 @@ def plot():
         plt.close(fig)  # Close the plot to free memory
 
         return send_file(img, mimetype='image/png', as_attachment=False, download_name='plot.png')
-        
+    
     except Exception as e:
         print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
     
 if __name__ == '__main__':
     host = "192.168.68.67"

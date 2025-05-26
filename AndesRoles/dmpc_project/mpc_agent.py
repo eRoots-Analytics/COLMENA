@@ -29,7 +29,6 @@ class MPCAgent:
 
         # Get system data and state values
         self._get_system_data()
-        # self.get_state_values() #NOTE: could be useless
 
         self.vars_saved = {
                             'freq': np.ones(self.T + 1),

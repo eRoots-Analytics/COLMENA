@@ -24,7 +24,7 @@ from andes.routines.aux_data import get_set_points
 # Append the parent directory of the current script's directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 sys.path.append('/home/pablo/Desktop/eroots/COLMENA/AndesApp/Scripts/scripts')
-import aux_function as aux
+import AndesApp.Scripts.scripts.aux_function as aux
 # Now import aux_function from the adjusted path
 #from Scripts.scripts import aux_function as aux
 logger = logging.getLogger(__name__)

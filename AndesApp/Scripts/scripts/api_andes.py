@@ -1,17 +1,18 @@
 from flask import Flask
-from flask import url_for, request, render_template_string, jsonify, send_file
-import pandas as pd
+from flask import request, jsonify, send_file
 import os
+import sys
+import io
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", "plots")
 os.makedirs(desktop_path, exist_ok=True)
-import requests
+
 from collections import OrderedDict
-import os, sys, io
+
 import time
 import numpy as np
 import traceback
-import aux_function as aux
+import AndesApp.Scripts.scripts.aux_function as aux
 import matplotlib.pyplot as plt
 import matplotlib
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -57,7 +58,7 @@ def load_simulation():
         n_redual = 4
         system_ieee = ad.load(case_file, setup=False)
         print(f"case_file is {case_file}")
-        if data['redual'] is False:
+        if data.get('redual') is False:
             system = system_ieee
             system.prepare(models = system.TGOV1N)
             print(f"system.TGOV1N.b is {system.TGOV1N.b}")
@@ -68,7 +69,9 @@ def load_simulation():
             #system.Line.alter(src='u', idx = 'Line_32', value = 0)
             system.setup()
             system.PFlow.run()
-            #system.TDS.init()
+            
+            system.TDS.config.tf = 0.01
+            system.TDS.run()
             print(f"system area is {system.Area}")
             return jsonify({"message": f"Simulation loaded successfully"}), 200
 
@@ -140,6 +143,7 @@ def assign_device():
 # Route to run the previously loaded simulation
 @app.route('/run_simulation', methods=['POST'])
 def run_simulation():
+    global system
     try:
         if not loaded_system:
             return jsonify({"error": "No simulation loaded. Load a simulation first."}), 400
@@ -168,6 +172,7 @@ def print_var():
 
 @app.route('/connecting_buses', methods=['GET'])
 def connecting_buses():
+    global system
     area1 = request.args.get('area1', type=int)
     area2 = request.args.get('area2', type=int)
     result = set()
@@ -195,6 +200,7 @@ def connecting_buses():
 #Function that 
 @app.route('/neighbour_area', methods=['GET'])
 def neighbour_area():
+    global system
     area = request.args.get('area', type=int)
     result = set()
     response = {}
@@ -220,6 +226,7 @@ def neighbour_area():
 # Route to run the previously loaded simulation
 @app.route('/lines_susceptance', methods=['GET'])
 def lines_susceptance():
+    global system
     data = request.get_json()
     area = data['area']
     result = {}
@@ -243,6 +250,7 @@ def lines_susceptance():
 # Route to run the previously loaded simulation
 @app.route('/system_susceptance', methods=['GET'])
 def system_susceptance():
+    global system
     try:
         data = request.args.to_dict()
         area = int(data['area'])
@@ -287,6 +295,7 @@ def system_susceptance():
 # Route to compute the equivalent angles of the area
 @app.route('/delta_equivalent', methods=['GET'])
 def delta_equivalent():
+    global system
     try:
         data = request.args.to_dict()
         area = int(data['area'])
@@ -362,6 +371,7 @@ def delta_equivalent():
 # Route to compute the equivalent angles of the area
 @app.route('/delta_equivalent_balanced', methods=['GET'])
 def delta_equivalent_balanced():
+    global system
     try:
         data = request.args.to_dict()
         area = int(data['area'])
@@ -431,6 +441,7 @@ def delta_equivalent_balanced():
 
 @app.route('/run_simulation_online', methods=['POST'])
 def run_simulation_online():
+    global system
     global loaded_system
     try:
         if not loaded_system:
@@ -447,6 +458,7 @@ def run_simulation_online():
 
 @app.route('/device_role_change', methods=['POST'])
 def device_role_change():
+    global system
     #method to post the new device role in the app
     try:
         data = request.get_json()
@@ -487,6 +499,7 @@ def device_role_change():
     
 @app.route('/set_point_change', methods=['POST'])
 def set_point_change():
+    global system
     #method to post the new device role in the app
     try:
         set_points_data = request.get_json()
@@ -549,6 +562,7 @@ def device_sync(all_devices = False):
 
 @app.route('/specific_device_sync', methods=['GET'])
 def specific_device_sync(all_devices = False):
+    global system
     #method to post the new device role in the app
     try:
         data = request.args.to_dict()
@@ -579,6 +593,7 @@ def specific_device_sync(all_devices = False):
     
 @app.route('/complete_variable_sync', methods=['GET'])
 def complete_variable_sync(all_devices = False):
+    global system
     #method to post the new device role in the app
     try:
         data = request.args.to_dict()
@@ -612,6 +627,7 @@ def complete_variable_sync(all_devices = False):
 
 @app.route('/partial_variable_sync', methods=['POST'])
 def partial_variable_sync(all_devices = False):
+    global system
     #method to post the new device role in the app
     try:
         data = request.get_json()
@@ -646,6 +662,7 @@ def partial_variable_sync(all_devices = False):
     
 @app.route('/area_variable_sync', methods=['POST'])
 def area_variable_sync(all_devices = False):
+    global system
     #method to post the new device role in the app
     try:
         data = request.get_json()
@@ -692,6 +709,7 @@ def area_variable_sync(all_devices = False):
     
 @app.route('/specific_variable_sync', methods=['GET'])
 def specific_variable_sync(all_devices = False):
+    global system
     #method to post the new device role in the app
     try:
         data = request.args.to_dict()
@@ -721,6 +739,7 @@ def specific_variable_sync(all_devices = False):
 
 @app.route('/sync_time', methods=['GET'])
 def sync_time():
+    global system
     app_t = system.dae.t
     app_t = float(app_t)
     print(app_t)
@@ -738,6 +757,7 @@ def start_simulation():
 
 @app.route('/add_set_point', methods=['GET'])
 def add_set_point():
+    global system
     global set_points
     try:
         data = request.args.to_dict()
@@ -753,6 +773,7 @@ def add_set_point():
 
 @app.route('/run_real_time', methods=['GET'])
 def run_real_time():
+    global system
     global set_points
     try:
         set_points = []
@@ -807,8 +828,8 @@ def set_last_control_time():
 
 @app.route('/run_stopping_time', methods=['GET'])
 def run_stopping_time():
+    global system
     global set_points
-    
     try:
         print(f"Running Simulation 1")
         set_points = []
@@ -855,6 +876,7 @@ def run_stopping_time():
 
 @app.route('/plot', methods=['GET'])
 def plot():
+    global system
     try:
         data = request.args.to_dict()
         model_name = data['model']
@@ -911,6 +933,7 @@ def plot():
     
 @app.route('/run_step', methods=['POST'])
 def run_step():
+    global system
     global set_points
     try:
         data = request.get_json()
@@ -934,13 +957,6 @@ def run_step():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
-if __name__ == '__main__':
-    host = "192.168.68.67"
-    host = "0.0.0.0"
-    app.run(host=host, port=5000, debug=False, threaded=True)
-    andes_url = 'http://127.0.0.1:5000'
-    andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
-    andes_dict = {"case_file":andes_directory}
-    kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'GENROU'} 
-    responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
-    responseLoad = requests.post(andes_url + '/run', json=andes_dict)
+@app.route('/ping', methods=['GET'])
+def ping():
+    return 'pong', 200

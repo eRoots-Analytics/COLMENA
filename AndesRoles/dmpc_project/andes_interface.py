@@ -1,19 +1,41 @@
 import requests
 import time
+from config import Config
+import os
+import sys 
+
+# Adjust the path so that ANDES and your Flask app can be imported
+current_directory = os.path.dirname(os.path.abspath(__file__))
+two_levels_up = os.path.dirname(os.path.dirname(current_directory))
+sys.path.insert(0, two_levels_up)
+
+import andes
 
 class AndesInterface:
-    def __init__(self, andes_url):
-        self.andes_url = andes_url
+    def __init__(self):
 
+        print("\n[DEBUG - Client] Current working dir:", os.getcwd())
+        print("[DEBUG - Client] __file__ (main_new.py):", __file__)
+        self.andes_url = Config.andes_url
+        self.case_path = andes.get_case(Config.case_path)
+
+        if self.case_path is not None:
+            self.load_simulation(self.case_path)
+
+    def load_simulation(self, case_path, redual=False):
+        payload = {'case_file': case_path, 'redual': redual}
+        response = requests.post(f'{self.andes_url}/load_simulation', json=payload)
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to load simulation: {response.text}")
+        print("[ANDES] Simulation loaded.")
+        time.sleep(0.25)  # Allow some time for the server to process the request
         self.set_simulation()
 
     def set_simulation(self):
-        """
-        Start the simulation by sending a POST request to the Andes server.
-        """
         response = requests.post(f"{self.andes_url}/start_simulation")
-        time.sleep(0.1)
-        return response
+        if response.status_code != 200:
+            raise RuntimeError(f"Failed to start simulation: {response.text}")
+        print("[ANDES] Simulation started.")
     
     def sync_time(self):
         """
@@ -70,12 +92,23 @@ class AndesInterface:
 
         return [float(v) for v in raw["value"].values()]
 
-    def get_device_dict(self):
-        response = requests.get(f"{self.andes_url}/assign_device", params={"agent": self.agent_id})
-        return response.json()
-
     def send_setpoint(self, role_change_dict : dict):
         return requests.get(f"{self.andes_url}/add_set_point", params=role_change_dict)
     
     def set_last_control_time(self, t: float):
         return requests.get(f"{self.andes_url}/set_last_control_time", params={'t': t})
+    
+    def run_step(self, delta_t):
+        response = requests.post(f"{self.andes_url}/run_step", json={"delta_t": delta_t})
+        if response.status_code == 200:
+            new_time = response.json()["t"]
+            return True, new_time
+        else:
+            print("Step failed:", response.text)
+            return False, None
+
+    def plot(self, model, var):
+        response = requests.get(f'{self.api_url}/plot', params={'model': model, 'var': var})
+        if response.status_code == 200:
+            return response.content
+        raise RuntimeError("Failed to retrieve plot.")

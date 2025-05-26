@@ -20,8 +20,8 @@ class ADMM:
                 if i==0: 
                     # Initialize the model for the first iteration
                     agent.initialize_variables_values()
-                
-                pdb.set_trace()
+                # pdb.set_trace()
+
                 self._solve_agent(agent, i)
 
             primal_residual = self._compute_primal_residual_inf()
@@ -135,6 +135,8 @@ class ADMM:
                 kundur = not isinstance(gen_id, str)
                 id_number = gen_id if kundur else (gen_id[-2:] if gen_id[-2] != '_' else gen_id[-1])
                 for t in range(1, agent.T + 1):
+                    if t != 1:
+                        continue
                     for param in ['p_direct', 'b']:  # Adjust this list if needed
 
                         role_change = {'var': param,

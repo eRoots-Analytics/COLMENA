@@ -1,10 +1,11 @@
 from admm import ADMM
 from config import Config
+from mpc_agent import MPCAgent
 import pdb
 
 class Coordinator:
     
-    def __init__(self, agents, andes_interface):
+    def __init__(self, andes_interface, agents):
         # Constants
         self.dt = Config.dt
         self.T =  Config.T
@@ -13,7 +14,7 @@ class Coordinator:
         self.andes = andes_interface
 
         # System agents and cache 
-        self.agents = {agent.area: agent for agent in agents}
+        self.agents = {agent: MPCAgent(agent, andes_interface) for agent in agents}
         self.thetas = {}
 
         self.neighbours = {
@@ -53,21 +54,24 @@ class Coordinator:
     
     def run_simulation(self):
         self.t = 0
+
         while self.t <= self.dt * self.T:
+            print(f"\n[Coordinator] Time: {self.t:.2f}")
 
-            # Get grid global variables (thetas)
-            self._initialize_theta_values()
+            # 1. Get global grid variables (thetas)
+            self._initialize_theta_values()  # This should query ANDES variables via self.andes.get_variable()
 
-            # Solve ADMM-based optimization
-            _, role_change_dict, _ = self.run_admm() #NOTE return necessary?
+            # 2. Solve ADMM optimization
+            _, role_change_list, _ = self.run_admm()
 
-            # Send updated controls to ANDES
-            self.andes.send_setpoint(role_change_dict)
+            # 3. Send updated controls to ANDES
+            for role_change in role_change_list:
+                self.andes.send_setpoint(role_change)
 
-            # Let ANDES continue
-            self.andes.set_last_control_time(self.t)
+            # 4. Run one simulation step
+            self.andes.run_step(self.dt)
 
-            # Update time
+            # 5. Advance time locally
             self.t += self.dt
 
     def _initialize_theta_values(self): #NOTE hardcoded, needs to be changed
@@ -82,6 +86,8 @@ class Coordinator:
             agent.model.theta0.set_value(self.thetas[agent.area])
             for nbr in self.neighbours[agent.area]:
                 agent.model.theta0_areas[nbr].set_value(self.thetas[nbr])
+            
+        
 
 
         
