@@ -2,20 +2,26 @@ import threading
 import time
 import requests
 import sys
+import logging
+import matplotlib
+import matplotlib.pyplot as plt
 from pathlib import Path
-
+from collections import defaultdict
+    
 # Move to one level up, i.e. project root folder (COLMENA). 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.config.config import Config
-from src.simulator.api_andes import app
+from src.simulator.app import app
 from src.controller.coordinator import Coordinator  
-from src.controller.andes_interface import AndesInterface  
+from src.simulator.simulator import Simulator  
 
 import pdb
 
 def run_flask_app():
     host = "0.0.0.0"
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
     app.run(host=host, port=5000, debug=False, threaded=True)
 
 def wait_for_server(url, timeout=10):
@@ -30,7 +36,7 @@ def wait_for_server(url, timeout=10):
         except requests.exceptions.ConnectionError:
             pass
         time.sleep(0.5)
-    raise TimeoutError("Flask server did not start in time")
+    raise TimeoutError("Flask server did not start in time.")
 
 def main():
     # 1. Start Flask server in background
@@ -41,13 +47,47 @@ def main():
     wait_for_server(Config.andes_url)
 
     # 2. Create Andes interface
-    andes_interface = AndesInterface()
+    print("[Main] Initializing Simulator...")
+    andes = Simulator()
 
-    # 3. Create Coordinator and run simulation
+    # 3. Create Coordinator
     print("[Main] Initializing Coordinator...")
-    coordinator = Coordinator(andes_interface, agents=[1, 2]) #TODO: to automitize 
-    coordinator.run_simulation()
-    print("[Main] Simulation completed.")
+    coordinator = Coordinator(andes, agents=[1, 2]) #TODO: to automitize 
+    print("[Main] Coordinator Initialized.")
+    
+    return coordinator
+
+    
 
 if __name__ == '__main__':
-    main()
+    sim = main()
+
+    if sim.terminated:
+        print("LETSGOOOOOOOOOOOOOOOOOOOOO")
+    else: 
+        print("NOOOOOOOOOOOO")
+
+    # ==== PLOT OMEGA ====
+    matplotlib.use('TkAgg')  
+    omega_log = sim.omega_log
+    times = []
+    gen_series = defaultdict(list)
+
+    for time, omega_by_agent in omega_log:
+        times.append(time)
+        for agent_id, omega_list in omega_by_agent.items():
+            for local_gen_index, omega_val in enumerate(omega_list):
+                gen_name = f"A{agent_id}_G{local_gen_index}"
+                gen_series[gen_name].append(omega_val)
+
+    plt.figure()
+    for gen_name, omega_vals in gen_series.items():
+        plt.plot(times, omega_vals, label=gen_name)
+
+    plt.xlabel("Time [s]")
+    plt.ylabel("Omega")
+    plt.title("Generator Speeds")
+    plt.legend()
+    plt.grid()
+    plt.savefig("plots/first_test_omega.png")
+    plt.show()

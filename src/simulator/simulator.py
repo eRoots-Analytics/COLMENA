@@ -5,7 +5,7 @@ from andes import get_case
 
 import pdb
 
-class AndesInterface:
+class Simulator:
     def __init__(self):
 
         self.andes_url = Config.andes_url
@@ -21,14 +21,7 @@ class AndesInterface:
         if response.status_code != 200:
             raise RuntimeError(f"Failed to load simulation: {response.text}")
         print("[ANDES] Simulation loaded.")
-        time.sleep(0.25)  # Allow some time for the server to process the request
-        self.set_simulation()
-
-    def set_simulation(self):
-        response = requests.post(f"{self.andes_url}/start_simulation")
-        if response.status_code != 200:
-            raise RuntimeError(f"Failed to start simulation: {response.text}")
-        print("[ANDES] Simulation started.")
+        self.start_time = response.json().get("start_time")
     
     def sync_time(self):
         """
@@ -85,16 +78,33 @@ class AndesInterface:
 
         return [float(v) for v in raw["value"].values()]
 
-    def send_setpoint(self, role_change_dict : dict):
-        return requests.get(f"{self.andes_url}/add_set_point", params=role_change_dict)
-    
-    def set_last_control_time(self, t: float):
-        return requests.get(f"{self.andes_url}/set_last_control_time", params={'t': t})
-    
-    def run_step(self, delta_t):
-        response = requests.post(f"{self.andes_url}/run_step", json={"delta_t": delta_t})
+    def send_setpoint(self, role_change_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/send_set_point",
+                json=role_change_dict
+            )
+            # if response.status_code == 200:
+            #     print(f"[Send] OK → {role_change_dict}")
+            # else:
+            #     print(f"[Send] ERROR {response.status_code}: {response.json()}")
+        except Exception as e:
+            print(f"[Send] Failed to send setpoint: {e}")
+
+    def init_tds(self):
+        response = requests.post(f"{self.andes_url}/init_tds")
         if response.status_code == 200:
-            new_time = response.json()["t"]
+            start_time = response.json().get("start_time")
+            print(f"[Init] TDS initialized at time {start_time}")
+            return True, start_time
+        else:
+            print("[Error] Failed to initialize TDS:", response.text)
+            return False, None
+    
+    def run_step(self):
+        response = requests.post(f"{self.andes_url}/run_step")  # empty dict just to be valid JSON
+        if response.status_code == 200:
+            new_time = response.json().get("time")
             return True, new_time
         else:
             print("Step failed:", response.text)

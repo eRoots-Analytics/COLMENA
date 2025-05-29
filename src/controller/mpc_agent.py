@@ -1,12 +1,12 @@
 import numpy as np
 import pyomo.environ as pyo
 from src.config.config import Config
-from src.controller.andes_interface import AndesInterface
+from src.simulator.simulator import Simulator
 
 import pdb  
 
 class MPCAgent:
-    def __init__(self, agent_id: str, andes_interface: AndesInterface):
+    def __init__(self, agent_id: str, andes_interface: Simulator):
 
         self.dt =        Config.dt
         self.T =         Config.T
@@ -19,6 +19,7 @@ class MPCAgent:
 
         self.agent_id = 'Agent_' + str(agent_id)
         self.area = agent_id
+
         self.andes = andes_interface  
 
         self.setup = True
@@ -28,8 +29,8 @@ class MPCAgent:
         self.gen_location = {}
         self.bus2idgen = {}
 
-        # Get system data and state values
-        self._get_system_data()
+        ### Agent get area params ### NOTE: in case of tripping/distrubance the _init_ should be re-executed.
+        self._get_area_params()
 
         self.vars_saved = {
                             'freq': np.ones(self.T + 1),
@@ -146,10 +147,11 @@ class MPCAgent:
         
         return self.model
     
-    def _get_area_devices(self):
+    def _get_area_params(self):
         """
-        Get the devices list in area from Andes.
+        Get the all the parameters of the area from Andes.
         """
+        # List of devices 
         self.generators = self.andes.get_area_variable("GENROU", "idx", self.area)
         self.loads = self.andes.get_area_variable("PQ", "idx", self.area)
         self.areas = self.andes.get_complete_variable("Area", "idx")
@@ -158,21 +160,15 @@ class MPCAgent:
         self.generator_bus = self.andes.get_area_variable("GENROU", "bus", self.area)
         self.slack_bus = self.andes.get_complete_variable("Slack", "bus", self.area)
 
-        self.gen_location = {gen: self.generator_bus[i] for i, gen in enumerate(self.generators)}
-        self.bus2idgen = {self.generator_bus[i]: gen for i, gen in enumerate(self.generators)}
-    
-    def _get_neighbour_areas(self):
-        """
-        Get the neighbour areas from Andes.
-        """
-        self.other_areas = self.andes.get_neighbour_areas(self.area)    
-    
-    def _get_area_device_params(self):
-        """
-        Get the parameters in area from Andes.
-        """
+        self.gen_location = {gen: self.generator_bus[i] for i, gen in enumerate(self.generators)} #NOTE: necessary?
+        self.bus2idgen = {self.generator_bus[i]: gen for i, gen in enumerate(self.generators)} #NOTE: necessary?
+
+        # List of neighbour areas
+        self.other_areas = self.andes.get_neighbour_areas(self.area)  #NOTE: rename
+
+        # Synchronous generator paramters 
         self.Sn_values = self.andes.get_partial_variable("GENROU", "Sn", self.generators)
-        self.Pe_values = self.andes.get_partial_variable("GENROU", "Pe", self.generators)
+        self.Pe_values = self.andes.get_partial_variable("GENROU", "Pe", self.generators) #NOTE: not a constant
         self.M_values =  self.andes.get_partial_variable("GENROU", "M", self.generators)
         self.D_values =  self.andes.get_partial_variable("GENROU", "D", self.generators)
         self.fn_values = self.andes.get_partial_variable("GENROU", "fn", self.generators)
@@ -184,8 +180,8 @@ class MPCAgent:
         self.pmin_slack = self.andes.get_complete_variable("Slack", "pmin", self.area)
         self.pmax_pv = self.andes.get_area_variable("PV", "pmax", self.area)
         self.pmin_pv = self.andes.get_area_variable("PV", "pmin", self.area)
-    
-    def _get_system_susceptance(self):
+
+        # Transmission line susceptance with other areas
         self.b_areas = self.andes.get_system_susceptance(self.area)
     
     def _compute_coi_parameters(self): #NOTE to move
@@ -204,22 +200,16 @@ class MPCAgent:
                 Sn = self.Sn_values[i]
                 self.S_area += Sn
                 self.M_coi += self.M_values[i]
-                self.Pd += self.Pe_values[i]
+                self.Pd += self.Pe_values[i] #NOTE: not a constant. What's the meaning?
                 self.D_coi += Sn * self.D_values[i]
                 self.fn_coi += Sn * self.fn_values[i]
-                self.P_demand += self.Pe_values[i]
+                self.P_demand += self.Pe_values[i] #NOTE: not a constant. What's the meaning?
 
         if self.S_area > 0:
             self.D_coi /= self.S_area
             self.fn_coi = 60.0  # Set nominal frequency explicitly
 
         self.Pe_base = {gen: self.Pe_values[i] for i, gen in enumerate(self.generators)} 
-
-    def _get_system_data(self):
-        self._get_area_devices()
-        self._get_neighbour_areas() 
-        self._get_area_device_params()
-        self._get_system_susceptance()
     
     def _get_theta_equivalent(self): #NOTE: change the name
         self.delta_theta = self.andes.get_theta_equivalent(self.area)
@@ -277,8 +267,6 @@ class MPCAgent:
                 self.vars_saved['theta_areas'][(nbr, t)] = self.model.theta_areas[nbr, t].value
 
             for gen in self.generators:
-                self.vars_saved['Pg'][(gen, t)] = self.model.Pg[gen, t].value
-
-
+                self.vars_saved['Pg'][(gen, t)] = self.model.Pg[gen, t].value    
 
     

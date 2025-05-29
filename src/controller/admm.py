@@ -32,12 +32,12 @@ class ADMM:
 
             if primal_residual < self.tol:
                 print("Distributed MPC converged (via primal residual)")
-                return True, self._collect_role_changes(), self.coordinator #NOTE return necessary?
+                return True, self.coordinator.collect_role_changes()
 
             self._update_duals()
             self._update_pyomo_params() # NOTE: convergence can be improved by updating only the changed agents
 
-        return False, self._collect_role_changes(), self.coordinator #NOTE return necessary?
+        return False, self.coordinator.collect_role_changes()
 
     def _solve_agent(self, agent, i):
         if agent.setup: #NOTE: in online setup needs to changed
@@ -65,7 +65,6 @@ class ADMM:
             for nbr in self.coordinator.neighbours[agent.area]:
                 self.coordinator.variables_horizon_values[agent.area, nbr, t] = model.theta_areas[nbr, t].value   
                   
-
     def _update_duals(self):
         alpha = self.alpha
         vars_dict = self.coordinator.variables_horizon_values
@@ -123,42 +122,3 @@ class ADMM:
                     max_residual = max(max_residual, residual)
 
         return max_residual
-
-    def _collect_role_changes(self):
-        andes_role_changes = []
-        agents = list(self.coordinator.agents.values())
-        
-        # Sync time (assuming all agents return the same)
-        time_start = self.coordinator.andes.sync_time()
-
-        for agent in agents:
-            for gen_id in agent.generators:
-                kundur = not isinstance(gen_id, str)
-                id_number = gen_id if kundur else (gen_id[-2:] if gen_id[-2] != '_' else gen_id[-1])
-                for t in range(1, agent.T + 1):
-                    if t != 1:
-                        continue
-                    for param in ['p_direct', 'b']:  # Adjust this list if needed
-
-                        role_change = {'var': param,
-                                       't': time_start + agent.dt * t}
-                        
-                        if param == 'tm0':
-                            role_change['model'] = 'GENROU'
-                            role_change['idx'] = 'GENROU_' + id_number
-                        else:
-                            role_change['model'] = 'TGOV1' if kundur else 'TGOV1N'
-                            role_change['idx'] = id_number if kundur else 'TGOV1_' + id_number
-                        
-                        if param == 'paux0':
-                            role_change['value'] = agent.model.Pg[gen_id, t].value - agent.model.Pg[gen_id, 0].value
-                        elif param == 'b':
-                            role_change['value'] = 1
-                        else:
-                            role_change['value'] = agent.model.Pg[gen_id, t].value
-
-                        # Send to Andes
-                        self.coordinator.andes.send_setpoint(role_change)
-                        andes_role_changes.append(role_change.copy())
-        
-        return andes_role_changes
