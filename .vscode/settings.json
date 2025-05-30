@@ -1,18 +1,3 @@
 {
-    "python.pythonPath": "${workspaceFolder}/venv/Scripts/python.exe",
-    
-    "spellright.language": [
-        "en-US-10-1."
-    ],
-    "spellright.documentTypes": [
-        "markdown",
-        "latex",
-        "plaintext",
-        "Log"
-    ],
-    "spellright.parserByClass": {
-        "Log": {
-            "parser": "latex"
-        }
-    }
+    "python.pythonPath": "${workspaceFolder}/venv/Scripts/python.exe"
 }

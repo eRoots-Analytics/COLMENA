@@ -19,9 +19,11 @@ from src.simulator.simulator import Simulator
 import pdb
 
 def run_flask_app():
-    host = "0.0.0.0"
+    # Stop Flask logs
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
+    # Run app
+    host = "0.0.0.0"
     app.run(host=host, port=5000, debug=False, threaded=True)
 
 def wait_for_server(url, timeout=10):
@@ -53,19 +55,17 @@ def main():
     # 3. Create Coordinator
     print("[Main] Initializing Coordinator...")
     coordinator = Coordinator(andes, agents=[1, 2]) #TODO: to automitize 
-    print("[Main] Coordinator Initialized.")
+    print(f"[Main] Coordinator run loop finished at t = {coordinator.t}")
     
     return coordinator
-
-    
 
 if __name__ == '__main__':
     sim = main()
 
     if sim.terminated:
-        print("LETSGOOOOOOOOOOOOOOOOOOOOO")
+        print("[Main] Simulation completed succesfully.")
     else: 
-        print("NOOOOOOOOOOOO")
+        print("[Main] Simulation failed.")
 
     # ==== PLOT OMEGA ====
     matplotlib.use('TkAgg')  

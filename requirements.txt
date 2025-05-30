@@ -15,3 +15,8 @@ chardet
 psutil
 texttable
 numba
+requests
+flask
+pyomo
+ipywidgets 
+tqdm

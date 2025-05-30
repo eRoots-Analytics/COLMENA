@@ -340,8 +340,7 @@ def area_variable_sync(all_devices = False):
         
         if type(res) == np.ndarray:
             response['value'] = res.tolist()
-
-        print(f"response is {response}")
+            
         return jsonify(response), 200
     except Exception as e:
         print(e)

@@ -73,29 +73,9 @@ coverage.xml
 # PyBuilder
 target/
 
-# Andes-specific files (adjusted for AndesApp/)
-AndesApp/andes/cases/*/*.txt
-AndesApp/*.dat
-AndesApp/*.lst
-AndesApp/*.npy
-AndesApp/*.npz
-AndesApp/*.prof
-AndesApp/benchmarks/.asv
-AndesApp/benchmarks/andes
-AndesApp/docs/source/modelref.rst
-AndesApp/docs/source/configref.rst
-AndesApp/docs/source/groupdoc
-AndesApp/docs/source/_examples
-AndesApp/docs/build/
-AndesApp/docs/jupyter_execute/
-AndesApp/docs/source/_build/
-AndesApp/_generated
-AndesApp/icebar
-
 # Your project-specific files
-/venv/
-/plots/
-AndesRoles/roles_tests/build/LayerOne/Ipopt
+venv/
+plots/
 pycode
 *.png
 *.pyc

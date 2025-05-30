@@ -46,13 +46,21 @@ class Coordinator:
             for t in range(self.T + 1)
             }
 
-        self.error_save = []
-
-        self.admm = ADMM(self)
-
+        self.error_save = [] # to store error
         self.omega_log = []  # to store (time, omega_values_dict)
 
-        self.terminated = self.run()
+        # Initilailzed ADMM algorithm 
+        self.admm = ADMM(self)
+
+        print("[Main] Coordinator initialized.")
+
+        # Run simulation
+        try:
+            self.terminated = self.run()
+        except Exception as e:
+            print(f"[Exception] Error during simulation run: {e}")
+            traceback.print_exc()
+
 
     def run_admm(self):
         return self.admm.solve()
@@ -97,8 +105,6 @@ class Coordinator:
                 # 5. Update time 
                 # NOTE: in the future simulation time step can be different from MPC time step!
                 self.t = new_time
-
-            print(f"[Done] MPC run loop finished at t = {self.t}")
             return True
         except Exception as e:
             print(f"[Exception] Error during loop: {e}")

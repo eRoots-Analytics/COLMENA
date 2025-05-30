@@ -5,7 +5,7 @@ class Config:
 
     # Simulator 
     tstep = 0.1
-    tf = 50.0
+    tf = 10.0
 
     # MPC
     dt = 0.1
