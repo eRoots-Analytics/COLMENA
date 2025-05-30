@@ -1,8 +1,10 @@
+"""
+This class contains the logic of the ADMM algorithm.
+"""
+
 import numpy as np
 import pyomo.environ as pyo
 from src.config.config import Config
-
-import pdb
 
 class ADMM:
     def __init__(self, coordinator):
@@ -71,7 +73,7 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for t in range(self.coordinator.T + 1):
+                for t in range(self.coordinator.K + 1):
                     # Get local and neighbor values
                     theta_ii = vars_dict[area, area, t]
                     theta_ji = vars_dict[nbr, area, t]
@@ -87,7 +89,7 @@ class ADMM:
             model = agent.model
             area = agent.area
             for nbr in self.coordinator.neighbours[area]:
-                for t in range(self.coordinator.T + 1):
+                for t in range(self.coordinator.K + 1):
                     model.variables_horizon_values[area, nbr, t].value = self.coordinator.variables_horizon_values[area, nbr, t]
                     model.dual_vars[area, nbr, t].value = self.coordinator.dual_vars[area, nbr, t]
 
@@ -98,7 +100,7 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for t in range(self.coordinator.T + 1):
+                for t in range(self.coordinator.K + 1):
                     theta_ii = vars_dict[area, area, t]
                     theta_ji = vars_dict[nbr, area, t]
 
@@ -113,7 +115,7 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for t in range(self.coordinator.T + 1):
+                for t in range(self.coordinator.K + 1):
                     theta_ii = vars_dict[area, area, t]
                     theta_ji = vars_dict[nbr, area, t]
 

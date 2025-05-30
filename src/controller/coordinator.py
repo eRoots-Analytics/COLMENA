@@ -1,17 +1,23 @@
+"""
+This class contains the logic of the coordinator which is responsible for the communication between agents and for the execution of the simulation.
+"""
+
 import traceback
 
 from src.config.config import Config
 from src.controller.admm import ADMM
 from src.controller.mpc_agent import MPCAgent
+from src.simulator.andes_wrapper import AndesWrapper
 
 class Coordinator:
     
-    def __init__(self, andes, agents):
+    def __init__(self, andes: AndesWrapper, agents: list):
         # Constants
         self.tstep = Config.tstep
         self.tf =    Config.tf
         self.dt =    Config.dt
-        self.T =     Config.T
+        self.K =     Config.K
+        self.tdmpc = Config.tdmpc
 
         # Andes interface
         self.andes = andes
@@ -29,21 +35,21 @@ class Coordinator:
             (i, j, t): 0.0 #NOTE: could be initialized differently
             for i in self.agents
             for j in self.agents
-            for t in range(self.T + 1)
+            for t in range(self.K + 1)
             }
         
         self.dual_vars = {
             (i, j, t): 0.0 #NOTE: could be initialized differently
             for i in self.agents
             for j in self.agents
-            for t in range(self.T + 1)
+            for t in range(self.K + 1)
             }
         
         self.dual_history = {
             (i, j, t): []
             for i in self.agents
             for j in self.agents
-            for t in range(self.T + 1)
+            for t in range(self.K + 1)
             }
 
         self.error_save = [] # to store error
@@ -66,11 +72,15 @@ class Coordinator:
         return self.admm.solve()
     
     def run(self):
-        self.t = self.andes.start_time
+
+        self.k = 0
+        self.t = 0.0
+
         print(f"[Init] Starting MPC loop at t = {self.t}, final time = {self.tf}")
 
         try:
-            while self.t < self.tf: #TODO to adjust
+            i = 0 # Counter for DMPC activation
+            while self.k < int(self.tf/self.tstep): 
                 print(f"[Loop] Time {self.t:.2f}")
 
                 # 1. Get values
@@ -86,11 +96,13 @@ class Coordinator:
                 self.omega_log.append((self.t, omega_snapshot))
                 ######################################################
 
-                # 2. Run ADMM algorithm
-                success, role_change_list = self.run_admm()
-                if not success:
-                    print("[Error] ADMM failed.")
-                    break
+                # 2. Run DMPC - ADMM algorithm
+                if self.k >= i * int(self.tdmpc/self.tstep):
+                    i += 1
+                    success, role_change_list = self.run_admm()
+                    if not success:
+                        print("[Error] ADMM failed.")
+                        break
 
                 # 3. Post results
                 for role_change in role_change_list:
@@ -99,12 +111,12 @@ class Coordinator:
                 # 4. Run one ANDES simulation step
                 success, new_time = self.andes.run_step()
                 if not success:
-                    print("[Error] Simulation step failed.")
+                    print(f"[Error] Simulation step failed at simulation time {new_time}.")
                     break
 
-                # 5. Update time 
-                # NOTE: in the future simulation time step can be different from MPC time step!
-                self.t = new_time
+                # 5. Update time step and time 
+                self.k += 1
+                self.t += self.tstep
             return True
         except Exception as e:
             print(f"[Exception] Error during loop: {e}")
@@ -144,46 +156,6 @@ class Coordinator:
                 andes_role_changes.append(role_change.copy())
 
         return andes_role_changes
-
-    # def collect_role_changes(self):
-    #     andes_role_changes = []
-    #     agents = list(self.agents.values())
-        
-    #     # Sync time (assuming all agents return the same)
-    #     time_start = self.andes.sync_time()
-
-    #     for agent in agents:
-    #         for gen_id in agent.generators:
-    #             kundur = not isinstance(gen_id, str)
-    #             id_number = gen_id if kundur else (gen_id[-2:] if gen_id[-2] != '_' else gen_id[-1])
-    #             for t in range(1, agent.T + 1):
-    #                 if t != 1:
-    #                     continue
-    #                 for param in ['p_direct', 'b']:  # Adjust this list if needed
-
-    #                     role_change = {'var': param,
-    #                                    't': time_start + agent.dt * t}
-                        
-    #                     if param == 'tm0':
-    #                         role_change['model'] = 'GENROU'
-    #                         role_change['idx'] = 'GENROU_' + id_number
-    #                     else:
-    #                         role_change['model'] = 'TGOV1' if kundur else 'TGOV1N'
-    #                         role_change['idx'] = id_number if kundur else 'TGOV1_' + id_number
-                        
-    #                     if param == 'paux0':
-    #                         role_change['value'] = agent.model.Pg[gen_id, t].value - agent.model.Pg[gen_id, 0].value
-    #                     elif param == 'b':
-    #                         role_change['value'] = 1
-    #                     else:
-    #                         role_change['value'] = agent.model.Pg[gen_id, t].value
-
-    #                     # Send to Andes
-    #                     self.andes.send_setpoint(role_change)
-    #                     andes_role_changes.append(role_change.copy())
-        
-    #     return andes_role_changes
-
     
 
             

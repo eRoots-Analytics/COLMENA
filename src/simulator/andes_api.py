@@ -1,14 +1,15 @@
+"""
+Andes API: rules and protocols to communicate with Andes via a flask app.
+"""
+
 import traceback
 import numpy as np
-from pathlib import Path
 from flask import Flask
 from flask import request, jsonify
 
 from src.config.config import Config
 from andes import load
 from andes.routines.tds import TDS
-
-import pdb
 
 app = Flask(__name__)
 system = None
@@ -340,7 +341,7 @@ def area_variable_sync(all_devices = False):
         
         if type(res) == np.ndarray:
             response['value'] = res.tolist()
-            
+
         return jsonify(response), 200
     except Exception as e:
         print(e)

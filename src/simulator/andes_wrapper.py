@@ -1,11 +1,13 @@
+"""
+Andes API wrapper to simplfy calls.
+"""
+
 import requests
-import time
+
 from src.config.config import Config
 from andes import get_case
 
-import pdb
-
-class Simulator:
+class AndesWrapper:
     def __init__(self):
 
         self.andes_url = Config.andes_url

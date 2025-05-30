@@ -9,9 +9,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.config.config import Config
-from src.simulator.app import app
+from simulator.andes_api import app
 from src.controller.coordinator import Coordinator  
-from src.simulator.simulator import Simulator  
+from simulator.andes_wrapper import Simulator  
 
 import pdb
 

@@ -12,11 +12,9 @@ from collections import defaultdict
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from src.config.config import Config
-from src.simulator.app import app
+from src.simulator.andes_api import app
 from src.controller.coordinator import Coordinator  
-from src.simulator.simulator import Simulator  
-
-import pdb
+from src.simulator.andes_wrapper import AndesWrapper  
 
 def run_flask_app():
     # Stop Flask logs
@@ -50,7 +48,7 @@ def main():
 
     # 2. Create Andes interface
     print("[Main] Initializing Simulator...")
-    andes = Simulator()
+    andes = AndesWrapper()
 
     # 3. Create Coordinator
     print("[Main] Initializing Coordinator...")

@@ -1,3 +1,6 @@
+"""
+This class contains all the parameter values for the configuration of the simulation.
+"""
 class Config:
 
     andes_url = "http://127.0.0.1:5000" # andes_url = 'http://192.168.68.59:5000'
@@ -8,8 +11,11 @@ class Config:
     tf = 10.0
 
     # MPC
-    dt = 0.1
-    T = 50
+    # Horizon
+    dt = tstep
+    K = 50
+    # Execution
+    tdmpc = 0.5
 
     ramp_up = 0.05
     ramp_down = 0.05

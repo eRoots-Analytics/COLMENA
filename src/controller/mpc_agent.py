@@ -1,17 +1,22 @@
+"""
+This class contains the agent description and the optimization problem definition.
+"""
+
 import numpy as np
 import pyomo.environ as pyo
-from src.config.config import Config
-from src.simulator.simulator import Simulator
 
-import pdb  
+from src.config.config import Config
+from src.simulator.andes_wrapper import AndesWrapper
 
 class MPCAgent:
-    def __init__(self, agent_id: str, andes_interface: Simulator):
+    def __init__(self, agent_id: str, andes_interface: AndesWrapper):
 
         self.dt =        Config.dt
-        self.T =         Config.T
+        self.K =         Config.K
+
         self.ramp_up =   Config.ramp_up
         self.ramp_down = Config.ramp_down
+
         self.freq_ref =  Config.freq_ref 
 
         self.q =         Config.q
@@ -33,12 +38,12 @@ class MPCAgent:
         self._get_area_params()
 
         self.vars_saved = {
-                            'freq': np.ones(self.T + 1),
-                            'P': np.zeros(self.T + 1),
-                            'P_exchange': np.zeros(self.T + 1),
-                            'Pg': {(g, t): 0.0 for g in self.generators for t in range(self.T + 1)},
-                            'theta': np.zeros(self.T + 1),
-                            'theta_areas': {(area, t): 0.0 for area in self.other_areas for t in range(self.T + 1)},
+                            'freq': np.ones(self.K + 1),
+                            'P': np.zeros(self.K + 1),
+                            'P_exchange': np.zeros(self.K + 1),
+                            'Pg': {(g, t): 0.0 for g in self.generators for t in range(self.K + 1)},
+                            'theta': np.zeros(self.K + 1),
+                            'theta_areas': {(area, t): 0.0 for area in self.other_areas for t in range(self.K + 1)},
                             }
         
         ### Set up individial optimization model ###
@@ -51,8 +56,8 @@ class MPCAgent:
         self.model.other_areas =     pyo.Set(initialize=self.other_areas)
 
         # Range Set for time indexing
-        self.model.TimeHorizon =     pyo.RangeSet(0, self.T)
-        self.model.TimeDynamics =    pyo.RangeSet(0, self.T - 1) #NOTE: to check if it is needed
+        self.model.TimeHorizon =     pyo.RangeSet(0, self.K)
+        self.model.TimeDynamics =    pyo.RangeSet(0, self.K - 1) #NOTE: to check if it is needed
 
         # Params: scalar and multidimensional
         self.model.M =               pyo.Param(initialize=self.M_coi)
@@ -98,7 +103,7 @@ class MPCAgent:
             return model.theta_areas[i, 0] == self.model.theta0_areas[i]
         
         self.model.initial_constr_theta_areas = pyo.Constraint(self.model.other_areas, rule=_initial_theta_areas)
-        self.model.terminal_constr_freq =       pyo.Constraint(expr=self.model.freq[self.T] == self.freq_ref)
+        self.model.terminal_constr_freq =       pyo.Constraint(expr=self.model.freq[self.K] == self.freq_ref)
         self.model.initial_constr_freq =        pyo.Constraint(expr=self.model.freq[0] == self.model.freq0)
         self.model.initial_constr_theta =       pyo.Constraint(expr=self.model.theta[0] == self.model.theta0)
         self.model.initial_constr_P =           pyo.Constraint(self.model.generators, rule=_initial_P)
@@ -229,7 +234,7 @@ class MPCAgent:
         
 
     def first_warm_start(self): #NOTE: can be improved
-        for t in range(self.T + 1):
+        for t in range(self.K + 1):
             self.vars_saved['freq'][t] = self.model.freq0.value
             self.vars_saved['P'][t] = sum(self.tm_values)
             self.vars_saved['P_exchange'][t] = 0.0 #NOTE: can be initilaied differently 
@@ -244,7 +249,7 @@ class MPCAgent:
         self.warm_start()
         
     def warm_start(self):
-        for t in range(self.T + 1):
+        for t in range(self.K + 1):
             self.model.freq[t].value = self.vars_saved['freq'][t] #max(self.vars_saved['freq'][t], 0.85)
             self.model.P[t].value = self.vars_saved['P'][t]
             self.model.P_exchange[t].value = self.vars_saved['P_exchange'][t]
@@ -257,7 +262,7 @@ class MPCAgent:
                 self.model.Pg[gen, t].value = self.vars_saved['Pg'][(gen, t)]
     
     def save_warm_start(self):
-        for t in range(self.T + 1):
+        for t in range(self.K + 1):
             self.vars_saved['freq'][t] = self.model.freq[t].value
             self.vars_saved['P'][t] = self.model.P[t].value
             self.vars_saved['P_exchange'][t] = self.model.P_exchange[t].value
