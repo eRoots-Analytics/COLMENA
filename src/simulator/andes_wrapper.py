@@ -93,6 +93,19 @@ class AndesWrapper:
         except Exception as e:
             print(f"[Send] Failed to send setpoint: {e}")
 
+    def change_parameter_value(self, role_change_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/change_parameter_value",
+                json=role_change_dict
+            )
+            # if response.status_code == 200:
+            #     print(f"[Send] OK → {role_change_dict}")
+            # else:
+            #     print(f"[Send] ERROR {response.status_code}: {response.json()}")
+        except Exception as e:
+            print(f"[Send] Failed to send setpoint: {e}")
+
     def init_tds(self):
         response = requests.post(f"{self.andes_url}/init_tds")
         if response.status_code == 200:

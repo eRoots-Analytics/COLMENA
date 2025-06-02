@@ -14,6 +14,9 @@ class ADMM:
 
         self.coordinator = coordinator
 
+        self.primal_log = []
+        self.cost_log = []
+
     def solve(self):
         agents = self.coordinator.agents.values()
 
@@ -23,10 +26,10 @@ class ADMM:
                 if i==0: 
                     # Initialize the model for the first iteration
                     agent.initialize_variables_values()
-                # pdb.set_trace()
 
                 self._solve_agent(agent, i)
 
+            # Residual computation
             primal_residual = self._compute_primal_residual_inf()
             self.coordinator.error_save.append(primal_residual) 
 
@@ -36,7 +39,7 @@ class ADMM:
                 print("Distributed MPC converged (via primal residual)")
                 return True, self.coordinator.collect_role_changes()
 
-            self._update_duals()
+            self._update_duals(i)
             self._update_pyomo_params() # NOTE: convergence can be improved by updating only the changed agents
 
         return False, self.coordinator.collect_role_changes()
@@ -58,6 +61,16 @@ class ADMM:
         if result.solver.termination_condition != pyo.TerminationCondition.optimal:
             print(f"Infeasible or max iterations for agent {agent.area}")
             raise RuntimeError(f"Agent {agent.area} MPC failure at iteration {i}.")
+        
+        ########### FOR PLOTTING #############
+        self.cost_log.append({
+            "iteration": i,
+            "freq_val" : pyo.value(model.freq_cost),
+            "lagrangian_val" : pyo.value(model.lagrangian_term),
+            "convex_val" : pyo.value(model.convex_term),
+            "total_cost" : pyo.value(model.cost)
+        })
+        ######################################
 
         agent.save_warm_start()
 
@@ -65,33 +78,46 @@ class ADMM:
         for t in model.TimeHorizon:
             self.coordinator.variables_horizon_values[agent.area, agent.area, t] = model.theta[t].value                                    
             for nbr in self.coordinator.neighbours[agent.area]:
-                self.coordinator.variables_horizon_values[agent.area, nbr, t] = model.theta_areas[nbr, t].value   
+                self.coordinator.variables_horizon_values[nbr, agent.area, t] = model.theta_areas[nbr, t].value   
                   
-    def _update_duals(self):
+    def _update_duals(self, i):
         alpha = self.alpha
         vars_dict = self.coordinator.variables_horizon_values
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for t in range(self.coordinator.K + 1):
+                for k in range(self.coordinator.K + 1):
                     # Get local and neighbor values
-                    theta_ii = vars_dict[area, area, t]
-                    theta_ji = vars_dict[nbr, area, t]
+                    theta_ii = vars_dict[area, area, k]
+                    theta_ij = vars_dict[area, nbr, k]
 
                     # Update the dual variable
-                    key = (nbr, area, t)
+                    key = (area, nbr, k)
                     lambda_old = self.coordinator.dual_vars[key]
-                    lambda_new = lambda_old + alpha * (theta_ii - theta_ji)
+                    lambda_new = lambda_old + alpha * (theta_ii - theta_ij)
                     self.coordinator.dual_vars[key] = lambda_new
+
+                    ########### FOR PLOTTING #############
+                    self.primal_log.append({
+                        "iteration": i,
+                        "t": k,
+                        "area": area,
+                        "nbr": nbr,
+                        "theta_ii": theta_ii,
+                        "theta_ij": theta_ij,
+                        "residual": abs(theta_ii - theta_ij),
+                        "dual": lambda_new
+                    })
+                    ######################################
     
     def _update_pyomo_params(self):
         for agent in self.coordinator.agents.values():
             model = agent.model
             area = agent.area
             for nbr in self.coordinator.neighbours[area]:
-                for t in range(self.coordinator.K + 1):
-                    model.variables_horizon_values[area, nbr, t].value = self.coordinator.variables_horizon_values[area, nbr, t]
-                    model.dual_vars[area, nbr, t].value = self.coordinator.dual_vars[area, nbr, t]
+                for k in range(self.coordinator.K + 1):
+                    model.variables_horizon_values[area, nbr, k].value = self.coordinator.variables_horizon_values[area, nbr, k]
+                    model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
 
     def _compute_primal_residual_mse(self):
         residual_sum = 0.0
@@ -100,11 +126,11 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for t in range(self.coordinator.K + 1):
-                    theta_ii = vars_dict[area, area, t]
-                    theta_ji = vars_dict[nbr, area, t]
+                for k in range(self.coordinator.K + 1):
+                    theta_ii = vars_dict[area, area, k]
+                    theta_ij = vars_dict[area, nbr, k]
 
-                    residual_sum += (theta_ii - theta_ji)**2
+                    residual_sum += (theta_ii - theta_ij)**2
                     count += 2
 
         return np.sqrt(residual_sum / count) if count else 0.0
@@ -115,11 +141,11 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for t in range(self.coordinator.K + 1):
-                    theta_ii = vars_dict[area, area, t]
-                    theta_ji = vars_dict[nbr, area, t]
+                for k in range(self.coordinator.K + 1):
+                    theta_ii = vars_dict[area, area, k]
+                    theta_ij = vars_dict[area, nbr, k]
 
-                    residual = abs(theta_ii - theta_ji)
+                    residual = abs(theta_ii - theta_ij)
 
                     max_residual = max(max_residual, residual)
 

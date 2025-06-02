@@ -5,6 +5,7 @@ import sys
 import logging
 import matplotlib
 import matplotlib.pyplot as plt
+import pandas as pd
 from pathlib import Path
 from collections import defaultdict
     
@@ -84,8 +85,94 @@ if __name__ == '__main__':
 
     plt.xlabel("Time [s]")
     plt.ylabel("Omega")
+    plt.xlim(0, Config.tf)
+    plt.ylim(0.95, 1.05)
     plt.title("Generator Speeds")
     plt.legend()
     plt.grid()
     plt.savefig("plots/first_test_omega.png")
     plt.show()
+
+    # ==== PLOT PRIMAL VARIABLE EVOLUTION ====
+    df_primal = pd.DataFrame(sim.admm.primal_log)
+    pairs = df_primal[["area", "nbr"]].drop_duplicates()
+    colors = plt.cm.get_cmap('tab10', len(pairs))
+    pair_to_color = {
+        (row.area, row.nbr): colors(i) for i, row in pairs.reset_index(drop=True).iterrows()
+    }
+
+    plt.figure(figsize=(12, 7))
+    for (area, nbr), group in df_primal.groupby(["area", "nbr"]):
+        color = pair_to_color[(area, nbr)]
+        plt.plot(group["iteration"], group["theta_ii"], color=color, label=f"θ_{area}{area} (original)")
+        plt.plot(group["iteration"], group["theta_ij"], linestyle='--', color=color, label=f"θ_{area}{nbr} (copy)")
+
+    plt.xlabel("ADMM Iteration")
+    plt.ylabel("θ Values")
+    plt.title("Primal Variables Across ADMM Iterations")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # ==== PLOT COST FUNCTION COMPONENTS ====
+    df_cost = pd.DataFrame(sim.admm.cost_log)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(df_cost["iteration"], df_cost["freq_val"], label="Frequency Cost")
+    plt.plot(df_cost["iteration"], df_cost["lagrangian_val"], label="Lagrangian Term")
+    plt.plot(df_cost["iteration"], df_cost["convex_val"], label="Convex Term")
+    plt.plot(df_cost["iteration"], df_cost["total_cost"], label="Total Cost", linewidth=2, color="black")
+
+    plt.xlabel("ADMM Iteration")
+    plt.ylabel("Cost Value")
+    plt.title("Cost Function")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+    # ==== PLOT RESIDUAL ====
+    iterations = list(range(len(sim.error_save)))
+    plt.figure(figsize=(10, 6))
+    plt.plot(iterations, sim.error_save, label='Primal Residual (∞-norm)')
+    plt.xlabel('ADMM Iteration')
+    plt.ylabel('Residual')
+    plt.title('Primal Residual')
+    plt.grid(True)
+    plt.yscale('log')  # logarithmic scale helps see slow convergence
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # ==== PLOT MPC HORIZON VARIABLES OF LAST ITERATION - FREQ ====
+    plt.figure(figsize=(14, 6))
+    for agent_id, agent in sim.agents.items():
+        time_horizon = list(range(agent.K + 1))
+        plt.plot(time_horizon, agent.vars_saved['freq'], label=f"{agent_id} - Frequency")
+
+    plt.xlabel("MPC Horizon Step")
+    plt.ylabel("Frequency [pu]")
+    plt.title("MPC Horizon Frequency After Final ADMM Iteration")
+    plt.ylim(0.95, 1.05)
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # ==== PLOT MPC HORIZON VARIABLES OF LAST ITERATION - P_EXCHANGE====
+    plt.figure(figsize=(14, 6))
+    for agent_id, agent in sim.agents.items():
+        time_horizon = list(range(agent.K + 1))
+        plt.plot(time_horizon, agent.vars_saved['P_exchange'], label=f"{agent_id} - P_exchange")
+
+    plt.xlabel("MPC Horizon Step")
+    plt.ylabel("P_exchange [pu]")
+    plt.title("MPC Horizon Frequency After Final ADMM Iteration")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    print('Ok')

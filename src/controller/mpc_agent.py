@@ -91,8 +91,8 @@ class MPCAgent:
         self.model.P =               pyo.Var(self.model.TimeHorizon)
         self.model.P_exchange =      pyo.Var(self.model.TimeHorizon)
         self.model.Pg =              pyo.Var(self.model.generators, self.model.TimeHorizon, bounds=_get_power_bounds)
-        self.model.theta =           pyo.Var(self.model.TimeHorizon, bounds=(-50, 50))
-        self.model.theta_areas =     pyo.Var(self.model.other_areas, self.model.TimeHorizon, bounds=(-50, 50))
+        self.model.theta =           pyo.Var(self.model.TimeHorizon) #, bounds=(-50, 50)
+        self.model.theta_areas =     pyo.Var(self.model.other_areas, self.model.TimeHorizon) #, bounds=(-50, 50)
 
         ### Constraints ### 
         # Initial conditions
@@ -125,7 +125,7 @@ class MPCAgent:
     def setup_dmpc(self, coordinator): #NOTE: actualy can be removed because it's feasible to construct variables_horizon_values and dual_vars before
         ### Set up distirbuted optimization model ###
         self.model.dual_vars =                  pyo.Param(self.model.areas, self.model.areas, self.model.TimeHorizon, 
-                                                              initialize=coordinator.dual_vars, mutable=True)
+                                                              initialize=coordinator.dual_vars, mutable=True) #NOTE: actually useless.
         self.model.variables_horizon_values =   pyo.Param(self.model.areas, self.model.areas, self.model.TimeHorizon,
                                                               initialize=coordinator.variables_horizon_values, mutable=True)
 
@@ -135,21 +135,26 @@ class MPCAgent:
 
         def _lagrangian_term(model):
             return sum(
-                model.dual_vars[nbr, self.area, t] * (model.theta[t] - model.variables_horizon_values[nbr, self.area, t]) + # NOTE: model.variables_horizon_values[self.area, nbr, t] is actually useless
-                model.dual_vars[nbr, nbr, t] * (model.variables_horizon_values[nbr, nbr, t] - model.theta_areas[nbr, t])    # NOTE: model.variables_horizon_values[nbr, nbr, t] is actually useless
+                model.dual_vars[self.area, nbr, t] * (model.theta[t] - model.variables_horizon_values[self.area, nbr, t]) +  # NOTE: model.variables_horizon_values[self.area, nbr, t] is actually useless as well as self.area
+                model.dual_vars[nbr, self.area, t] * (model.variables_horizon_values[nbr, nbr, t] - model.theta_areas[nbr, t])     # NOTE: model.variables_horizon_values[nbr, nbr, t] is actually useless as well as self.area
                 for nbr in model.other_areas for t in model.TimeHorizon
                 )
 
         def _convex_term(model):
-            eps = 1e-4
             return model.rho * sum(
-                (model.theta[t] - model.variables_horizon_values[nbr, self.area, t])**2 +
+                (model.theta[t] - model.variables_horizon_values[self.area, nbr, t])**2 +
                 (model.variables_horizon_values[nbr, nbr, t] - model.theta_areas[nbr, t])**2
                 for nbr in model.other_areas for t in model.TimeHorizon
-            ) + eps
+            ) 
         
-        self.model.cost = pyo.Objective(rule=lambda model: _freq_cost(model) + _lagrangian_term(model) + _convex_term(model), sense=pyo.minimize)
-        
+        # Define expressions for each cost component such that it is possible to extract the values
+        self.model.freq_cost =          pyo.Expression(rule=_freq_cost)
+        self.model.lagrangian_term =    pyo.Expression(rule=_lagrangian_term)
+        self.model.convex_term =        pyo.Expression(rule=_convex_term)
+
+        # Define the total objective using these expressions
+        self.model.cost = pyo.Objective(expr=self.model.freq_cost + self.model.lagrangian_term + self.model.convex_term, sense=pyo.minimize)
+
         return self.model
     
     def _get_area_params(self):
@@ -177,7 +182,7 @@ class MPCAgent:
         self.M_values =  self.andes.get_partial_variable("GENROU", "M", self.generators)
         self.D_values =  self.andes.get_partial_variable("GENROU", "D", self.generators)
         self.fn_values = self.andes.get_partial_variable("GENROU", "fn", self.generators)
-        self.p0_values = self.andes.get_complete_variable("PV", "p0")
+        self.p0_values = self.andes.get_complete_variable("PQ", "p0")
 
         self._compute_coi_parameters()
 
@@ -205,7 +210,7 @@ class MPCAgent:
                 Sn = self.Sn_values[i]
                 self.S_area += Sn
                 self.M_coi += self.M_values[i]
-                self.Pd += self.Pe_values[i] #NOTE: not a constant. What's the meaning?
+                self.Pd += self.p0_values[i] #NOTE: not a constant. What's the meaning?
                 self.D_coi += Sn * self.D_values[i]
                 self.fn_coi += Sn * self.fn_values[i]
                 self.P_demand += self.Pe_values[i] #NOTE: not a constant. What's the meaning?
@@ -237,11 +242,11 @@ class MPCAgent:
         for t in range(self.K + 1):
             self.vars_saved['freq'][t] = self.model.freq0.value
             self.vars_saved['P'][t] = sum(self.tm_values)
-            self.vars_saved['P_exchange'][t] = 0.0 #NOTE: can be initilaied differently 
-            self.vars_saved['theta'][t] = self.model.theta0.value  #NOTE horrible 
+            self.vars_saved['P_exchange'][t] = 0.0                  #NOTE: can be initilaied differently 
+            self.vars_saved['theta'][t] = self.model.theta0.value   #NOTE horrible 
 
             for area in self.other_areas:
-                self.vars_saved['theta_areas'][(area, t)] = 0.0 #NOTE: can be initilaied differently 
+                self.vars_saved['theta_areas'][(area, t)] = 0.0     #NOTE: can be initilaied differently 
 
             for i, gen in enumerate(self.generators):
                 self.vars_saved['Pg'][(gen, t)] = self.tm_values[i]

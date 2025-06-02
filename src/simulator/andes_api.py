@@ -395,6 +395,46 @@ def send_set_point():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
+@app.route('/change_parameter_value', methods=['POST'])
+def change_parameter_value():
+    global system
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No JSON data received"}), 400
+
+        required = ['model', 'idx', 'param', 'value']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"Missing required field '{field}'"}), 400
+
+        model_name = data['model']
+        param_name = data['param']
+        idx = data['idx']
+        value = float(data['value'])
+
+        if not hasattr(system, model_name):
+            return jsonify({"error": f"Model '{model_name}' not found"}), 400
+        model = getattr(system, model_name)
+
+        if not hasattr(model, param_name):
+            return jsonify({"error": f"Variable '{param_name}' not in model '{model_name}'"}), 400
+        param = getattr(model, param_name)
+
+        try:
+            uid = model.idx2uid(idx)
+        except Exception:
+            return jsonify({"error": f"Index '{idx}' not found in model '{model_name}'"}), 400
+
+        param.v[uid] = value
+        # print(f"[Setpoint] {model_name}.{var_name}[{idx}] ← {value}")
+
+        return jsonify({"message": "Setpoint applied successfully"}), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/ping', methods=['GET'])
 def ping():
     return 'pong', 200

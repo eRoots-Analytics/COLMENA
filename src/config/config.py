@@ -7,25 +7,30 @@ class Config:
     case_path = "ieee39/ieee39_full.xlsx"
 
     # Simulator 
-    tstep = 0.1
-    tf = 10.0
+    tstep = 0.05
+    tf = 5.0
+
+    # Disturbance 
+    td = tf/2
 
     # MPC
+    # Status 
+    controlled = True
     # Horizon
     dt = tstep
     K = 50
     # Execution
-    tdmpc = 0.5
+    tdmpc = tstep # imporves numeric performance
 
     ramp_up = 0.05
     ramp_down = 0.05
 
     freq_ref = 1.0
 
-    q = 1
+    q = 1e3
     alpha = 10
-    rho = 100
+    rho = 30
 
     max_iter = 100
-    tol = 1e-4
+    tol = 1e-3
 

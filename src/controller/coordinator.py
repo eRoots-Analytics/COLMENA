@@ -13,11 +13,14 @@ class Coordinator:
     
     def __init__(self, andes: AndesWrapper, agents: list):
         # Constants
-        self.tstep = Config.tstep
-        self.tf =    Config.tf
-        self.dt =    Config.dt
-        self.K =     Config.K
-        self.tdmpc = Config.tdmpc
+        self.tstep =      Config.tstep
+        self.tf =         Config.tf
+        self.dt =         Config.dt
+        self.K =          Config.K
+        self.tdmpc =      Config.tdmpc
+        self.td =         Config.td
+
+        self.controlled = Config.controlled
 
         # Andes interface
         self.andes = andes
@@ -40,13 +43,6 @@ class Coordinator:
         
         self.dual_vars = {
             (i, j, t): 0.0 #NOTE: could be initialized differently
-            for i in self.agents
-            for j in self.agents
-            for t in range(self.K + 1)
-            }
-        
-        self.dual_history = {
-            (i, j, t): []
             for i in self.agents
             for j in self.agents
             for t in range(self.K + 1)
@@ -83,10 +79,19 @@ class Coordinator:
             while self.k < int(self.tf/self.tstep): 
                 print(f"[Loop] Time {self.t:.2f}")
 
+                # 0. Check for disturbances/events
+                if self.k == int(self.td/self.tstep):
+                    print("[Loop] Disturbance acting")
+
+                    self.andes.change_parameter_value({'param': 'u', 
+                                                       'model': 'PQ', 
+                                                       'idx': "PQ_4", 
+                                                       'value': 0})
+
                 # 1. Get values
                 self._initialize_theta_values()
 
-                ######################################################
+                #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
                 omega_snapshot = {}
                 for agent_id, agent in self.agents.items():
@@ -97,16 +102,17 @@ class Coordinator:
                 ######################################################
 
                 # 2. Run DMPC - ADMM algorithm
-                if self.k >= i * int(self.tdmpc/self.tstep):
-                    i += 1
-                    success, role_change_list = self.run_admm()
-                    if not success:
-                        print("[Error] ADMM failed.")
-                        break
+                if self.controlled:
+                    if self.k >= i * int(self.tdmpc/self.tstep):
+                        i += 1
+                        success, role_change_list = self.run_admm()
+                        if not success:
+                            print("[Error] ADMM failed.")
+                            break
 
-                # 3. Post results
-                for role_change in role_change_list:
-                    self.andes.send_setpoint(role_change)
+                    # Send set points
+                    for role_change in role_change_list:
+                        self.andes.send_setpoint(role_change)
 
                 # 4. Run one ANDES simulation step
                 success, new_time = self.andes.run_step()
