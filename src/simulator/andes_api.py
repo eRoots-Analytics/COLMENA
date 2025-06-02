@@ -55,28 +55,6 @@ def load_simulation():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
-# @app.route('/init_tds', methods=['POST'])
-# def init_tds():
-#     global system
-#     global tds
-
-#     if system is None:
-#         return jsonify({"error": "System not loaded."}), 400
-
-#     try:
-#         # Initialize Time-Domain-Simulation
-#         tds = TDS(system)
-#         tds.config.fixt = 1
-#         tds.config.shrinkt = 0
-#         tds.config.tstep = Config.tstep
-#         tds.config.tf = Config.tf
-#         tds.t = 0.0
-#         tds.init()
-
-#         return jsonify({"message": "TDS initialized", "start_time": tds.t}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-    
 @app.route('/run_step', methods=['POST'])
 def run_step():
     global tds

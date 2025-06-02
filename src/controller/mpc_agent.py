@@ -65,8 +65,7 @@ class MPCAgent:
         self.model.fn =              pyo.Param(initialize=self.fn_coi)
         self.model.Pd =              pyo.Param(self.model.TimeHorizon, initialize=self.Pd)
         self.model.b =               pyo.Param(self.model.other_areas, initialize=self.b_areas)
-        self.model.Sn =              pyo.Param(self.model.generators, initialize=self.Pe_base) #NOTE: useless because we don't consider generators individually
-
+ 
         # Params: tuning cost function
         self.model.q =               pyo.Param(initialize=self.q, mutable=True)
         self.model.rho =             pyo.Param(initialize=self.rho, mutable=True)
@@ -82,10 +81,10 @@ class MPCAgent:
             gen_bus = self.gen_location[i]
             if gen_bus in self.PV_bus:
                 j = self.PV_bus.index(gen_bus)
-                return (self.pmin_pv[j], self.pmax_pv[j] + 0.2)
+                return (self.pmin_pv[j], self.pmax_pv[j] + 0.2) #
             elif gen_bus in self.slack_bus:
                 j = self.slack_bus.index(gen_bus)
-                return (self.pmin_slack[j], self.pmax_slack[j] + 0.2)
+                return (self.pmin_slack[j], self.pmax_slack[j] + 0.2)#
             
         self.model.freq =            pyo.Var(self.model.TimeHorizon, bounds=(0.85, 1.15))
         self.model.P =               pyo.Var(self.model.TimeHorizon)
@@ -131,11 +130,11 @@ class MPCAgent:
 
         ### Cost ###
         def _freq_cost(model):
-            return model.q * sum((model.freq[t] - 1)**2 for t in model.TimeHorizon)
+            return model.q * sum((model.freq[t] - self.freq_ref)**2 for t in model.TimeHorizon)
 
         def _lagrangian_term(model):
             return sum(
-                model.dual_vars[self.area, nbr, t] * (model.theta[t] - model.variables_horizon_values[self.area, nbr, t]) +  # NOTE: model.variables_horizon_values[self.area, nbr, t] is actually useless as well as self.area
+                model.dual_vars[self.area, nbr, t] * (model.theta[t] - model.variables_horizon_values[self.area, nbr, t]) +        # NOTE: model.variables_horizon_values[self.area, nbr, t] is actually useless as well as self.area
                 model.dual_vars[nbr, self.area, t] * (model.variables_horizon_values[nbr, nbr, t] - model.theta_areas[nbr, t])     # NOTE: model.variables_horizon_values[nbr, nbr, t] is actually useless as well as self.area
                 for nbr in model.other_areas for t in model.TimeHorizon
                 )
@@ -148,9 +147,9 @@ class MPCAgent:
             ) 
         
         # Define expressions for each cost component such that it is possible to extract the values
-        self.model.freq_cost =          pyo.Expression(rule=_freq_cost)
-        self.model.lagrangian_term =    pyo.Expression(rule=_lagrangian_term)
-        self.model.convex_term =        pyo.Expression(rule=_convex_term)
+        self.model.freq_cost =       pyo.Expression(rule=_freq_cost)
+        self.model.lagrangian_term = pyo.Expression(rule=_lagrangian_term)
+        self.model.convex_term =     pyo.Expression(rule=_convex_term)
 
         # Define the total objective using these expressions
         self.model.cost = pyo.Objective(expr=self.model.freq_cost + self.model.lagrangian_term + self.model.convex_term, sense=pyo.minimize)
@@ -162,13 +161,13 @@ class MPCAgent:
         Get the all the parameters of the area from Andes.
         """
         # List of devices 
-        self.generators = self.andes.get_area_variable("GENROU", "idx", self.area)
-        self.loads = self.andes.get_area_variable("PQ", "idx", self.area)
-        self.areas = self.andes.get_complete_variable("Area", "idx")
-        self.buses = self.andes.get_area_variable("Bus", "idx", self.area)
-        self.PV_bus = self.andes.get_area_variable("PV", "bus", self.area)
+        self.generators =    self.andes.get_area_variable("GENROU", "idx", self.area)
+        self.loads =         self.andes.get_area_variable("PQ", "idx", self.area)
+        self.areas =         self.andes.get_complete_variable("Area", "idx")
+        self.buses =         self.andes.get_area_variable("Bus", "idx", self.area)
+        self.PV_bus =        self.andes.get_area_variable("PV", "bus", self.area)
         self.generator_bus = self.andes.get_area_variable("GENROU", "bus", self.area)
-        self.slack_bus = self.andes.get_complete_variable("Slack", "bus", self.area)
+        self.slack_bus =     self.andes.get_complete_variable("Slack", "bus", self.area)
 
         self.gen_location = {gen: self.generator_bus[i] for i, gen in enumerate(self.generators)} #NOTE: necessary?
         self.bus2idgen = {self.generator_bus[i]: gen for i, gen in enumerate(self.generators)} #NOTE: necessary?
@@ -178,7 +177,7 @@ class MPCAgent:
 
         # Synchronous generator paramters 
         self.Sn_values = self.andes.get_partial_variable("GENROU", "Sn", self.generators)
-        self.Pe_values = self.andes.get_partial_variable("GENROU", "Pe", self.generators) #NOTE: not a constant
+        self.Pe_values = self.andes.get_partial_variable("GENROU", "Pe", self.generators)
         self.M_values =  self.andes.get_partial_variable("GENROU", "M", self.generators)
         self.D_values =  self.andes.get_partial_variable("GENROU", "D", self.generators)
         self.fn_values = self.andes.get_partial_variable("GENROU", "fn", self.generators)
@@ -203,17 +202,18 @@ class MPCAgent:
         self.Pd = 0.0
         self.D_coi = 0.0
         self.fn_coi = 0.0  
-        self.P_demand = 0.0
+
+        for i, bus in enumerate(self.loads):
+            if bus in self.buses:
+                self.Pd += self.p0_values[i]
 
         for i, bus in enumerate(self.generator_bus):
             if bus in self.buses:
                 Sn = self.Sn_values[i]
                 self.S_area += Sn
                 self.M_coi += self.M_values[i]
-                self.Pd += self.p0_values[i] #NOTE: not a constant. What's the meaning?
                 self.D_coi += Sn * self.D_values[i]
                 self.fn_coi += Sn * self.fn_values[i]
-                self.P_demand += self.Pe_values[i] #NOTE: not a constant. What's the meaning?
 
         if self.S_area > 0:
             self.D_coi /= self.S_area
