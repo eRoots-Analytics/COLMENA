@@ -15,7 +15,7 @@ class Config:
 
     # MPC
     # Status 
-    controlled = False
+    controlled = True
     # Horizon
     dt = tstep
     K = 30
