@@ -3,7 +3,7 @@ import subprocess
 import time
 
 pre_command = 'source /home/pablo/myenv/bin/activate'
-script_name = "mpc_with_ipopt"
+script_name = "data_test"
 build_command = {
         "cmd": "/home/pablo/myenv/bin/python -m colmena_build "
                f"--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/{script_name}.py' "
@@ -26,10 +26,10 @@ agent_command= {
         'is_agent': True,
     }
 
-agents = [{'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_a'},
-          {'hardware':'TRANSFORMER', 'strategy':'LAZY', 'agent_name':'device_b'}, 
-          {'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_c'}, 
-          {'hardware':'GENERATOR', 'strategy':'LAZY', 'agent_name':'device_d'}] 
+agents = [{'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'device_a'},
+          {'hardware':'TRANSFORMER', 'strategy':'EAGER', 'agent_name':'device_b'}, 
+          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'device_c'}, 
+          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'device_d'}] 
 
 mpc_agents = True
 if mpc_agents:

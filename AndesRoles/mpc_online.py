@@ -11,8 +11,8 @@ import pyomo
 
 #Service to deploy a one layer control
 
-url = 'http://192.168.68.71:5000' + "/print_app"
-andes_url = 'http://192.168.68.71:5000'
+url = 'http://192.168.68.74:5000' + "/print_app"
+andes_url = 'http://192.168.68.74:5000'
 
 from pyomo.core.expr.visitor import identify_variables
 from pyomo.environ import value, Constraint
@@ -182,7 +182,11 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     fn_values = responseAndes.json()['value']
     responseAndes = requests.get(andes_url + '/complete_variable_sync', params={'model':'PV', 'var':'p0'})
     p0_values = responseAndes.json()['value']
-
+    responseAndes = requests.post(andes_url + '/area_variable_sync', json={'model':'PQ', 'var':'p0', 'area':self.area})
+    PQ_values = responseAndes.json()['value']
+    for i, bus in enumerate(PQ_values):
+        p0 = PQ_values[i]
+        P_demand += p0   
     #We compute the Center of Inertia and other values using the previous parameters
     for i, bus in enumerate(generator_bus):
         if bus in buses:
@@ -197,7 +201,6 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
             M_coi += M
             D_coi += Sn*D
             fn_coi += Sn*fn
-            P_demand += p0
             S_base.append(Sn)
     M_coi = M_coi
     D_coi = D_coi/S_area
@@ -264,9 +267,11 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     b_areas = requests.get(andes_url + '/system_susceptance', params={'area':self.area}).json()
     b_areas = {int(k): v for k, v in b_areas.items()}
     delta_previous = {t:0 for t in model.TimeHorizon}
+    delta_areas_previous = delta_areas_previous = {(area, t): 0.0 for area in model.other_areas for t in model.TimeHorizon}
     model.Pd = pyo.Param(model.TimeHorizon, initialize = P_demand)
     model.b = pyo.Param(model.other_areas, initialize = b_areas)
     model.delta_previous = pyo.Param(model.TimeHorizon, initialize= delta_previous, mutable = True)
+    model.delta_areas_previous = pyo.Param(model.other_areas, model.TimeHorizon, initialize= delta_areas_previous, mutable = True)
     model.state_horizon_values = pyo.Param(model.areas, model.areas, model.TimeHorizon, initialize = self.state_horizon_values, mutable=True)
 
     #We define the initial conditions:
@@ -326,7 +331,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     #C2: the current frequency angle derivative
     #C3: the generator maximum ramp up
     #C4: the generator minimum ramp up
-    self.ramp_up = 0.2
+    self.ramp_up = 0.0
     model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.delta[t+1] - model.delta[t])==  self.dt*2*np.pi*fn*(model.freq[t]-1))
     model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.M*model.fn*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t])))
     model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
@@ -383,7 +388,8 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     def damping_term(model):
         a = 0
         a += sum((model.delta[t] - model.delta_previous[t])**2  for t in model.TimeHorizon)
-        return 60*a
+        a += sum( sum((model.delta_areas[i,t] - model.delta_areas_previous[i, t])**2 for i in model.other_areas) for t in model.TimeHorizon)
+        return 120*a
     def terminal_cost(model):
         a = 0
         a += self.T*(model.freq[self.T]-1)**2
@@ -394,7 +400,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         return 1*a 
     def frequency_normalizer(model):
         a = 0
-        a += 100*sum((model.freq[t+1] - model.freq[t])**2 for t in model.TimeDynamics)
+        a += 3e3*sum((model.freq[t+1] - model.freq[t])**2 for t in model.TimeDynamics)
         return a
     model.cost = pyo.Objective(rule=lambda model: 1*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
                                + penalty_term(model) + 1*damping_term(model) + 0*terminal_cost(model) + frequency_normalizer(model), sense=pyo.minimize)
@@ -413,7 +419,7 @@ class mpc_agent:
         responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
         self.device_dict = responseAndes.json()
         self.t_start = time.time()
-        self.T = 15             #number of timesteps when performing the MPC
+        self.T = 10            #number of timesteps when performing the MPC
         
         self.areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         self.other_areas = [i for i in self.areas if i != self.area]
@@ -459,8 +465,8 @@ class mpc_agent:
 
     def warm_start(self):
         for t in self.model.TimeHorizon:
-            
             for area in self.model.other_areas:
+                self.model.delta_areas_previous[area, t].value = self.model.delta_areas[area,t].value
                 if t != 0:
                     self.model.delta_areas[area, t].value = self.state_horizon_values[area, area, t]
                     self.model.delta[t].value = self.state_horizon_values[area, self.area, t]
@@ -745,7 +751,7 @@ def online_mpc():
     return converged, andes_role_changes, mpc_problem
 
 andes_url = 'http://192.168.10.137:5000'
-andes_url = 'http://192.168.68.71:5000'
+andes_url = 'http://192.168.68.74:5000'
 
 responseLoad = requests.post(andes_url + '/start_simulation')
 delta_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'GENROU', 'var':'delta'}).json()['value']

@@ -1,0 +1,123 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{grid:ieee39}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
+           family={Athay},
+           familyi={A\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=06144b0a243aed86518ed65c6c1e8439}{%
+           family={Podmore},
+           familyi={P\bibinitperiod},
+           given={Roger},
+           giveni={R\bibinitperiod}}}%
+        {{hash=12147c3a32ea087e5568b6b6eef97ae8}{%
+           family={Virmani},
+           familyi={V\bibinitperiod},
+           given={Stephen},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
+      \strng{fullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{fullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{bibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authorbibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authornamehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
+      \strng{authorfullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authorfullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
+      \field{title}{A practical method for the direct analysis of transient stability}
+      \field{volume}{PAS-98}
+      \field{year}{1979}
+    \endentry
+    \entry{grids:models}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=ecec65b415b19b3621e8d452315cd17f}{%
+           family={Cui},
+           familyi={C\bibinitperiod},
+           given={Hantao},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{fullhash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{fullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{bibnamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorbibnamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authornamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorfullhash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorfullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://docs.andes.app/en/latest/modelref.html}}
+      \field{title}{Andes, Model References}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://docs.andes.app/en/latest/modelref.html
+      \endverb
+      \verb{url}
+      \verb https://docs.andes.app/en/latest/modelref.html
+      \endverb
+    \endentry
+    \entry{repo:colmenaeroots}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=74a7cbe732a920845d1f4a25588b490b}{%
+           family={Analytics},
+           familyi={A\bibinitperiod},
+           prefix={eRoots},
+           prefixi={e\bibinitperiod}}}%
+      }
+      \strng{namehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{fullhash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{fullhashraw}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{bibnamehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authorbibnamehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authornamehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authorfullhash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authorfullhashraw}{74a7cbe732a920845d1f4a25588b490b}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/eRoots-Analytics/COLMENA}}
+      \field{note}{Accessed: 2025-06-03}
+      \field{title}{COLMENA: Decentralized Control Framework for Power Grids}
+      \field{year}{2024}
+    \endentry
+  \enddatalist
+  \missing{grids:ieee39}
+\endrefsection
+\endinput
+

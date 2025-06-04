@@ -278,7 +278,6 @@ def system_susceptance():
                 line_uid = system.Line.idx2uid(line)
                 connection_status = system.Line.u.v[line_uid]
                 xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
                 bi += (1/xi)*connection_status
                 print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
@@ -301,6 +300,7 @@ def delta_equivalent():
         connecting_lines = {}
         connecting_susceptance = {}
         delta_equivalent = {}
+
         for x_area in other_areas:
             connecting_lines[x_area] = []
 
@@ -323,14 +323,12 @@ def delta_equivalent():
                 line_uid = system.Line.idx2uid(line)
                 connection_status = system.Line.u.v[line_uid]
                 xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
                 bi += (1/xi)*connection_status
                 print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
         
         for x_area, lines in connecting_lines.items():
             p_exchanged = 0
-            p_exchanged_other = 0
             for line in lines:
                 i = system.Line.idx2uid(line)
                 bus1 = system.Line.bus1.v[i]
@@ -358,8 +356,37 @@ def delta_equivalent():
             else:
                 delta_equivalent[int(x_area)] = 0
         
+        p_gen = 0
+        d_omega = 0
+        d_M_omega = 0
+        for i, gen_idx in enumerate(system.GENROU.idx.v):
+            bus_idx = system.GENROU.bus.v[i]
+            bus_uid = system.Bus.idx2uid(bus_idx) 
+            bus_area = system.Bus.area.v[bus_uid]
+            if bus_area == area:
+                p_gen += system.GENROU.tm.v[i]
+                d_M_omega += system.GENROU.M.v[i]*(system.GENROU.omega.e[i])
+                d_omega += (system.GENROU.omega.e[i])
+        p_demand = 0
+        for i, gen_idx in enumerate(system.PQ.idx.v):
+            bus_idx = system.PQ.bus.v[i]
+            bus_uid = system.Bus.idx2uid(bus_idx) 
+            bus_area = system.Bus.area.v[bus_uid]
+            if bus_area == area:
+                p_demand -= system.PQ.p0.v[i]
+        p_losses = 0*d_M_omega - p_exchanged - p_demand - p_gen
         result = {}
         result['value'] = delta_equivalent
+        result['losses'] = p_losses
+
+        verbose = True
+        if verbose:
+            print(f"d_omega are {d_omega}")
+            print(f"d_M_omega are {d_M_omega}")
+            print(f"p_exchanged are {p_exchanged}")
+            print(f"p_demand are {p_demand}")
+            print(f"p_gen are {p_gen}")
+            print(f"losses are {p_losses}")
         return jsonify(result), 200
     except Exception as e:
         traceback.print_exc()
@@ -405,12 +432,16 @@ def delta_equivalent_balanced():
         
             P_balance = 0
             p_gen = 0
+            d_M_omega = 0
+            d_omega = 0
             for i, gen_idx in enumerate(system.GENROU.idx.v):
                 bus_idx = system.GENROU.bus.v[i]
                 bus_uid = system.Bus.idx2uid(bus_idx) 
                 bus_area = system.Bus.area.v[bus_uid]
                 if bus_area == area:
                     p_gen += system.GENROU.tm.v[i]
+                    d_M_omega += system.GENROU.M.v[i]*(system.GENROU.omega.e[i])
+                    d_omega += (system.GENROU.omega.e[i])
             P_balance += p_gen
 
             p_demand = 0
@@ -421,13 +452,14 @@ def delta_equivalent_balanced():
                 if bus_area == area:
                     p_demand -= system.PQ.p0.v[i]
             P_balance += p_demand
-
+            
             #This works if there are only 2 areas if not we have to solve a linear system
             if connecting_susceptance[int(x_area)] != 0:
-                delta_equivalent[int(x_area)] = P_balance/connecting_susceptance[int(x_area)]
+                delta_equivalent[int(x_area)] = -P_balance/connecting_susceptance[int(x_area)]
             else:
                 delta_equivalent[int(x_area)] = 0
-        
+
+            p_losses = d_M_omega + p_demand - p_gen 
         result = {}
         result['value'] = delta_equivalent
         return jsonify(result), 200
@@ -814,7 +846,6 @@ def set_last_control_time():
 @app.route('/run_stopping_time', methods=['GET'])
 def run_stopping_time():
     global set_points
-    
     try:
         print(f"Running Simulation 1")
         set_points = []
@@ -822,8 +853,8 @@ def run_stopping_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            #set_points += [{'model':'Line', 'idx':'Line_19', 't':8, 'param':'u', 'value':0, 'add':False}]
-            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+            set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
             time.sleep(0.2)

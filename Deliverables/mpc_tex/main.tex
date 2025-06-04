@@ -16,6 +16,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage{comment}
 \usepackage{float}
 % \usetikzlibrary{shapes, arrows, positioning}
 % \lstset{ 
@@ -59,91 +60,416 @@
 \setlength{\parskip}{1em} 
 \begin{document}
 \maketitle
+\section{Introduction}
 
-\section{MPC Formulation}
-The decision variables are:
+COLMENA aims to enable decentralized decision-making by coordinating autonomous agents that perform specific roles. Each agent can execute specific roles to change the system and operate based on local measurements and predictions. This project uses COLMENA to deploy a multi agent control system in where each agent is responsible for the control of a specific area. The different agents use the tools available through COLMENA to ensure proper coordination for completing the goal of controlling the frequency throughout the grid.
+
+Distributed Model Predictive Control (MPC) is a particularly well-suited control strategy in this context. MPC anticipates future states and disturbances, optimizes control actions over a prediction horizon, and incorporates constraints in a clear manner. When implemented in a distributed fashion through COLMENA, each agent can locally solve an MPC problem to manage its area, while coordinating with neighboring agents to respect power flow constraints and system-wide objectives.
+
+This report will first explain the physical models and equations used to build the MPC, we will then explain the optimisation background used for to implement the Distributed MPC, and finally we will use the MPC control in the grid \cite{grid:ieee39} in ANDES to showcase its capability for frequency control.
+
+\section{Modeling}
+
+Accurate modeling of the frequency and angle dynamics of each area is fundamental to the design and implementation of distributed control strategies in power systems. These dynamic variables capture how each area responds to generation-demand imbalances and how it interacts electrically with neighboring regions through phase angle differences. By understanding these behaviors, the proposed MPC can anticipate future states and choose the appropriate controls actions.
+
+\subsection*{Grid dynamics}
+
+In the proposed framework, each electrical area is represented using two states values:
+
 \begin{itemize}
-    \item $f_t$ the area's frequency.
-    \item $\delta_{i,t}$ the angle of area i.
-    \item $P^{\text{gen}_i}_t$ the generator's i power output in pu.
-    \item $P^{i,j}_t$ the power exchanged between area i and area j in pu.
+    \item \textbf{Frequency} $f_i(t)$: the local frequency of area $i$, which reflects the balance between generation and consumption.
+    \item \textbf{Phase Angle} $\delta_i(t)$: the relative voltage phase angle of area $i$ with respect to the reference area, governing power exchanges with neighboring areas.
 \end{itemize}
 
-The parameters are:
+This abstraction treats each area as a coherent group of generators and loads that tend to oscillate together in response to disturbances. It enables scalable distributed control by reducing the system's dimensionality.
+
+The frequency evolution in each area is governed by a version of the swing equation:
+
+\begin{equation}
+    M_i \frac{df_i(t)}{dt} = -D_i(f_i(t) - f_0) + \sum_{k \in \text{Area}_i} P^{\text{gen}_k}_{t} - \sum_{j \in \mathcal{N}_i} P^{i,j}_t - P^{\text{demand}}_i(t)
+\end{equation}
+
+where:
 \begin{itemize}
-    \item $B_{i,j}$ the susceptance between area i and area j in p.u.
-    \item $\hat{\delta}_{i,j,t}$ is the previous optimal solution of the MPC of area i for the area angles $\delta_{j,t}^*$.
-    \item $\hat{\delta}_{i,0}$ the initial value of the area i in radians.
-    \item $\hat{f_{0}}$ the current area initial frequency value.
-    \item $u^{min}_{gen_i}, u^{max}_{gen_i}$ the minimum and maximum ramp up speed of generator i in pu/s.
-    \item $M_i$ the area wise inertia constant defined as $\frac{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}M_{gen_k}}{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}}$ 
-    \item $D_i$ the area wise damping coefficient defined as $\frac{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}D_{gen_k}}{\sum_{gen_k \in AreaGenerators} Sn^{gen_k}}$ 
+    \item $M_i$ is the aggregated inertia of area $i$,
+    \item $D_i$ is the damping coefficient of area $i$,
+    \item $f_0$ is the nominal frequency (e.g., 50 or 60 Hz),
+    \item $P^{\text{gen}_k}_t$ is the generation in area $i$,
+    \item $P^{i,j}_t$ is the power exchanged from $i$ to area $j$.
 \end{itemize}
 
+The relative angle $\delta_i(t)$ accumulates the frequency deviation with the reference area over time:
+\begin{equation}
+    \frac{d\delta_i(t)}{dt} = 2\pi(f_i(t) - f_0)
+\end{equation}
 
-The dynamics of the MPC model can be expressed as the following differential equations:
+This relation ensures that the angle reflects the integral of frequency deviation, which is crucial for tracking system phase shifts over time. 
+
+
+In this formulation, we use the DC power flow approximation to model the active power exchange between areas. This approach is widely accepted in high-voltage transmission system analysis due to its simplicity and relatively high accuracy under typical operating conditions. The approximation is based on the following assumptions:
+
+\begin{itemize}
+    \item Voltage magnitudes are close to their nominal values and are considered constant.
+    \item Angle differences between buses are small enough that $\sin(\delta_i - \delta_j) \approx \delta_i - \delta_j$.
+    \item Line resistance is negligible compared to reactance, so power losses are ignored.
+\end{itemize}
+
+Under these assumptions, the active power flow from area $i$ to area $j$ can be approximated by, this shows that active power flows are driven by angle differences and line susceptance $B_{i,j}$.:
+\begin{equation}
+    P^{i,j}_t = B_{i,j}(\delta_i(t) - \delta_j(t))
+\end{equation}
+where $B_{i,j}$ represents the total susceptance between the two areas. This is calculated as the sum of the susceptances of all transmission lines directly connecting buses in area $i$ to buses in area $j$:
+
+\begin{equation}
+    B_{i,j} = \sum_{\text{line i connects area i to area j}} b_{\text{line i}}
+\end{equation}
+
+This aggregation allows us to ignore the specific topologies of the areas during inter-area coordination, while still capturing the essential physics of power exchange via angle differences. It also reduces computational complexity, which is critical for scalable distributed optimisation.
+
+\subsection*{Grid Controls}
+
+We build a multi-agent system where each agent is responsible for the control of a defined electrical area. Each area comprises several buses, generators, and loads, and interacts with other areas through lines. The objective of the agent is to maintain frequency stability by coordinating with neighboring agents through the sharing of information. 
+
+Each agent is equipped with the capability to perform multiple control functions within its domain, depending on the system design and available actuators. These actions may include:
+\begin{itemize}
+    \item \textbf{Power generation control}: adjusting generator outputs to balance load and maintain frequency.
+    \item \textbf{Load shedding strategies}: curtailing controllable loads during contingencies to stabilize frequency.
+    \item \textbf{Battery or storage management}: charging or discharging storage systems to buffer fluctuations in net demand or generation.
+    \item \textbf{Reactive power or voltage support}: engaging voltage control mechanisms to assist in voltage regulation, if needed.
+\end{itemize}
+
+In the broader COLMENA framework, agents could also be capable of activating other roles local roles, provided that the dynamics and interactions of those roles are explicitly defined and known by the agent.
+
+In this first implementation, we focus on a simplified setting where each agent directly controls the ramp of generator power outputs within its area. Specifically, the control vector \( u_i \) for agent \( i \) is defined as the difference in power output between two consecutive time steps:
+
+\begin{equation}
+    u_i(t) = P^{\text{gen}}_i(t+1) - P^{\text{gen}}_i(t) \in \mathbb{R}^{n_{g,i}}
+\end{equation}
+
+where \( P^{\text{gen}}_i(t) \) is the vector of generator power outputs at time \( t \), and \( n_{g,i} \) is the number of controllable generators in area \( i \).
+
+The control inputs are subject to ramp-rate constraints that limit how fast the generators can increase or decrease their output:
+
+\begin{equation}
+    u^{\min}_{k} \leq u_{i,k}(t)  \Delta  t \leq u^{\max}_{k} \quad \forall k \in \{1, \dots, n_{g,i}\}, \forall t
+\end{equation}
+
+where \( u^{\min}_{k} \) and \( u^{\max}_{k} \) are the ramp-down and ramp-up limits (in pu/s) for generator \( k \). 
+
+\section{Mathematical Formulation}
+
+A Model Predictive Control (MPC) is a control strategy that solves an optimisation problem at each time step to determine the best sequence of control actions over a finite future time horizon. The fundamental idea is to use a dynamic model of the system to predict its future behavior and to compute the control inputs that minimize a given cost function while satisfying physical and operational constraints.
+
+\begin{comment}
+At every time step, MPC performs the following steps:
+\begin{enumerate}
+\item Measure or estimate the current state of the system.
+\item Solve an optimization problem over a prediction horizon $T$, minimizing a cost function (e.g., deviation from desired trajectories, energy usage, or frequency deviation).
+\item Apply only the first control input from the optimal sequence.
+\item Move forward one time step and repeat the process using updated state information.
+\end{enumerate}
+\end{comment}
+
+\subsection{Centralized Global Problem}
+
+In a distributed formulation of a power system, each area $i$ tracks its own frequency $f_{i,t}$. Although control inputs are applied locally, the physical coupling between areas means that the frequency of area $i$ is influenced by the overall system state, including the states of neighboring areas.
+
+In this formulation, we express the local frequency $f_{i,t}$ as a function of the full system state vector at time $t$, denoted $x_t = \{ \delta_{j,t}, f_{j,t} \}_{j=1}^{N}$.
+
+\textbf{State Variables:}
+\begin{itemize}
+    \item $x_t$: The global state vector at time $t$, including:
+    \begin{itemize}
+        \item $\delta_{j,t}$: Voltage angle of area $j$
+        \item $f_{j,t}$: Frequency of area $j$
+    \end{itemize}
+\end{itemize}
+
+\textbf{Local Frequency Dynamics:}
+
+The frequency update in area $i$ can now be written as:
+\begin{equation}
+    f_{i,t+1} = f_{i,t}(x_t)
+\end{equation}
+
+More explicitly, using the physical model:
+\begin{align}
+    f_{i,t+1} &= f_{i,t} + \frac{\Delta t}{M_i} \Big[ -D_i(f_{i,t} - f_0) + \sum_{k \in \mathcal{G}_i} P^{\text{gen}_k}_t - P^{\text{demand}}_{i,t} + \sum_{j \in \mathcal{N}_i} B_{j,i}(\delta_{j,t} - \delta_{i,t}) \Big] \\
+    &=: f_{i,t}(x_t)
+\end{align}
+
+This shows that $f_{i,t+1}$ depends not only on $f_{i,t}$ and $\delta_{i,t}$ (local state), but also on $\delta_{j,t}$ for $j \in \mathcal{N}_i$ (neighboring states). Hence, local frequency regulation depends on the evolution of the entire system state.
+
+\textbf{Angle Dynamics:}
+\begin{equation}
+    \delta_{i,t+1} = \delta_{i,t} + 2\pi \Delta t (f_{i,t} - f_0)
+\end{equation}
+
+\textbf{Global Optimization Problem:}
+
+The global frequency control is equivalent to the following optimal control problem:
+\begin{equation}
+\min_{\{u_{i,t}\}} \quad \sum_i^N \sum_{t=0}^{T} \left( f_{i,t}(x_t) - f_0 \right)^2
+\end{equation}
+
+Subject to:
+\begin{align}
+    \delta_{i,t+1} &= \delta_{i,t} + 2\pi \Delta t (f_{i,t}(x_t) - f_0) \\
+    x_{t+1} &= \text{State transition function dependent on controls and dynamics} \\
+    u^{\min}_k &\leq u_{i,t}^{(k)} \leq u^{\max}_k \\
+    u^{\min}_k &\leq u_{i,t+1}^{(k)} - u_{i,t}^{(k)} \leq u^{\max}_k
+\end{align}
+
+Where we have $u_{i,t} \in \mathbb{R}^{N \times T}$ the set of control variables. From these formulations we introduce the local state for area i, $x_{i,t}$. The variable is defined as the set of local state variables of area $i$ and the state variables of the neighboring areas.
+\[
+x_{i,t} = \left( \delta_{i,t},\ f_{i,t},\ \{ \delta_{j,t} \}_{j \in \mathcal{N}_i} \right)
+\] 
+
+With this we can redefine the global problem as follows:
 
 \begin{align}
-    \dot{\delta}_i &= 2 \pi (f_t - f_0) \quad  \forall t = 0, \dots, T\\
-    M(\dot{f}) &= -D(f-f_0) + \sum_{gen \in area} P^{gen}_t +\sum_{j \in \text{other area}}P_{i,j} - P^{demand}_t 
-\end{align}
-The MPC formulation for area $i$ is.
-\begin{align}
-    \min_{f_{t}, \delta_{i,t}, P^{gen}_{t}, P^{i,j}_t} \quad 
-    & \|f - f_0\|^2 
-    + \sum_{j \in \text{NeighboringAreas}} \lambda_{j, i, t} (\delta_{j,t} - \hat{\delta}_{i,j,t}) \cdot \text{sign}(i-j) \\
-    & + \sum_{j \in \text{NeighboringAreas}} \lambda_{i,j,t} (\delta_{i,t} - \hat{\delta}_{j,i,t}) \cdot \text{sign}(j-i) \nonumber \\
-    & + \sum_{j \in \text{NeighboringAreas}} (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \nonumber \\
-    \text{s.t.} \quad 
-    & \delta_{t+1} -\delta_{t} = 2 \Delta t \pi (f_t - f_0) \quad \forall t = 0, \dots, T \\
-    & M(f_{t+1} - f_t) = -\Delta t \left(D(f-f_0) + \sum_{\text{gen} \in \text{area}} P^{gen}_t + \sum_{j \in \text{other area}} P_{i,j} - P^{demand}_t \right) \\
-    & \delta_{j,0} = \hat{\delta}_{j,0}  \forall j \in \text{Areas}\\
-    & f_0 = \hat{f}_0 \\
-    & P_{i,j} = \sum_{j \in \text{Areas}} B_{i,j}(\delta_{i,t} - \delta_{j,t}) \\
-    & u_{\min} \leq P^{gen_k }_{t+1} - P^{gen_k }_{t} \leq u_{\max} \quad \forall gen_k \in AreaGenerators \forall t = 0,...,T-1\\
-    & P^{gen_k}_{\min} \leq P^{gen}_{i, t} \leq P^{gen_k}_{\max} \quad \forall gen_k \in AreaGenerators
+\min_{\{u_{i,t}\}} \quad & \sum_{i=1}^{N} \sum_{t=0}^{T} \left( f_{i,t}(x_{i,t}) - f_0 \right)^2 \label{eq:decentralized_obj} \\
+\text{s.t.} \quad & x_{i,t} = x_{j,t}, \quad \forall (i,j) \text{ areas s.t. } B_{i,j} \neq 0,\ \forall t \label{eq:coupling_constraint}
 \end{align}
 
-Where we have that this expression is the cost in the objective function associated to the error of the agent's data about other agents angles,
-\begin{equation}
-    \sum_{j \in NeighboringAreas}\lambda_{j, i, t}(\delta_{j,t} - \hat{\delta}_{i,j,t})(sign(i-j))
-\end{equation} 
-whereas this other expression is the error of the other agent's data tells about the value they have.
-\begin{equation}
-    \sum_{j \in NeighboringAreas}\lambda_{i,j,t}(\delta_{i,t} - \hat{\delta}_{j,i,t})(sign(j-i))
-\end{equation} 
+In this formulation, the objective function itself is unchanged only the dependencies of the frequency values $f_{i,t}$ changes to a function of the local state $x_{i,t}$. The key modeling change introduced here is the inclusion of a coupling constraint of the form $x_{i,t} = x_{j,t}$ for all connected pairs of areas $(i,j)$ and time $t$.
 
-The objective of the extended formulation is to expand the current problem where we consider the areas as a simple aggregation of devices to one where the topology inside each grid is also considered. For this purpose, we add new constraints related to the power balance in each individual bus and not just in the whole area.
+This constraint enforces that the local copies of shared state variables maintained by each agent (e.g., voltage angles or neighboring states) must agree with those of their neighbors. Although each agent $i$ solves its problem using its local state $x_{i,t}$, coordination is required so that all local views converge to a common global state.
+
+This structure enables the use of distributed optimization techniques, such as the Alternating Direction Method of Multipliers (ADMM), where each agent optimizes independently and the consistency across agents is enforced iteratively through dual variables and auxiliary updates.
+
+\subsection{Distributed MPC via ADMM}
+
+In order to enforce consistency across areas while allowing decentralized computation, we adopt the Alternating Direction Method of Multipliers (ADMM) to solve the distributed MPC problem. At each iteration, each agent $i$ solves a local optimal control problem over its prediction horizon. This problem incorporates local dynamics and objectives, along with augmented terms that enforce consensus on shared variables (e.g., voltage angles) with neighboring agents.
+
+The augmented Lagrangian $\mathcal{L}_i$ for agent $i$ combines the local objective with terms enforcing agreement on shared voltage angle variables $\delta_{i,t}$ with its neighbors. Here $\hat{\delta}_{i,j,t}$ is the copy of the variable $\delta{j,t}$ seen from the agent in area $i$. The dual variables $\lambda_{i,j,t}$ and $\lambda_{j,i,t}$ enforce the consensus constraints between agent $i$ and neighbor $j$. The penalty term weighted by $\rho$ further encourages agreement across shared variables through a quadratic penalty.
  
 \begin{align}
-    P^{gen}_{\text{bus}_i} - P^d_{\text{bus}_i} - \sum_{j \in area} P_{\text{bus}_i, \text{bus}_j}= 0 \quad \forall \text{bus}_i \in \text{Area}\\
-    P_{\text{bus}_i, \text{bus}_j} = B_{i,j}(\theta_{i}-\theta_{j})
+    \mathcal{L}_i = \sum_{t=0}^{T} (f_{i,t} - f_0)^2 &+ \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ \lambda_{i,j,t} (\delta_{i,t} - \hat{\delta}_{j,i,t}) + \lambda_{j,i,t} (\delta_{j,t} - \hat{\delta}_{i,j,t}) \right] \nonumber \\
+    &+ \frac{\rho}{2} \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ (\delta_{i,t} - \hat{\delta}_{j,i,t})^2 + (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \right]
 \end{align}
-\begin{algorithm}
-    \caption{Distributed MPC ADMM algorithm}
-    \label{algo:ADMM}
-    \begin{algorithmic}[1]
-        \State Initialize grid states $x$ to $x_0$ using Power Flow results.
-        \While{error $>$ tolerance}
-            \For{each agent in area\_agents}
-                \State Agent controlling area i
-                \State Get initial values $f_0^{\text{area}_i}$, $\delta_{\text{area}, 0} \quad \forall \text{agent}$ from other agents via \texttt{@Data(horizon)}
-                \State Get state horizon of the other $\hat{\delta}_{\text{area}, 0} \quad \forall \text{agent}$ from other agents via \texttt{@Data(horizon)}
-                \State Solve local area MPC
-                \State Publish state horizon solution $\delta_{\text{area}_i, t}^* \forall t=0...T$ to \texttt{@Data(horizon)}
-            \EndFor
-            \State $error \gets \delta_{i}^* - \hat{\delta_{i}}$
-            \State $\lambda_{i} \gets \lambda_{i} + \alpha \cdot error$
-        \EndWhile
-        \For{gen in generators}
-            \State Consider the area's MPC the generator belongs to.
-            \State Update generator power setpoint $P_{ref, gen} \gets (P^{g}_{gen, 0})^*$
+
+With this we can define a local subproblem for agent $i$. At each iteration of the ADMM algorithm agent i will solve minimizes the augmented Lagrangian with respect to its own local decision variable $\{u_{i,t}\}$ over the prediction horizon. The subproblem has the following expression:
+
+\begin{align}
+    \min_{\{u_{i,t}\}} \quad & \sum_{t=0}^{T} (f_{i,t} - f_0)^2 \nonumber \\
+    &+ \sum_{j \in \mathcal{N}_i} \left[ \lambda_{j,i,t}(\delta_{j,t} - \hat{\delta}_{i,j,t})  + \lambda_{j,i,t}(\hat{\delta_{j,t}} - \hat{\delta}_{i, j, t}) \cdot  \right] \nonumber \\
+    &+ \frac{\rho}{2} \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ (\delta_{i,t} - \hat{\delta}_{j,i,t})^2 + (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \right]
+\end{align}
+
+\textbf{Subject to the following local constraints:}
+\begin{align}
+    u^{\min}_k \leq P^{\text{gen}_k}_{t+1} - P^{\text{gen}_k}_t \leq u^{\max}_k \quad &\forall k \in \mathcal{G}_i,\ \forall t \\
+    P^{\text{gen}_k}_{\min} \leq P^{\text{gen}_k}_t \leq P^{\text{gen}_k}_{\max} \quad &\forall k \in \mathcal{G}_i,\ \forall t
+\end{align}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item The first term penalizes local frequency deviation over the prediction horizon.
+    \item The second term introduces dual variables $\lambda_{i,j,t}$ and $\lambda_{j,i,t}$ that enforce agreement between shared voltage angle variables $\delta_{i,t}$ and $\delta_{j,t}$ across neighboring agents.
+    \item $\hat{\delta}_{j,i,t}$ is the angle value received from neighbor $j$ during the previous iteration.
+    \item The last term is a quadratic penalty that reinforces consensus via the parameter $\rho$.
+\end{itemize}
+
+\subsection*{Local Problem Modifications}
+
+\paragraph{A. Damping Term} 
+We addan additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. 
+\[
+ \frac{\beta}{2} \|\delta_{i,t} - \delta_{i,t}^{k-1}\|^2 \quad \forall i,t
+\]
+where $\delta_{i,t}$ is the area's decision variable for the angle and  $\delta_{i,t}^{k-1}$ is its value in the previous iteration, and \( \beta > 0 \) is a damping coefficient. This modification biases the optimizer towards solutions close to the prior iteration, it stabilize convergence and avoids scillations in the horizon state.
+
+\paragraph{B. Adaptable \(\rho\)} 
+
+
+Instead of using a fixed penalty parameter \( \rho \), we adaptively adjust it based on the ratio of primal and dual residuals. This helps balance the convergence of both residuals and improves performance across different problem scales. The update rule is:
+\[
+\rho^{k+1} := 
+\begin{cases}
+\tau \rho^k & \text{if } \|r^k\| > \mu \|s^k\| \\
+\rho^k / \tau & \text{if } \|s^k\| > \mu \|r^k\| \\
+\rho^k & \text{otherwise}
+\end{cases}
+\]
+Here, \( r^k \) and \( s^k \) are the primal and dual residuals respectively, and \( \tau > 1 \), \( \mu > 5 \) are tuning parameters. The residuals in iteration $k$ are defined as follows:
+
+\[
+r_{j,i}^k := \delta{j,i}^k - \delta_j^k
+\]
+
+\[
+s_{j,i}^k := \rho \left( \delta_j^k - \delta_j^{k-1} \right)
+\]
+
+\paragraph{C. Cost Function Scaling} 
+In practice, the magnitudes of the objective terms across agents can differ significantly. Specially, when dealing with the frequency in per unit the cost function can be of the order of $10^{-6}$. This means that if the cost function is not properly scaled the penalty and lagrangian term override the capcity of the solver to converge. This results on reaching consensus easier but with suboptimal horizons. Thats we redefine the frequency cost as follows. In the simulation we use $\gamma = 10^9$.
+
+\begin{equation}
+    \gamma ||f_{i,t} - f_{nom}||_2^2
+\end{equation}
+
+This subproblem defines the core of the distributed MPC framework under ADMM. Each agent optimizes locally, exchanges information with its neighbors, and updates its variables based on the augmented Lagrangian terms, gradually driving the overall system toward a consensus-based optimal trajectory.
+\subsection{ADMM Algorithm}
+
+\begin{algorithm}[H]
+\caption{Distributed MPC via ADMM}
+\begin{algorithmic}[1]
+    \State Initialize states $x \gets x_0$ by getting the grid's actual state.
+    \While{consensus error $> \epsilon$}
+        \For{each agent $i$}
+            \State Receive $\hat{\delta}_{j,i,t}$ from neighbors $j \in \mathcal{N}_i$ the copies of the shared values in the neighboring agents.
+            \State Solve local MPC with updated dual and penalty terms.
+            \State Send $\delta^*_{i,j,t}$ to agent's $i$ neighbors. 
         \EndFor
-    \end{algorithmic}
+        \For{each pair $(i,j)$}
+            \State Update dual variables:
+            \[
+                \lambda_{i,j,t} \gets \lambda_{i,j,t} + \rho (\delta_{j,j,t} - \hat{\delta}_{i,j,t})
+            \]
+        \EndFor
+    \EndWhile
+\end{algorithmic}
 \end{algorithm}
 
-\subsection{Distributed MPC with role dynamics}
+This distributed MPC approach converges to the centralized solution while allowing each agent to optimize its control strategy independently and in parallel. The dual variables ensure consensus across shared variables, and ADMM iterations enforce global coordination. 
 
-\nocite{*}
+In the prototype we aim to implement an online implementation of this ADMM by solving the ADMM algorithm iteratively. In practice this means that each area solves its local optimization problem over a finite horizon and exchanges boundary variables  with neighboring areas. Once there is convergence, only the first control action of the optimal sequence is applied to the physical system. This includes updating the setpoints of generators for the next time step. The following algorithm illustrates how each generator applies the control update by computing the power ramp to be executed in the current time step:
+
+\begin{algorithm}
+\caption{Online Setpoint Update using ADMM}
+\begin{algorithmic}
+    \For{each generator $k$}
+        \State Apply control ramp: $u_k(t) = P^{\text{gen}_k}_{t+1} - P^{\text{gen}_k}_t$.
+        \State Send updated setpoint $P^{\text{gen}_k}_{t+1}$ to the generator's governor.
+    \EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\section{MPC Role Definition}
+
+In multi agent architectures and in the context of COLMENA a role is usually tied to a local behavior with a narrow task that is activated when a specific value or KPI is not respected. In this context, the Distributed MPC can be seen as a policy coordinating multiple roles as much a role. For this we propose two different solutions that limit the MPC to specific circumstances making it more akin to a proper role than a policy.
+
+\subsection{Frequency Area Response}
+
+In this configuration, the Distributed MPC is deployed as a reactive role rather than a permanent coordination policy. When frequency stability is unusual, indicated by the associated KPI being broken, COLMENA activates this role tasked with coordinating corrective actions within that area.
+
+The COLMENA framework can select the most computationally capable agent within the affected area to execute the distributed MPC coordination logic. This agent acts as the local coordinator, solving the area-wide optimal control problem while communicating with neighboring agents to respect tie-line interactions and boundary constraints. This structure means that a single agent by area is executing the frequency area response role.
+
+The role's objective is to minimize frequency deviations in the local area by adjusting controllable resources (e.g., generation controllable loads) over a prediction horizon. The optimization prioritizes frequency recovery while incorporating ramp limits and operational constraints.
+ 
+With this context although the distributed MPC involves system-wide coordination and may interact with multiple roles, it behaves as a role in this context because:
+\begin{itemize}
+    \item It is activated only in response to a specific condition (frequency instability).
+    \item It has a well-defined and limited objective: frequency stability.
+    \item Changing the objective function (e.g., minimizing cost instead of deviation) or time scale (e.g., minutes vs seconds) would create a role with a different objective, not simply a parameter change within a generic policy.
+\end{itemize}
+
+If instead of minimizing frequency deviation, the agent optimized for economic dispatch over a longer time scale (e.g., 10 minutes), the same underlying MPC engine would constitute a completely different role, such as a \texttt{CostOptimizationRole}. This highlights that roles are defined by their specific objectives, context, and triggers and not merely by the algorithm they run.
+
+Within COLMENA’s architecture, the distributed MPC can straddle the line between coordination mechanism and agent behavior, depending on how it is contextualized and activated. By bounding its scope through KPIs and objectives, it becomes operationally meaningful as a discrete role.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|p{4cm}|p{10cm}|}
+\hline
+\textbf{Aspect} & \textbf{Description} \\
+\hline
+\textbf{Role Name} & \texttt{FrequencyAreaResponseRole} \\
+\hline
+\textbf{Objective} & Minimize frequency deviation in the local area by optimally adjusting controllable resources over a prediction horizon. \\
+\hline
+\textbf{Activation Condition} & Triggered when the frequency KPI is violated, i.e., $|f_i - f_0| > \Delta f_{\text{max}}$ for any agent $i$ in the area. \\
+\hline
+\textbf{Scope} & Local to an area, with coordination across neighboring agents. \\
+\hline
+\textbf{Agent Requirement} & Computational Power, Specific Solver\\
+\hline
+\textbf{Time Scale} & Fast-acting (typically sub-minute) response to stabilize frequency\\
+\hline
+\textbf{Key Dependencies} & Access to local state measurements (frequency, generation), ramp-rate limits, and communication with neighboring agents. \\
+\hline
+\end{tabular}
+\caption{Summary of the \texttt{FrequencyAreaResponseRole}}
+\end{table}
+
+The following pseudocode describes the online control loop executed by each local agent in area $i$ when the distributed MPC role is activated.
+
+\begin{algorithm}[H]
+\caption{Local Agent $i$ — Online Distributed MPC}
+\begin{algorithmic}[1]
+\State \textbf{Initialization:} Obtain initial state $x_{i,0}$ and initialize dual variables and neighbor estimates.
+\While{Frequency KPI is broken}
+    \While{not converged and max iterations not reached}
+        \State Receive latest state estimates from neighbors $j \in \mathcal{N}_i$
+        \State Solve local MPC optimization problem over horizon $t \rightarrow t+T$
+        \State Exchange updated local state estimates with neighbors
+        \State Update dual variables (consensus step)
+    \EndWhile
+    \State Apply first control input $u_{i,t}$ to the system
+    \State Measure or estimate new local state $x_{i,t+1}$
+    \State Shift horizon and prepare for next step
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+\subsection*{Specific implementation}
+
+In this section we discuss how the different tools provided by COLMENA are used to set up the grid. Specifically, how the data and contexts decorators are used by the Distributed MPC role to be implemented in parallel. The parallel implementation is key to 
+
+\subsubsection*{Data Decorators}
+
+We define 2 Data Channels to share information between the different agents running the ADMM:
+
+\begin{itemize}
+    \item State Horizon Channel: Channel where the copies of all the coupled primal variables are stored, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
+    \item Dual Variables Channel: Channel where the dual variables are stored.
+    \item Iteration Channel: Channel where the agents shared their iteration in the MPC.
+\end{itemize}
+
+The different agents read these channels to get the values for the dual variables and the copies of the primal variables and then post their updates primal values.
+
+\subsubsection*{Contexts Decorators}
+
+The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific conmtexts when they belong to an area. For example, we could have contexts defined by the agents ID beforehand or, if we consider the initial prototype, if an agent is paired to an electrical device then the agent would belong to that area's context.
+
+We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For example, instead of the MPC including the dynamics of certain roles the MPC can set objectives that then other roles inside the area can react to. 
+
+\section{Case Study and Results}
+
+We consider the IEEE39 \cite{grids:ieee39} grid to perform multiple case studies and see how the COLMENA frameworks performs in controlling the frequency. The grid consists of 39 buses, 10 generators, 14 lines and others electrical devices responsible for the electrical control. The line is simulated in python using the open source package ANDES \cite{grids:models}. This grid is divided in two different areas of similar size, where each bus belongs to one area or the other. The setup is identical to the one explained in the previous deliverable: ANDES is set up as an app that simulates the grid in real time. This app is also set up to receive queries to from COLMENA on the state on the grid, akin to making measurement of specific metrics on the grid. And it can also change the parameters of the simulation similar to a role acting on the grid.
+
+
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/ieee2areas.png}
+    \caption{IEEE39 2 area diagram.}
+    \label{fig:ieee39_2areas}
+\end{figure}
+
+From the COLMENA side, we deploy multiple agents as docker containers deployed in a single computer. We deploy at two agents per area, where these agents can run both the Distributed MPC role and the roles presented in the previous deliverables (if they respect the requirements). In each area we deploy:
+
+\begin{itemize}
+    \item Agent 1: Agent with requirement ('generator', 'solver') 
+    \item Agent 2: Agent with requirement ('converter') 
+\end{itemize}
+
+On the simulation side, we start the simulation with a grid in steady state conditions. Then, we define a perturbation at $t=2s$ that consists in a line tripping. This perturbation provokes a change in frequency. We set up multiple scenarios with the objective of seeing how the different roles act in the grid to counteract this perturbation.
+
+\subsection{Results}
+
+\section{Milestone Analysis}
+
+\subsection*{Milestone 1}
+
+The final version of the prototype is now fully functional and has been successfully deployed. This version leverages the tools provided by Colmena to enable scalable, modular deployment of decentralized control algorithms. It has been extensively tested using multiple contingency scenarios, including generator outages, line outages and loads increases to validate the robustness of power converter responses under possible stress conditions. The response of the COLMENA control in these scenarios validates the capacity of the roles to respond to perturbations and restore the original frequency. The different testcases along with the prototype are available in the following online repository \cite{repo:colmenaeroots}.
+\subsection*{Milestone 2}
+
+The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations.
+
+\section{Future Work}
+
+
 \printbibliography
 \end{document}

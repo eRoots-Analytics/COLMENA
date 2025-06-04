@@ -20,8 +20,8 @@ ieee_file = get_case('ieee39/ieee39_full.xlsx')
 
 ad.config_logger(stream_level=10)
 system = ad.load(ieee_file, setup = False)
-system.Toggle.alter(src='dev', idx = 'Toggler_1', value = 'GENROU_8')
-system.Toggle.alter(src='t', idx = 'Toggler_1', value = 20)
+system.Toggle.alter(src='dev', idx = 'Toggler_1', value = 'GENROU_1')
+system.Toggle.alter(src='t', idx = 'Toggler_1', value = 2)
 system.Toggle.alter(src='u', idx = 'Toggler_1', value = 1)
 system.setup()
 system.PFlow.run()
@@ -53,7 +53,7 @@ for i, delta in enumerate(system.Bus.a.v):
     print(f"delta diff b is {delta - initial_a[i]}")
 
 print(f" for system load is {sum(system.PQ.p0.v)} and generation is {sum(system.PV.p0.v) + sum(system.Slack.p0.v) }")
-system.TDS_stepwise.run()
+#system.TDS_stepwise.run()
 
 for area in [1, 2]:
     P_balance = 0
@@ -118,7 +118,7 @@ for area in [1, 2]:
             denom = ri**2 + xi**2
             p_ij = sign * v1 * v2 * ((ri / denom) * np.cos(delta1 - delta2) - (xi / denom) * np.sin(delta1 - delta2))
             p_exchanged += 0*p_ij
-            p_exchanged += 0*(sign*v1*v2*((-1/xi)*np.sin(delta1-delta2)) )
+            p_exchanged += 1*(sign*v1*v2*((-1/xi)*np.sin(delta1-delta2)) )
             p_exchanged_other += 0*sign*v1*v2*((ri/(xi**2))*np.cos(delta1-delta2)) 
             print(f"line is {p_exchanged} with p_line {p_exchanged_other}")
     P_balance += p_exchanged
@@ -149,5 +149,6 @@ system.TDS_stepwise.load_plotter()
 matplotlib.use('TkAgg')
 #fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Qe, a = n_tuple)
 fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta)
+fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega)
 fig, ax = system.TDS_stepwise.plt.plot(system.Bus.a, a = (0,1,2,3))
 _ = 0
