@@ -46,7 +46,7 @@ def query_variables(label):
         print(f" sum of {key} is {sum(value)}")
 
 def run_simulation():
-    response = requests.get(f"{andes_url}/run_real_time", params={'t_run':80, 'delta_t': 0.1})
+    response = requests.get(f"{andes_url}/run_real_time", params={'t_run':55, 'delta_t': 0.1})
     print("[Simulation] Response:", response)
     print("[Simulation] Output:", response.json())
 

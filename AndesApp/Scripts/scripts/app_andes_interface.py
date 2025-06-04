@@ -66,6 +66,7 @@ def load_simulation():
         if data['redual'] is False:
             system = system_ieee
             system.prepare(models = system.TGOV1N)
+            system.prepare(models = system.TGOV1)
             print(f"system.TGOV1N.b is {system.TGOV1N.b}")
             #system.Line.alter(src='u', idx = 'Line_7', value = 0)
             #system.Line.alter(src='u', idx = 'Line_17', value = 0)
@@ -374,7 +375,7 @@ def delta_equivalent():
             bus_area = system.Bus.area.v[bus_uid]
             if bus_area == area:
                 p_demand -= system.PQ.p0.v[i]
-        p_losses = 0*d_M_omega - p_exchanged - p_demand - p_gen
+        p_losses = d_M_omega - p_exchanged - p_demand - p_gen
         result = {}
         result['value'] = delta_equivalent
         result['losses'] = p_losses
@@ -914,7 +915,7 @@ def plot():
 
         if app.config['grid'] == 'kundur':
             plots['tgov_pout']=system.TGOV1.pout
-            plots['tgov_pout']=system.TGOV1.pref
+            plots['tgov_pref']=system.TGOV1.pref
 
         system.TDS_stepwise.plt.export_csv(path="plots/data.csv", idx=system.TDS_stepwise.plt.find('omega')[0])
         for name, variable in plots.items():

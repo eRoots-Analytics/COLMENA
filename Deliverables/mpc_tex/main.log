@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.20)  3 JUN 2025 17:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.20)  4 JUN 2025 12:10
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -836,41 +836,42 @@ Overfull \hbox (9.92093pt too wide) detected at line 199
 [9]
 
 [10]
-Overfull \hbox (47.80399pt too wide) in paragraph at lines 368--369
+Overfull \hbox (47.80399pt too wide) in paragraph at lines 385--386
 \OT1/cmr/m/n/10 MPC en-gine would con-sti-tute a com-pletely dif-fer-ent role, such as a \OT1/cmtt/m/n/10 CostOptimizationRole\OT1/cmr/m/n/10 .
- []
-
-
-Overfull \hbox (77.33858pt too wide) in paragraph at lines 374--393
- [][] 
  []
 
 
 
 [11]
+Overfull \hbox (77.33858pt too wide) in paragraph at lines 391--410
+ [][] 
+ []
+
+
 
 [12]
 
-LaTeX Warning: Citation 'grids:ieee39' on page 13 undefined on input line 440.
+LaTeX Warning: Citation 'grids:ieee39' on page 13 undefined on input line 457.
 
-<figures/ieee2areas.png, id=61, 675.52374pt x 578.16pt>
-File: figures/ieee2areas.png Graphic file (type png)
-<use figures/ieee2areas.png>
-Package pdftex.def Info: figures/ieee2areas.png  used on input line 446.
-(pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
 
 
 [13]
+<figures/ieee2areas.png, id=65, 675.52374pt x 578.16pt>
+File: figures/ieee2areas.png Graphic file (type png)
+<use figures/ieee2areas.png>
+Package pdftex.def Info: figures/ieee2areas.png  used on input line 463.
+(pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
+
 
 [14 <./figures/ieee2areas.png>]
-Overfull \hbox (3.77907pt too wide) in paragraph at lines 475--475
+Overfull \hbox (3.77907pt too wide) in paragraph at lines 492--492
 []\OT1/cmr/m/n/10 eRoots An-a-lyt-ics, \OT1/cmr/m/it/10 Col-mena: De-cen-tral-ized con-trol frame-work for power grids\OT1/cmr/m/n/10 ,
  []
 
 
 
 [15]
-runsystem(latexminted cleantemp  --timestamp 20250603170748 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
+runsystem(latexminted cleantemp  --timestamp 20250604121050 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
 
  (./main.aux)
  ***********
@@ -890,7 +891,7 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  85i,15n,93p,979b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on main.pdf (15 pages, 357143 bytes).
+Output written on main.pdf (15 pages, 358165 bytes).
 PDF statistics:
  155 PDF objects out of 1000 (max. 8388607)
  97 compressed objects within 1 object stream

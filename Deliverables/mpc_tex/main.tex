@@ -310,6 +310,23 @@ In practice, the magnitudes of the objective terms across agents can differ sign
 \end{equation}
 
 This subproblem defines the core of the distributed MPC framework under ADMM. Each agent optimizes locally, exchanges information with its neighbors, and updates its variables based on the augmented Lagrangian terms, gradually driving the overall system toward a consensus-based optimal trajectory.
+
+\paragraph{D.Smoothing and Terminal cost} 
+
+Finally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
+
+\begin{equation}
+    \alpha_1 \sum_{0 \leq t < T}(f_{i,t+1} - f_{i,t})^2 
+\end{equation}
+
+And a Terminal cost term that we define as follows:
+
+\begin{equation}
+    \alpha_2 (f_{i,T} - f_{nom})^2 
+\end{equation}
+
+Overall, these additions help us find a more suitable solution of the frequency's trajectory rather than just minimizing for the cost.
+
 \subsection{ADMM Algorithm}
 
 \begin{algorithm}[H]

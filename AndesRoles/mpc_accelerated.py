@@ -286,7 +286,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     delta_equivalent = response_delta_equivalent.json()['value']
     response_delta_equivalent = requests.get(andes_url + '/delta_equivalent', params={'area':self.area})
     p_losses = response_delta_equivalent.json()['losses']
-    p_losses *= 0
+    p_losses *= 1
     delta0 = np.mean(delta_values)
     freq0 = np.dot(M_values, freq_values) / np.sum(M_values)
     model.delta[0].value = delta0
@@ -620,7 +620,7 @@ def solve_mpc(verbose = False):
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
     mpc_problem.rho = 0.1
-    mpc_problem.iter = 800
+    mpc_problem.iter = 300
     alpha0_used = False
     other = {"area_1": agent_2, "area_2": agent_1}
     mpc_problem.alpha = mpc_problem.rho
@@ -742,9 +742,9 @@ def solve_mpc(verbose = False):
                 norm2_dual_error = 0
         mpc_problem.error_save.append([error, mpc_problem.rho, norm2_error, norm2_dual_error])
 
-        if not mpc_problem.second_stage and i<15:
+        if not mpc_problem.second_stage and i<25:
             mu = 15
-            rho_max = 1e8
+            rho_max = 1e3
             if norm2_error > mu*norm2_dual_error:
                 mpc_problem.rho = min(rho_max, mpc_problem.rho*1.3)
             elif mu*norm2_error < norm2_dual_error and (not mpc_problem.second_stage):
@@ -829,7 +829,6 @@ def solve_mpc(verbose = False):
 andes_url = 'http://192.168.68.74:5000'
 
 responseLoad = requests.post(andes_url + '/start_simulation')
-delta_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'GENROU', 'var':'delta'}).json()['value']
 
 time.sleep(10)
 converged, andes_role_changes, mpc_problem = solve_mpc()
