@@ -122,6 +122,7 @@ class MPCAgent:
         #NOTE initialize power exchange?
 
         # Dynamics and ramp up/down
+        self.model.dynamics_constr_theta =       pyo.Constraint(self.model.TimeDynamics, rule=lambda model, t: (model.theta[t + 1] - model.theta[t]) / self.dt == 2*np.pi*model.fn(model.freq[t] - 1))
         self.model.dynamics_constr_freq =       pyo.Constraint(self.model.TimeDynamics, rule=lambda model, t: model.M * (model.freq[t + 1] - model.freq[t]) / self.dt == model.P[t] - model.Pd[t] - model.P_exchange[t] - model.p_losses - model.D * (model.freq[t] - 1))
         self.model.dynamics_constr_ramp_up =    pyo.Constraint(self.model.generators, self.model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t + 1] - model.Pg[i, t]) <= self.dt * self.ramp_up)
         self.model.dynamics_constr_ramp_down = pyo.Constraint(self.model.generators, self.model.TimeDynamics, rule=lambda model, i, t: -self.dt * self.ramp_down <= (model.Pg[i, t + 1] - model.Pg[i, t]))
@@ -169,7 +170,7 @@ class MPCAgent:
             return self.gamma*(sum((model.theta[t+1] - model.thea[t])**2  for t in model.TimeDynamics))
         
         def _terminal_cost_term(model):
-            return self.gamma*(model.theta[self.K] -1)**2
+            return self.gamma*(model.theta[self.K] - self.omega_ref)**2
         
         # Define expressions for each cost component such that it is possible to extract the values
         self.model.freq_cost =           pyo.Expression(rule=_freq_cost)
@@ -258,23 +259,27 @@ class MPCAgent:
 
         # Angles
         # self.area  #NOTE: angle logic needs to be revisited if it works!
-        self.theta0 = self.andes.get_partial_variable("Bus", "a", self.interface_buses[self.area])
-        self.model.theta0.set_value(self.theta0[0])#NOTE: angle logic needs to be revisited if it works!
+        self.theta0 = self.andes.get_theta_equivalent()
+        self.model.theta0.set_value(self.theta0[self.area]) #NOTE: angle logic revisited
         # self.other_areas
         self.theta0_areas = {
-            area: self.andes.get_partial_variable("Bus", "a", bus_list)
-            for area, bus_list in self.interface_buses.items()
+            area: theta0
+            for area, theta0 in self.theta0.items()
             if area != self.area
         }     
 
         for area, value in self.theta0_areas.items():
-            self.model.theta0_areas[area] = value[0]#NOTE: angle logic needs to be revisited if it works!
+            self.model.theta0_areas[area] = self.theta0[0]#NOTE: angle logic needs to be revisited if it works!
 
         # Mechanical torque - Mechanical power in p.u.
         self.tm_values = self.andes.get_partial_variable("GENROU", "tm", self.generators)
         
         for gen, val in zip(self.generators, self.tm_values): #NOTE: to clean because of consistency 
             self.model.tm_values[gen] = val
+
+        #Losses per area 
+        p_losses = self.andes.get_losses(self.area)
+        self.model.p_losses.set_value(p_losses)
         
 
     def first_warm_start(self): #NOTE: can be improved

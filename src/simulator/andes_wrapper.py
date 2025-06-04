@@ -104,15 +104,25 @@ class AndesWrapper:
         
         return response_json['value']
     
-    def get_theta_equivalent(self, area: int):    #NOTE: Hard coded, needs to be changed
+    def get_theta_equivalent(self, area:int = 1):    #NOTE: Hard coded, needs to be changed
         response = requests.get(
             f"{self.andes_url}/delta_equivalent", #NOTE: name needs to be changed
-            params={"area": 1}
+            params={"area": area}
         )
         response.raise_for_status() 
         raw = response.json()
 
-        return [float(v) for v in raw["value"].values()]
+        return raw["value"].values()
+
+    def get_losses(self, area: int):    #NOTE: Hard coded, needs to be changed
+        response = requests.get(
+            f"{self.andes_url}/delta_equivalent", #NOTE: name needs to be changed
+            params={"area": area}
+        )
+        response.raise_for_status() 
+        raw = response.json()
+
+        return raw['losses']
 
     def send_setpoint(self, role_change_dict: dict):
         try:
