@@ -59,6 +59,45 @@ def load_simulation():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
+# @app.route('/init_tds', methods=['POST'])
+# def init_tds():
+#     global system
+#     global tds
+
+#     if system is None:
+#         return jsonify({"error": "System not loaded."}), 400
+
+#     try:
+#         # Initialize Time-Domain-Simulation
+#         tds = TDS(system)
+#         tds.config.fixt = 1
+#         tds.config.shrinkt = 0
+#         tds.config.tstep = Config.tstep
+#         tds.config.tf = Config.tf
+#         tds.t = 0.0
+#         tds.init()
+
+#         return jsonify({"message": "TDS initialized", "start_time": tds.t}), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+@app.route('/get_grid_type', methods=['grid'])
+def get_grid_type():
+    global tds
+
+    if tds is None:
+        return jsonify({"error": "TDS not initialized"}), 400
+
+    if tds.t >= tds.config.tf:
+        return jsonify({"message": "Simulation finished", "final_time": tds.t}), 200
+
+    try:
+        grid_type = app.config['grid']
+        return jsonify({"value": grid_type}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/run_step', methods=['POST'])
 def run_step():
     global tds
@@ -189,9 +228,9 @@ def interface_buses():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
+# Route to compute the equivalent angles of the area
 @app.route('/delta_equivalent', methods=['GET'])
 def delta_equivalent():
-    global system
     try:
         data = request.args.to_dict()
         area = int(data['area'])
@@ -200,6 +239,7 @@ def delta_equivalent():
         connecting_lines = {}
         connecting_susceptance = {}
         delta_equivalent = {}
+
         for x_area in other_areas:
             connecting_lines[x_area] = []
 
@@ -214,6 +254,7 @@ def delta_equivalent():
             if area1 != area2 and area in [area1, area2]:
                 connecting_area = area2 if area == area1 else area1
                 connecting_lines[connecting_area].append(line)
+                print(f"connecting")
             
         for x_area, lines in connecting_lines.items():
             bi = 0
@@ -221,13 +262,12 @@ def delta_equivalent():
                 line_uid = system.Line.idx2uid(line)
                 connection_status = system.Line.u.v[line_uid]
                 xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
                 bi += (1/xi)*connection_status
+                print(f"line is {line} bi is {bi}")
             connecting_susceptance[int(x_area)] = bi
         
         for x_area, lines in connecting_lines.items():
             p_exchanged = 0
-            p_exchanged_other = 0
             for line in lines:
                 i = system.Line.idx2uid(line)
                 bus1 = system.Line.bus1.v[i]
@@ -255,6 +295,110 @@ def delta_equivalent():
             else:
                 delta_equivalent[int(x_area)] = 0
         
+        p_gen = 0
+        d_omega = 0
+        d_M_omega = 0
+        for i, gen_idx in enumerate(system.GENROU.idx.v):
+            bus_idx = system.GENROU.bus.v[i]
+            bus_uid = system.Bus.idx2uid(bus_idx) 
+            bus_area = system.Bus.area.v[bus_uid]
+            if bus_area == area:
+                p_gen += system.GENROU.tm.v[i]
+                d_M_omega += system.GENROU.M.v[i]*(system.GENROU.omega.e[i])
+                d_omega += (system.GENROU.omega.e[i])
+        p_demand = 0
+        for i, gen_idx in enumerate(system.PQ.idx.v):
+            bus_idx = system.PQ.bus.v[i]
+            bus_uid = system.Bus.idx2uid(bus_idx) 
+            bus_area = system.Bus.area.v[bus_uid]
+            if bus_area == area:
+                p_demand -= system.PQ.p0.v[i]
+        p_losses = d_M_omega - p_exchanged - p_demand - p_gen
+        result = {}
+        result['value'] = delta_equivalent
+        result['losses'] = p_losses
+
+        verbose = True
+        if verbose:
+            print(f"d_omega are {d_omega}")
+            print(f"d_M_omega are {d_M_omega}")
+            print(f"p_exchanged are {p_exchanged}")
+            print(f"p_demand are {p_demand}")
+            print(f"p_gen are {p_gen}")
+            print(f"losses are {p_losses}")
+        return jsonify(result), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
+# Route to compute the equivalent angles of the area
+@app.route('/delta_equivalent_balanced', methods=['GET'])
+def delta_equivalent_balanced():
+    try:
+        data = request.args.to_dict()
+        area = int(data['area'])
+        other_areas = system.Area.idx.v
+        other_areas = [x_area for x_area in other_areas if x_area != area]
+        connecting_lines = {}
+        connecting_susceptance = {}
+        delta_equivalent = {}
+        for x_area in other_areas:
+            connecting_lines[x_area] = []
+
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area1 != area2 and area in [area1, area2]:
+                connecting_area = area2 if area == area1 else area1
+                connecting_lines[connecting_area].append(line)
+                print(f"connecting")
+            
+        for x_area, lines in connecting_lines.items():
+            bi = 0
+            for line in lines:
+                line_uid = system.Line.idx2uid(line)
+                connection_status = system.Line.u.v[line_uid]
+                xi = system.Line.x.v[line_uid]
+                Sn = system.Line.Sn.v[line_uid]
+                bi += (1/xi)*connection_status
+                print(f"line is {line} bi is {bi}")
+            connecting_susceptance[int(x_area)] = bi
+        
+            P_balance = 0
+            p_gen = 0
+            d_M_omega = 0
+            d_omega = 0
+            for i, gen_idx in enumerate(system.GENROU.idx.v):
+                bus_idx = system.GENROU.bus.v[i]
+                bus_uid = system.Bus.idx2uid(bus_idx) 
+                bus_area = system.Bus.area.v[bus_uid]
+                if bus_area == area:
+                    p_gen += system.GENROU.tm.v[i]
+                    d_M_omega += system.GENROU.M.v[i]*(system.GENROU.omega.e[i])
+                    d_omega += (system.GENROU.omega.e[i])
+            P_balance += p_gen
+
+            p_demand = 0
+            for i, gen_idx in enumerate(system.PQ.idx.v):
+                bus_idx = system.PQ.bus.v[i]
+                bus_uid = system.Bus.idx2uid(bus_idx) 
+                bus_area = system.Bus.area.v[bus_uid]
+                if bus_area == area:
+                    p_demand -= system.PQ.p0.v[i]
+            P_balance += p_demand
+            
+            #This works if there are only 2 areas if not we have to solve a linear system
+            if connecting_susceptance[int(x_area)] != 0:
+                delta_equivalent[int(x_area)] = -P_balance/connecting_susceptance[int(x_area)]
+            else:
+                delta_equivalent[int(x_area)] = 0
+
+            p_losses = d_M_omega + p_demand - p_gen 
         result = {}
         result['value'] = delta_equivalent
         return jsonify(result), 200

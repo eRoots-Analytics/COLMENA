@@ -15,6 +15,7 @@ class MPCAgent:
 
         self.dt =        Config.dt
         self.K =         Config.K
+        self.tf =        Config.tf 
 
         self.ramp_up =   Config.ramp_up
         self.ramp_down = Config.ramp_down
@@ -23,6 +24,7 @@ class MPCAgent:
 
         self.q =         Config.q
         self.rho =       Config.rho
+        self.gamma =     Config.gamma
 
         self.P_exchange_max = Config.P_exchange_max
         self.P_exchange_min = Config.P_exchange_min
@@ -79,8 +81,13 @@ class MPCAgent:
         # Params: initial conditions
         self.model.omega0 =          pyo.Param(mutable=True)
         self.model.theta0 =          pyo.Param(mutable=True)
+        self.model.p_losses =        pyo.Param(mutable=True)
         self.model.theta0_areas =    pyo.Param(self.model.other_areas, mutable=True)
         self.model.tm_values =       pyo.Param(self.model.generators, mutable=True)
+
+        #Params: previous values
+        self.model.theta_previous = pyo.Param(self.TimeHorizon, mutable=True)
+        self.model.theta_areas_previous = pyo.Param(self.TimeHorizon, mutable=True)
 
         # Decision variables
         def _get_power_bounds(model, i, k):
@@ -115,10 +122,9 @@ class MPCAgent:
         #NOTE initialize power exchange?
 
         # Dynamics and ramp up/down
-        self.model.dynamics_constr_freq =       pyo.Constraint(self.model.TimeStates, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd[k] - model.P_exchange[k] - model.D * (model.omega[k] - 1)) #
-        self.model.dynamics_constr_theta =      pyo.Constraint(self.model.TimeStates, rule=lambda model, k: (model.theta[k + 1] - model.theta[k]) / self.dt == model.omega[k])
-        self.model.dynamics_constr_ramp_up =    pyo.Constraint(self.model.generators, self.model.TimeInputs, rule=lambda model, i, k: (model.Pg[i, k + 1] - model.Pg[i, k]) <= self.dt * self.ramp_up)
-        self.model.dynamics_constr_rampo_down = pyo.Constraint(self.model.generators, self.model.TimeInputs, rule=lambda model, i, k: -self.dt * self.ramp_down <= (model.Pg[i, k + 1] - model.Pg[i, k]))
+        self.model.dynamics_constr_freq =       pyo.Constraint(self.model.TimeDynamics, rule=lambda model, t: model.M * (model.freq[t + 1] - model.freq[t]) / self.dt == model.P[t] - model.Pd[t] - model.P_exchange[t] - model.p_losses - model.D * (model.freq[t] - 1))
+        self.model.dynamics_constr_ramp_up =    pyo.Constraint(self.model.generators, self.model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t + 1] - model.Pg[i, t]) <= self.dt * self.ramp_up)
+        self.model.dynamics_constr_ramp_down = pyo.Constraint(self.model.generators, self.model.TimeDynamics, rule=lambda model, i, t: -self.dt * self.ramp_down <= (model.Pg[i, t + 1] - model.Pg[i, t]))
 
         # Power transmission
         def _power_inter_area(model, k):
@@ -148,16 +154,30 @@ class MPCAgent:
                 )
 
         def _convex_term(model):
-            return model.rho * sum(
-                (model.theta[k + 1] - model.variables_horizon_values[self.area, nbr, k])**2 +
-                (model.variables_horizon_values[nbr, nbr, k] - model.theta_areas[nbr, k])**2
-                for nbr in model.other_areas for k in model.TimeStates
+            return (model.rho/2) * sum(
+                (model.theta[t] - model.variables_horizon_values[self.area, nbr, t])**2 +
+                (model.variables_horizon_values[nbr, nbr, t] - model.theta_areas[nbr, t])**2
+                for nbr in model.other_areas for t in model.TimeHorizon
             ) 
         
+        def _damping_term(model):
+            return self.gamma*(sum((model.theta[t] - model.theta_previous[t])**2  for t in model.TimeHorizon) + 
+                sum( sum((model.theta_areas[i,t] - model.theta_areas_previous[i, t])**2 for i in model.other_areas) for t in model.TimeHorizon)
+            )
+        
+        def _smoothing_term(model):
+            return self.gamma*(sum((model.theta[t+1] - model.thea[t])**2  for t in model.TimeDynamics))
+        
+        def _terminal_cost_term(model):
+            return self.gamma*(model.theta[self.K] -1)**2
+        
         # Define expressions for each cost component such that it is possible to extract the values
-        self.model.freq_cost =       pyo.Expression(rule=_freq_cost)
-        self.model.lagrangian_term = pyo.Expression(rule=_lagrangian_term)
-        self.model.convex_term =     pyo.Expression(rule=_convex_term)
+        self.model.freq_cost =           pyo.Expression(rule=_freq_cost)
+        self.model.lagrangian_term =     pyo.Expression(rule=_lagrangian_term)
+        self.model.convex_term =         pyo.Expression(rule=_convex_term)
+        self.model.damping_term =        pyo.Expression(rule=_damping_term)
+        self.model.smoothing_term =      pyo.Expression(rule=_smoothing_term)
+        self.model.terminal_cost_term =  pyo.Expression(rule=_terminal_cost_term)
 
         # Define the total objective using these expressions
         self.model.cost = pyo.Objective(expr=self.model.freq_cost + self.model.lagrangian_term + self.model.convex_term, sense=pyo.minimize)
@@ -275,16 +295,16 @@ class MPCAgent:
         self.warm_start()
         
     def warm_start(self):
-        for k in range(self.K + 1):
-            self.model.omega[k].value = self.vars_saved['omega'][k] #max(self.vars_saved['omega'][k], 0.85)
-            self.model.theta[k].value = self.vars_saved['theta'][k]
-        
-        for k in range(self.K):
-            self.model.P[k].value = self.vars_saved['P'][k]
-            self.model.P_exchange[k].value = self.vars_saved['P_exchange'][k]
-            
+        for t in range(self.K + 1):
+            self.model.freq[t].value = self.vars_saved['freq'][t] #max(self.vars_saved['freq'][t], 0.85)
+            self.model.P[t].value = self.vars_saved['P'][t]
+            self.model.P_exchange[t].value = self.vars_saved['P_exchange'][t]
+            self.model.theta_previous[t].value = self.model.theta[t].value
+            self.model.theta[t].value = self.vars_saved['theta'][t]
+
             for nbr in self.other_areas:
-                self.model.theta_areas[nbr, k].value = self.vars_saved['theta_areas'][(nbr, k)]
+                self.model.theta_areas_previous[nbr, t].value = self.model.theta_areas[nbr, t].value
+                self.model.theta_areas[nbr, t].value = self.vars_saved['theta_areas'][(nbr, t)]
 
             for gen in self.generators:
                 self.model.Pg[gen, k].value = self.vars_saved['Pg'][(gen, k)]

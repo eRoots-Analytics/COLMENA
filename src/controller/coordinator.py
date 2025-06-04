@@ -135,15 +135,38 @@ class Coordinator:
                 
                 id_number = gen_id.split('_')[-1]
 
-                role_change = {
+                role_change_tm = {
                     'var': 'tm0',
                     'model': 'GENROU',
                     'idx': f"GENROU_{id_number}",
-                    'value': agent.model.Pg[gen_id, 0].value
+                    'value': agent.model.Pg[gen_id, 1].value
+                }
+                
+                role_change_b = {
+                    'var': 'b',
+                    'model': 'TGOV1N',
+                    'idx': f"TGOV1N_{id_number}",
+                    'value': 1
                 }
 
-                self.andes.send_setpoint(role_change)
-                andes_role_changes.append(role_change.copy())
+                role_change_pdirect = {
+                    'var': 'p_direct',
+                    'model': 'TGOV1N',
+                    'idx': f"TGOV1N_{id_number}",
+                    'value': agent.model.Pg[gen_id, 1].value
+                }
+
+                grid_type = self.andes.get_grid_type()
+                if grid_type == 'kundur':
+                    role_change_b['model'] = 'TGOV1'
+                    role_change_b['idx']   = id_number
+                    role_change_pdirect['model'] = 'TGOV1'
+                    role_change_pdirect['idx']   = id_number
+
+                self.andes.send_setpoint(role_change_tm)
+                self.andes.send_setpoint(role_change_b)
+                self.andes.send_setpoint(role_change_pdirect)
+                andes_role_changes.append(role_change_tm.copy())
 
         return andes_role_changes
     

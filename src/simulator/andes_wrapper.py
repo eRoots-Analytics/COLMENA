@@ -142,3 +142,19 @@ class AndesWrapper:
         else:
             print("Step failed:", response.text)
             return False, None
+        
+    def get_grid_type(self):
+        response = requests.post(f"{self.andes_url}/get_grid_type")  # empty dict just to be valid JSON
+        if response.status_code == 200:
+            grid_type = response.json().get("value")
+            return True, grid_type
+        else:
+            print("Step failed:", response.text)
+            return False, None
+
+
+    # def plot(self, model, var):
+    #     response = requests.get(f'{self.api_url}/plot', params={'model': model, 'var': var})
+    #     if response.status_code == 200:
+    #         return response.content
+    #     raise RuntimeError("Failed to retrieve plot.")
