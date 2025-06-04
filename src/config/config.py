@@ -8,29 +8,32 @@ class Config:
 
     # Simulator 
     tstep = 0.05
-    tf = 5.0
+    tf = 10.0
 
     # Disturbance 
     td = tf/2
 
     # MPC
     # Status 
-    controlled = True
+    controlled = False
     # Horizon
     dt = tstep
-    K = 50
+    K = 30
     # Execution
     tdmpc = tstep # imporves numeric performance
 
     ramp_up = 0.05
     ramp_down = 0.05
 
-    freq_ref = 1.0
+    omega_ref = 1.0
 
-    q = 1e4
+    q = 1e8
     alpha = 1.5
-    rho = 50
+    rho = 15
 
-    max_iter = 100
+    max_iter = 50
     tol = 1e-3
+
+    P_exchange_max = 20
+    P_exchange_min = 20
 

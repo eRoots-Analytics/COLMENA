@@ -38,14 +38,14 @@ class Coordinator:
             (i, j, t): 0.0 #NOTE: could be initialized differently
             for i in self.agents
             for j in self.agents
-            for t in range(self.K + 1)
+            for t in range(self.K)
             }
         
         self.dual_vars = {
             (i, j, t): 0.0 #NOTE: could be initialized differently
             for i in self.agents
             for j in self.agents
-            for t in range(self.K + 1)
+            for t in range(self.K)
             }
 
         self.error_save = [] # to store error
@@ -88,9 +88,6 @@ class Coordinator:
                                                        'idx': "PQ_4", 
                                                        'value': 0})
 
-                # 1. Get values
-                self._initialize_theta_values()
-
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
                 omega_snapshot = {}
@@ -128,19 +125,6 @@ class Coordinator:
             print(f"[Exception] Error during loop: {e}")
             traceback.print_exc()
         return False
-
-    def _initialize_theta_values(self): #NOTE hardcoded, needs to be changed
-        # Theta 
-        for agent in self.agents:
-            if agent == 1:
-                self.thetas[agent] = 0.0
-            else:
-                self.thetas[agent] = self.andes.get_theta_equivalent(agent)[0] #NOTE: get_theta_equivalent needs to be modified 
-
-        for agent in self.agents.values(): 
-            agent.model.theta0.set_value(self.thetas[agent.area])
-            for nbr in self.neighbours[agent.area]:
-                agent.model.theta0_areas[nbr].set_value(self.thetas[nbr])
 
     def collect_role_changes(self):
         andes_role_changes = []

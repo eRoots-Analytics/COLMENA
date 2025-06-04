@@ -146,11 +146,11 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.show()
 
-    # ==== PLOT MPC HORIZON VARIABLES OF LAST ITERATION - FREQ ====
+    # ==== PLOT MPC HORIZON VARIABLES OF LAST ITERATION - omega ====
     plt.figure(figsize=(14, 6))
     for agent_id, agent in sim.agents.items():
         time_horizon = list(range(agent.K + 1))
-        plt.plot(time_horizon, agent.vars_saved['freq'], label=f"{agent_id} - Frequency")
+        plt.plot(time_horizon, agent.vars_saved['omega'], label=f"{agent_id} - Frequency")
 
     plt.xlabel("MPC Horizon Step")
     plt.ylabel("Frequency [pu]")
@@ -174,5 +174,3 @@ if __name__ == '__main__':
     plt.legend()
     plt.tight_layout()
     plt.show()
-
-    print('Ok')

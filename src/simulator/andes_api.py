@@ -1,5 +1,5 @@
 """
-Andes API: rules and protocols to communicate with Andes via a flask app.
+Andes server API: rules and protocols to communicate with Andes via a flask app.
 """
 
 import traceback
@@ -11,7 +11,10 @@ from src.config.config import Config
 from andes import load
 from andes.routines.tds import TDS
 
+# App 
 app = Flask(__name__)
+
+# Global variables
 system = None
 tds = None
 
@@ -49,6 +52,7 @@ def load_simulation():
         tds.config.tf = Config.tf
         tds.t = 0.0
         tds.init()
+
         return jsonify({"message": "Simulation initialized successfully.", "start_time": tds.t}), 200
     except Exception as e:
         print("Error in initializing the simulation.")
@@ -76,24 +80,30 @@ def run_step():
 @app.route('/neighbour_area', methods=['GET'])
 def neighbour_area():
     global system
-    area = request.args.get('area', type=int)
-    result = set()
+    result = set()  # to ensure uniqueness.
     response = {}
+    
     try:
+        area = request.args.get('area', type=int)
+
         for i, line in enumerate(system.Line.idx.v):
             bus1 = system.Line.bus1.v[i]
             bus2 = system.Line.bus2.v[i]
-            bus1_index = system.Bus.idx2uid(bus1)
-            bus2_index = system.Bus.idx2uid(bus2)
-            area1 = system.Bus.area.v[bus1_index]
-            area2 = system.Bus.area.v[bus2_index]
+            bus1_idx = system.Bus.idx2uid(bus1)
+            bus2_idx = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_idx]
+            area2 = system.Bus.area.v[bus2_idx]
 
-            if area2 == area or area1 == area and area2 != area1:
-                area_neighbor = area2 if area2 != area else area1
-                if area_neighbor != area:
-                    result.add(area_neighbor)
+            if area1 != area2 and (area1 == area or area2 == area):
+                if area1 == area:
+                    area_nbr = area2
+                else: 
+                    area_nbr = area1
+                if area_nbr != area:
+                    result.add(area_nbr)
         response['value'] = list(result)
         return jsonify(response), 200
+    
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -101,15 +111,17 @@ def neighbour_area():
 @app.route('/system_susceptance', methods=['GET'])
 def system_susceptance():
     global system
+
     try:
-        data = request.args.to_dict()
-        area = int(data['area'])
-        other_areas = system.Area.idx.v
-        other_areas = [x_area for x_area in other_areas if x_area != area]
-        connecting_lines = {}
+        area = request.args.get('area', type=int)
+        area_list_str = request.args.get('area_list')
+
+        if not area_list_str:
+            return jsonify({"error": "Missing required parameter: area_list"}), 400
+
+        target_areas = [int(a) for a in area_list_str.split(',')]
+        connecting_lines = {x_area: [] for x_area in target_areas}
         connecting_susceptance = {}
-        for x_area in other_areas:
-            connecting_lines[x_area] = []
 
         for i, line in enumerate(system.Line.idx.v):
             bus1 = system.Line.bus1.v[i]
@@ -119,21 +131,60 @@ def system_susceptance():
             area1 = system.Bus.area.v[bus1_index]
             area2 = system.Bus.area.v[bus2_index]
 
-            if area1 != area2 and area in [area1, area2]:
-                connecting_area = area2 if area == area1 else area1
-                connecting_lines[connecting_area].append(line)
-            
-        for x_area, lines in connecting_lines.items():
+            # Only look at the known neighbor connections
+            if area == area1 and area2 in target_areas:
+                connecting_lines[area2].append(line)
+            elif area == area2 and area1 in target_areas:
+                connecting_lines[area1].append(line)
+
+        for area, lines in connecting_lines.items():
             bi = 0
             for line in lines:
                 line_uid = system.Line.idx2uid(line)
                 connection_status = system.Line.u.v[line_uid]
                 xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
-                bi += (1/xi)*connection_status
-            connecting_susceptance[int(x_area)] = bi
+                bi += (1 / xi) * connection_status
+            connecting_susceptance[area] = bi
 
         return jsonify(connecting_susceptance), 200
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/interface_buses', methods=['GET'])
+def interface_buses():
+    global system
+    try:
+        area = request.args.get('area', type=int)
+        area_list_str = request.args.get('area_list')
+
+        if not area_list_str:
+            return jsonify({"error": "Missing required parameter: area_list"}), 400
+
+        target_areas = [int(a) for a in area_list_str.split(',')]
+        all_areas = set(target_areas + [area])
+        interface_buses_by_area = {a: set() for a in all_areas}
+
+        for i, line in enumerate(system.Line.idx.v):
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area1 in all_areas and area2 in all_areas and area1 != area2:
+                interface_buses_by_area[area1].add(bus1)
+                interface_buses_by_area[area2].add(bus2)
+
+        # Convert sets to sorted lists for JSON serialization
+        interface_buses_by_area = {
+            k: sorted(list(v)) for k, v in interface_buses_by_area.items()
+        }
+
+        return jsonify(interface_buses_by_area), 200
+
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -208,19 +259,6 @@ def delta_equivalent():
         result['value'] = delta_equivalent
         return jsonify(result), 200
     except Exception as e:
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-    
-@app.route('/set_point_change', methods=['POST'])
-def set_point_change():
-    global system
-    try:
-        set_points_data = request.get_json()
-        for set_point in set_points_data:
-            system.TDS_stepwise.set_set_points(set_point)
-        return jsonify({'message': 'success'}), 200
-    except Exception as e:
-        print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
@@ -325,13 +363,6 @@ def area_variable_sync(all_devices = False):
         print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-    
-@app.route('/sync_time', methods=['GET'])
-def sync_time():
-    global system
-    app_t = system.dae.t
-    app_t = float(app_t)
-    return jsonify({"time": app_t}) 
 
 @app.route('/send_set_point', methods=['POST'])
 def send_set_point():
@@ -365,7 +396,6 @@ def send_set_point():
             return jsonify({"error": f"Index '{idx}' not found in model '{model_name}'"}), 400
 
         var.v[uid] = value
-        # print(f"[Setpoint] {model_name}.{var_name}[{idx}] ← {value}")
 
         return jsonify({"message": "Setpoint applied successfully"}), 200
 
@@ -405,7 +435,6 @@ def change_parameter_value():
             return jsonify({"error": f"Index '{idx}' not found in model '{model_name}'"}), 400
 
         param.v[uid] = value
-        # print(f"[Setpoint] {model_name}.{var_name}[{idx}] ← {value}")
 
         return jsonify({"message": "Setpoint applied successfully"}), 200
 
