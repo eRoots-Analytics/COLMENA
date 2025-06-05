@@ -7,7 +7,7 @@ class Config:
     case_path = "kundur/kundur_full.xlsx"
 
     # Simulator 
-    tstep = 0.05
+    tstep = 0.1
     tf = 10.0
 
     # Disturbance 
@@ -22,18 +22,22 @@ class Config:
     # Execution
     tdmpc = tstep # imporves numeric performance
 
-    ramp_up = 0.05
-    ramp_down = 0.05
+    ramp_up = 0.01
+    ramp_down = 0.01
 
     omega_ref = 1.0
 
-    q = 1e8
-    alpha = 1.5
-    rho = 15
+    q = 1e3
+    alpha = 25
+    beta = 0
+    rho = 1000
 
-    max_iter = 50
+    max_iter = 400
     tol = 1e-3
 
     P_exchange_max = 20
     P_exchange_min = 20
+
+    fn = 50
+    D = 12500
 

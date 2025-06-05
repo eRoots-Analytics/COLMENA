@@ -38,14 +38,14 @@ class Coordinator:
             (i, j, t): 0.0 #NOTE: could be initialized differently
             for i in self.agents
             for j in self.agents
-            for t in range(self.K)
+            for t in range(self.K + 1)
             }
         
         self.dual_vars = {
             (i, j, t): 0.0 #NOTE: could be initialized differently
             for i in self.agents
             for j in self.agents
-            for t in range(self.K)
+            for t in range(self.K + 1)
             }
 
         self.error_save = [] # to store error
@@ -85,8 +85,8 @@ class Coordinator:
 
                     self.andes.change_parameter_value({'param': 'u', 
                                                        'model': 'PQ', 
-                                                       'idx': "PQ_4", 
-                                                       'value': 0})
+                                                       'idx': "PQ_1", 
+                                                       'value': 1})
 
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
@@ -111,15 +111,15 @@ class Coordinator:
                     for role_change in role_change_list:
                         self.andes.send_setpoint(role_change)
 
-                # 4. Run one ANDES simulation step
+                # 3. Run one ANDES simulation step
                 success, new_time = self.andes.run_step()
                 if not success:
                     print(f"[Error] Simulation step failed at simulation time {new_time}.")
                     break
-
-                # 5. Update time step and time 
+                
                 self.k += 1
                 self.t += self.tstep
+
             return True
         except Exception as e:
             print(f"[Exception] Error during loop: {e}")
@@ -133,13 +133,13 @@ class Coordinator:
         for agent in agents:
             for gen_id in agent.generators:
                 
-                id_number = gen_id.split('_')[-1]
+                # id_number = gen_id.split('_')[-1]
 
                 role_change = {
                     'var': 'tm0',
                     'model': 'GENROU',
-                    'idx': f"GENROU_{id_number}",
-                    'value': agent.model.Pg[gen_id, 0].value
+                    'idx': gen_id,
+                    'value': agent.model.Pg[gen_id, 1].value
                 }
 
                 self.andes.send_setpoint(role_change)
