@@ -21,12 +21,14 @@ class ADMM:
     def solve(self):
         agents = self.coordinator.agents.values()
 
+        i = 0
         for i in range(self.max_iter):
             for agent in agents:
 
                 if i==0: 
                     # Initialize the model for the first iteration
                     agent.initialize_variables_values()
+                    agent.compute_offset()
 
                 self._solve_agent(agent, i)
 
@@ -46,15 +48,16 @@ class ADMM:
         return False, self.coordinator.collect_role_changes()
 
     def _solve_agent(self, agent, i):
-        if agent.setup: #NOTE: in online setup needs to changed
-            agent.compute_offset()
-            model = agent.setup_dmpc(self.coordinator) 
-            agent.first_warm_start() 
+        if agent.setup:
+            model = agent.setup_dmpc(self.coordinator)
+            agent.setup = False #NOTE realiability check
         else:
             model = agent.model
-        agent.setup = False #NOTE realiability check
-
-        agent.warm_start() 
+        
+        if i == 0:
+            agent.first_warm_start() 
+        else:
+            agent.warm_start() 
 
         solver = pyo.SolverFactory('ipopt')
         result = solver.solve(model, tee=False)
@@ -73,13 +76,13 @@ class ADMM:
         })
         ######################################
 
-        agent.save_warm_start()
-
         # Save results in the coordinator map NOTE: this could be converted into a function for readibility
         for k in model.TimeHorizon:
             self.coordinator.variables_horizon_values[agent.area, agent.area, k] = model.theta[k].value                                    
             for nbr in self.coordinator.neighbours[agent.area]:
                 self.coordinator.variables_horizon_values[nbr, agent.area, k] = model.theta_areas[nbr, k].value   
+        
+        agent.save_warm_start()
                   
     def _update_duals(self, i):
         alpha = self.alpha
@@ -112,12 +115,16 @@ class ADMM:
                     ######################################
     
     def _update_pyomo_params(self):
+        vars_dict = self.coordinator.variables_horizon_values
+
         for agent in self.coordinator.agents.values():
             model = agent.model
             area = agent.area
             for nbr in self.coordinator.neighbours[area]:
                 for k in range(self.coordinator.K + 1):
-                    model.variables_horizon_values[area, nbr, k].value = self.coordinator.variables_horizon_values[area, nbr, k]
+                    model.variables_horizon_values[area, nbr, k].value = vars_dict[area, nbr, k]
+                    model.variables_horizon_values[nbr, nbr, k].value = vars_dict[nbr, nbr, k]
+
                     model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
 
     def _compute_primal_residual_mse(self):

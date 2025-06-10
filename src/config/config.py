@@ -27,10 +27,11 @@ class Config:
 
     omega_ref = 1.0
 
-    q = 1e3
-    alpha = 25
+    q = 1e7
+    alpha = 5
     beta = 0
-    rho = 1000
+    rho = 1e5
+    q_terminal = 5e10
 
     max_iter = 400
     tol = 1e-3

@@ -86,7 +86,7 @@ class Coordinator:
                     self.andes.change_parameter_value({'param': 'u', 
                                                        'model': 'PQ', 
                                                        'idx': "PQ_1", 
-                                                       'value': 1})
+                                                       'value': 0})
 
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
@@ -132,8 +132,6 @@ class Coordinator:
 
         for agent in agents:
             for gen_id in agent.generators:
-                
-                # id_number = gen_id.split('_')[-1]
 
                 role_change = {
                     'var': 'tm0',

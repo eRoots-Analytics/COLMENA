@@ -22,6 +22,7 @@ class MPCAgent:
 
         self.q =         Config.q
         self.rho =       Config.rho
+        self.q_terminal= Config.q_terminal
 
         self.P_exchange_max = Config.P_exchange_max
         self.P_exchange_min = Config.P_exchange_min
@@ -36,7 +37,6 @@ class MPCAgent:
 
         self.setup = True
 
-        # self.variables_horizon_values = {} 
         self.variables_saved_values = {}
         self.gen_location = {}
         self.bus2idgen = {}
@@ -71,13 +71,14 @@ class MPCAgent:
         self.model.M =               pyo.Param(initialize=self.M_coi)
         self.model.D =               pyo.Param(initialize=self.D_coi)
         self.model.fn =              pyo.Param(initialize=self.fn_coi)
-        self.model.Pd =              pyo.Param(self.model.TimeHorizon, initialize=self.Pd)
+        self.model.Pd =              pyo.Param(self.model.TimeHorizon, initialize=0, mutable=True)
         self.model.b =               pyo.Param(self.model.other_areas, initialize=self.b_areas)
         self.model.P_offset =        pyo.Param(self.model.TimeHorizon, initialize=0, mutable=True)
  
         # Params: tuning cost function
         self.model.q =               pyo.Param(initialize=self.q, mutable=True)
         self.model.rho =             pyo.Param(initialize=self.rho, mutable=True)
+        self.model.q_terminal =      pyo.Param(initialize=self.q_terminal)
 
         # Params: initial conditions
         self.model.omega0 =          pyo.Param(mutable=True)
@@ -131,7 +132,7 @@ class MPCAgent:
         # self.model.balance_constr_max =         pyo.Constraint(self.model.TimeStates, rule=lambda model, k: model.P_exchange[k] <= self.P_exchange_max)    #NOTE: self.P_exchange_max can be retrived from Andes.
         # self.model.balance_constr_min =         pyo.Constraint(self.model.TimeStates, rule=lambda model, k: - self.P_exchange_min <= model.P_exchange[k])  #NOTE: self.P_exchange_min can be retrived from Andes.
     
-    def setup_dmpc(self, coordinator): #NOTE: actually can be removed because it's feasible to construct variables_horizon_values and dual_vars before
+    def setup_dmpc(self, coordinator):
         ### Set up distirbuted optimization model ###
         self.model.dual_vars =                  pyo.Param(self.model.areas, self.model.areas, self.model.TimeHorizon, 
                                                               initialize=coordinator.dual_vars, mutable=True) #NOTE: actually useless.
@@ -146,8 +147,8 @@ class MPCAgent:
 
         def _lagrangian_term(model):
             return sum(
-                model.dual_vars[self.area, nbr, k] * (model.theta[k] - model.variables_horizon_values[self.area, nbr, k]) +                #  NOTE: model.variables_horizon_values[self.area, nbr, k] is actually useless as well as self.area
-                model.dual_vars[nbr, self.area, k] * (model.variables_horizon_values[nbr, nbr, k] - model.theta_areas[nbr, k])     #          NOTE: model.variables_horizon_values[nbr, nbr, k] is actually useless as well as self.area
+                model.dual_vars[self.area, nbr, k] * (model.theta[k] - model.variables_horizon_values[self.area, nbr, k]) +   
+                model.dual_vars[nbr, self.area, k] * (model.variables_horizon_values[nbr, nbr, k] - model.theta_areas[nbr, k])
                 for nbr in model.other_areas for k in model.TimeHorizon
                 )
 
@@ -156,8 +157,8 @@ class MPCAgent:
                 (model.theta[k] - model.variables_horizon_values[self.area, nbr, k])**2 +
                 (model.variables_horizon_values[nbr, nbr, k] - model.theta_areas[nbr, k])**2
                 for nbr in model.other_areas for k in model.TimeHorizon
-            ) 
-        
+            )
+ 
         # Define expressions for each cost component such that it is possible to extract the values
         self.model.freq_cost =       pyo.Expression(rule=_freq_cost)
         self.model.lagrangian_term = pyo.Expression(rule=_lagrangian_term)
@@ -196,7 +197,6 @@ class MPCAgent:
         self.M_values =  self.andes.get_partial_variable("GENROU", "M", self.generators)
         self.D_values =  self.andes.get_partial_variable("GENROU", "D", self.generators)
         self.fn_values = self.andes.get_partial_variable("GENROU", "fn", self.generators)
-        self.p0_values = self.andes.get_partial_variable("PQ", "p0", self.loads)
 
         self._compute_coi_parameters()
 
@@ -211,13 +211,8 @@ class MPCAgent:
         """
         self.S_area = 0.0
         self.M_coi = 0.0 
-        self.Pd = 0.0
         self.D_coi = 0.0
-        self.fn_coi = 0.0  
-
-        for i, bus in enumerate(self.loads_bus):
-            if bus in self.buses:
-                self.Pd += self.p0_values[i]
+        self.fn_coi = 0.0
 
         for i, bus in enumerate(self.generator_bus):
             if bus in self.buses:
@@ -241,60 +236,63 @@ class MPCAgent:
         self.model.omega0.set_value(self.omega0) 
 
         # Angles
-        # self.area  #NOTE: angle logic needs to be revisited if it works!
         self.theta0 = self.andes.get_partial_variable("Bus", "a", self.interface_buses[self.area])
         self.model.theta0.set_value(self.theta0[0])#NOTE: angle logic needs to be revisited if it works!
-        # self.other_areas
+
         self.theta0_areas = {
             area: self.andes.get_partial_variable("Bus", "a", bus_list)
             for area, bus_list in self.interface_buses.items()
             if area != self.area
         }     
-
         for area, value in self.theta0_areas.items():
             self.model.theta0_areas[area] = value[0]#NOTE: angle logic needs to be revisited if it works!
 
-        # Mechanical torque - Mechanical power in p.u.
+        # Mechanical power
         self.tm_values = self.andes.get_partial_variable("GENROU", "tm", self.generators)
-        
         for gen, val in zip(self.generators, self.tm_values): #NOTE: to clean because of consistency 
             self.model.tm_values[gen] = val
     
-    def compute_offset(self):
+    def compute_offset(self): #NOTE: can be merged with intial_variable_values
         # Angles
-        # self.area  #NOTE: angle logic needs to be revisited if it works!
         self.theta0 = self.andes.get_partial_variable("Bus", "a", self.interface_buses[self.area])
 
-        # self.other_areas
         self.theta0_areas = {
             area: self.andes.get_partial_variable("Bus", "a", bus_list)
             for area, bus_list in self.interface_buses.items()
             if area != self.area
-        }   
+        }
 
+        # Mechanical power
         self.P = sum(self.andes.get_partial_variable("GENROU", "tm", self.generators))
 
-        # P_offset
-        self.P_offset = self.P - self.Pd - self.b_areas[self.other_areas[0]] * (self.theta0[0] - self.theta0_areas[self.other_areas[0]][0])
+        # Demand
+        self.Pd = 0.0
+        self.p0_values = self.andes.get_partial_variable("PQ", "p0", self.loads)
+        for i, bus in enumerate(self.loads_bus):
+            if bus in self.buses:
+                self.Pd += self.p0_values[i]
 
+        # P_offset computation and assignment
+        self.P_offset = self.P - self.b_areas[self.other_areas[0]] * (self.theta0[0] - self.theta0_areas[self.other_areas[0]][0]) - self.Pd 
         for k in self.model.TimeHorizon:
+            self.model.Pd[k] = self.Pd
             self.model.P_offset[k] = self.P_offset
-        
-        
 
-    def first_warm_start(self): #NOTE: can be improved
+    def first_warm_start(self): 
         for k in range(self.K + 1):
             self.vars_saved['omega'][k] = self.model.omega0.value
             self.vars_saved['theta'][k] = self.model.theta0.value 
             self.vars_saved['P'][k] = sum(self.tm_values)
-            self.vars_saved['P_exchange'][k] = self.vars_saved['P'][k] - self.Pd     
-                     
-            
+            self.vars_saved['P_exchange'][k] = self.vars_saved['P'][k] - self.Pd - self.P_offset #NOTE: possible source of error!   
+                
             for nbr in self.other_areas:
                 self.vars_saved['theta_areas'][(nbr, k)] = self.model.theta0_areas[nbr].value
 
+                self.model.variables_horizon_values[self.area, nbr, k] = self.model.theta0.value
+                self.model.variables_horizon_values[nbr, nbr, k] = self.model.theta0_areas[nbr].value
+
             for i, gen in enumerate(self.generators):
-                self.vars_saved['Pg'][(gen, k)] = self.tm_values[i]
+                self.vars_saved['Pg'][(gen, k)] = self.tm_values[i]    
         
         self.warm_start()
         
@@ -304,7 +302,6 @@ class MPCAgent:
             self.model.theta[k].value = self.vars_saved['theta'][k]
             self.model.P[k].value = self.vars_saved['P'][k]
             self.model.P_exchange[k].value = self.vars_saved['P_exchange'][k]
-            
             
             for nbr in self.other_areas:
                 self.model.theta_areas[nbr, k].value = self.vars_saved['theta_areas'][(nbr, k)]
@@ -318,7 +315,6 @@ class MPCAgent:
             self.vars_saved['theta'][k] = self.model.theta[k].value
             self.vars_saved['P'][k] = self.model.P[k].value
             self.vars_saved['P_exchange'][k] = self.model.P_exchange[k].value
-            
 
             for nbr in self.other_areas:
                 self.vars_saved['theta_areas'][(nbr, k)] = self.model.theta_areas[nbr, k].value
