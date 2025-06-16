@@ -3,15 +3,16 @@ import subprocess
 import time
 
 pre_command = 'source /home/pablo/myenv/bin/activate'
-script_name = "data_test"
+script_name = "roles_tests/data_test"
+script_name = "andes_mpc/mpc_multiple_areas"
 build_command = {
         "cmd": "/home/pablo/myenv/bin/python -m colmena_build "
-               f"--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/{script_name}.py' "
+               f"--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/{script_name}.py' "
                "--build_file='/home/pablo/Desktop/Colmena/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' ",
         "cwd": "/home/pablo/Desktop/Colmena/programming-model/colmena/building_tool"  
     }
 deploy_command = {
-        "cmd": f"/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/roles_tests/{script_name}/build' "
+        "cmd": f"/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/{script_name}/build' "
                "--platform='linux/amd64' "
                "--user=pablodejuan",
         "cwd": "/home/pablo/Desktop/Colmena/deployment-tool/deployment"  # Change to the correct directory
@@ -21,29 +22,27 @@ zenoh_command = {
         "cwd": "/home/pablo/Desktop/Colmena/agent"  # Change to the directory where compose.yaml is located
     }
 agent_command= {
-        "cmd": "DEVICE_HARDWARE={hardware} DEVICE_STRATEGY={strategy} docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
+        "cmd": "HARDWARE={hardware} AGENT_ID={agent_name} POLICY={strategy} docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
         "cwd": "/home/pablo/Desktop/Colmena/agent", 
         'is_agent': True,
     }
 
-agents = [{'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'device_a'},
-          {'hardware':'TRANSFORMER', 'strategy':'EAGER', 'agent_name':'device_b'}, 
-          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'device_c'}, 
-          {'hardware':'GENERATOR', 'strategy':'EAGER', 'agent_name':'device_d'}] 
+compose_down = " 'docker compose --file '/home/pablo/Desktop/Colmena/agent/compose.yaml' --project-name 'area_1' down' "
+
+agents = [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_a'},
+          {'hardware':'TRANSFORMER', 'strategy':'eager', 'agent_name':'device_b'}, 
+          {'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_c'}, 
+          {'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_d'}] 
 
 mpc_agents = True
 if mpc_agents:
-    agents = [{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area_1'},{'hardware':'AREA', 'strategy':'EAGER', 'agent_name':'area_2'}] 
+    agents = [{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_1'},{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_2'}] 
 
-redeploy_commands = [build_command, zenoh_command, agent_command, agent_command, deploy_command]  
 commands =  [zenoh_command, agent_command, agent_command, deploy_command]  
-commands = redeploy_commands 
-commands = [agent_command, agent_command, deploy_command]
 #commands = [build_command]
 #commands = [deploy_command]
 processes = []
 agent_i = 0
-
 
 cmd = zenoh_command['cmd']
 cwd = zenoh_command['cwd']
@@ -52,7 +51,7 @@ build_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_en
 #terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
 #process = subprocess.Popen(terminal_cmd, shell=True)
 subprocess.Popen(terminal_cmd,shell=True)
-#subprocess.Popen(build_cmd,shell=True)
+subprocess.Popen(build_cmd,shell=True)
 
 time.sleep(6)
 for cmd in commands:

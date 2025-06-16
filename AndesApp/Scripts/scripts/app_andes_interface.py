@@ -60,6 +60,8 @@ def load_simulation():
             agent_actions[agent_name] = []
         app.config['started'] = False
         app.config['await_start'] = True
+        app.config['set_time_limit'] = [0, 15]
+
         n_redual = 4
         system_ieee = ad.load(case_file, setup=False)
         print(f"case_file is {case_file}")
@@ -68,21 +70,19 @@ def load_simulation():
             system.prepare(models = system.TGOV1N)
             system.prepare(models = system.TGOV1)
             print(f"system.TGOV1N.b is {system.TGOV1N.b}")
-            #system.Line.alter(src='u', idx = 'Line_7', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_17', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_20', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_31', value = 0)
-            #system.Line.alter(src='u', idx = 'Line_32', value = 0)
+
             system.setup()
             system.PFlow.run()
             #system.TDS.init()
             print(f"system area is {system.Area}")
-            return jsonify({"message": f"Simulation loaded successfully"}), 200
+            app.config['areas'] = system.Area.n
 
+            return jsonify({"message": f"Simulation loaded successfully"}), 200
         app.config['redual'] = True
         print("redual is true")
         system = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
         system_initial = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
+
         for i in range(n_redual):
             idx = system.REDUAL.idx.v[i]
             system.REDUAL.alter(src='is_GFM', idx=idx, value = 0)
@@ -375,7 +375,7 @@ def delta_equivalent():
             bus_area = system.Bus.area.v[bus_uid]
             if bus_area == area:
                 p_demand -= system.PQ.p0.v[i]
-        p_losses = d_M_omega - p_exchanged - p_demand - p_gen
+        p_losses = 0*d_M_omega - p_exchanged - p_demand - p_gen
         result = {}
         result['value'] = delta_equivalent
         result['losses'] = p_losses
@@ -843,6 +843,18 @@ def set_last_control_time():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/set_time_limit', methods=['GET'])
+def set_time_limit():
+    try: 
+        t = float(request.args.get('t', None))  
+        app.config['set_time_limit'][0] = (1 + app.config['set_time_limit'][0])%(app.config['areas'])
+        app.config['set_time_limit'][1] = round(t, 1)
+
+        return jsonify({"Message": 'Success'}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/run_stopping_time', methods=['GET'])
 def run_stopping_time():
@@ -890,6 +902,50 @@ def run_stopping_time():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/run_colmena_time', methods=['GET'])
+def run_colmena_time():
+    global set_points
+    try:
+        print(f"Running Simulation 1")
+        set_points = []
+        speed_factor = float(request.args.get('speed', 1))
+        if app.config['grid'] == 'ieee39':
+            Ppf_pq5 = system.PQ.Ppf.v[4]
+            Ppf_pq6 = system.PQ.Ppf.v[5]
+            set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
+
+        print(f"Running Simulation 2")
+        t_run = float(request.args.get('t_run', 40))  
+        delta_t = float(request.args.get('delta_t', 0.1))  
+        app.config['started'] = True
+        system.PFlow.run()
+        t_0 = time.time()
+        while system.dae.t <= t_run:
+            if app.config['set_time_limit'][1] <= system.dae.t + delta_t or app.config['set_time_limit'][0] != 0:
+                time.sleep(0.01)
+                print(f'waiting for control limit is {app.config['set_time_limit']}, {system.dae.t}')
+                continue 
+            else:
+                app.config['set_time_limit'][0] = 0
+            start_time = time.time()
+            print(f"Running Simulation 3")
+            system.TDS_stepwise.set_set_points(set_points)
+            system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+            app.config['started'] = True
+            print(f't_run is {t_run}')
+            print(f'delta_t is {delta_t}')
+            print(f't_dae is {system.dae.t}')
+            time.sleep(max(0,delta_t-(time.time()-start_time)))
+            t_0 = time.time()
+            
+        app.config['await_start'] = True
+        return jsonify({"Message": 'Success', "Time":t_run}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/plot', methods=['GET'])
 def plot():

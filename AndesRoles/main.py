@@ -1,5 +1,5 @@
 from example_test import ErootsUseCase
-from example_opf import DistributedMPC
+from example_opf import AgentControl
 from example_application import ExampleApplication
 from typing import List, TYPE_CHECKING
 from threading import Thread
@@ -37,10 +37,10 @@ if __name__ == "__main__":
     andes_url = 'http://127.0.0.1:5000'
     kwargs = {'andes_url':andes_url, 'device_idx':1, 'model_name':'REDUAL'} 
     andes_dict["redual"] = False
-    responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
+    #responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)
     time.sleep(2)
     test_example = TestExamples()
-    test_example.execute_roles_in_service(service_class = DistributedMPC)
+    test_example.execute_roles_in_service(service_class = AgentControl)
     
     plot_response = False
     if plot_response:

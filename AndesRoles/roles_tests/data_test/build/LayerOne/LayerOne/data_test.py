@@ -51,6 +51,7 @@ class AgentControl(Service):
             self.states = np.ones(n_areas)
             self.value = np.random.rand(1)
             self.area = 1
+            self.model = self.setup_mpc()
 
         @Persistent()
         def behavior(self):
@@ -107,4 +108,3 @@ class AgentControl(Service):
             print("running")
             a = self.state_horizon.get()
             time.sleep(0.1)
-

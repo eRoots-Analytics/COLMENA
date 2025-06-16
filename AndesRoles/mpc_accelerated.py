@@ -360,15 +360,6 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         return model.P[t] == sum(model.Pg[gen, t] for gen in model.generators)
     model.constraints_balance = pyo.Constraint(model.TimeHorizon, rule = power_balance_rule)
 
-    #We define a condition for the final states To ensure feasability.
-    area_sign = 1 if self.area == 1 else -1
-    #model.final_condition = pyo.Constraint(expr = model.delta[0] == model.delta[self.T])
-    #model.final_condition_others = pyo.Constraint(model.other_areas,rule = lambda model, i: model.delta_areas[i, 0] == model.delta_areas[i,self.T])
-    #model.convex_condition = pyo.Constraint(model.TimeSecondDynamics, rule =lambda model, t: (area_sign)*(model.delta[t] - 2*model.delta[t+1] + model.delta[t+2]) >= 0)
-    #model.convex_condition_other = pyo.Constraint(model.TimeSecondDynamics, model.other_areas, rule =lambda model, t, i: (-area_sign)*(model.delta_areas[i,t] - 2*model.delta_areas[i,t+1] + model.delta_areas[i,t+2]) >= 0)
-    #model.final_condition = pyo.Constraint(expr = model.freq[self.T] == 1)
-    #model.final_condition = pyo.Constraint(expr = model.freq[self.T] == 1)
-
     #We define the cost function
     #COST 1: Linear cost related to each generator power
     #COST 2: Cost term related to losses of active power
@@ -626,7 +617,7 @@ def solve_mpc(verbose = False):
     mpc_problem.alpha = mpc_problem.rho
     for i in range(mpc_problem.iter):
         responseAndes = requests.get(agent_1.andes_url + '/sync_time')
-        time_start = int(responseAndes.json()['time'])
+        time_start = float(responseAndes.json()['time'])
         for agent in agents:
             other_agent = other[agent.agent_id]
 
@@ -742,9 +733,9 @@ def solve_mpc(verbose = False):
                 norm2_dual_error = 0
         mpc_problem.error_save.append([error, mpc_problem.rho, norm2_error, norm2_dual_error])
 
-        if not mpc_problem.second_stage and i<25:
+        if not mpc_problem.second_stage and i<50:
             mu = 15
-            rho_max = 1e3
+            rho_max = 1e5
             if norm2_error > mu*norm2_dual_error:
                 mpc_problem.rho = min(rho_max, mpc_problem.rho*1.3)
             elif mu*norm2_error < norm2_dual_error and (not mpc_problem.second_stage):
@@ -772,7 +763,7 @@ def solve_mpc(verbose = False):
 
         agent.first = False
         responseAndes = requests.get(andes_url + '/sync_time')
-        time_start = int(responseAndes.json()['time'])
+        time_start = float(responseAndes.json()['time'])
 
         #If Converged we send all the new set points to the generator's governors
         #All the new set points are sent to andes and not just the first one
@@ -782,11 +773,11 @@ def solve_mpc(verbose = False):
                 print(generators)
             responseAndes = requests.get(agent.andes_url + '/sync_time')
             responseAndes = requests.get(agent_1.andes_url + '/sync_time')
-            time_start = int(responseAndes.json()['time'])
+            time_start = float(responseAndes.json()['time'])
             for x_agent in agents:
                 generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
                 params = ['pref0', 'p_goal', 'paux0', 'tm0']
-                params = ['p_direct', 'b', ]
+                params = ['p_direct', 'b']
                 for gen_id in generators:
                     for t in range(1, x_agent.T+1):
                         for param in params:
@@ -860,6 +851,10 @@ for t in model.TimeHorizon:
     print(f"P_exchange self [{t}, area2] = {other_model.P_exchange[t].value}")
     print(f"delta model 2 self [{t}, area2] = {other_model.delta[t].value}")
     print(f"delta model 2 self [{t}, area1] = {other_model.delta_areas[1,t].value}")
+
+for t in model.TimeHorizon:
+    print(f"P generated is [{t}, area1] = {model.P[t].value}")
+    print(f"P generated is [{t}, area2] = {other_model.P[t].value}")
 
 
 def plot_dual_history(dual_history, title=None):

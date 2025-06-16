@@ -51,6 +51,7 @@ class AgentControl(Service):
             self.states = np.ones(n_areas)
             self.value = np.random.rand(1)
             self.area = 1
+            self.model = self.setup_mpc()
 
         @Persistent()
         def behavior(self):
@@ -77,8 +78,33 @@ class AgentControl(Service):
                 print(f'Error creating SolverFactory for Ipopt: {e}')
                 print('This might indicate a problem with Pyomo or the environment.')
                 sys.exit(1)
-                device_id = self.agent_i                    #agent_get = self.state_horizon.get()
-                self.state_horizon.publish(device_id)
+                
+            
+            print('Checking Ipopt availability through Pyomo...')
+            if not solver.available(exception_flag=False):
+                print('Ipopt is NOT available to Pyomo according to solver.available().')
+            try:
+                exe_path = solver.executable()
+                print(f'Pyomo\'s expected executable path for Ipopt: {exe_path if exe_path else "Not found or not set"}')
+            except Exception as e_path:
+                print(f'Error obtaining executable path from Pyomo: {e_path}')
+                print('Ensure Ipopt is installed correctly and in the system PATH.')
+                sys.exit(1)
+
+            print(f'Ipopt found by Pyomo. Executable: {solver.executable()}')
+            print(f'Ipopt version (if available through solver): {solver.version()}')
+
+            # 6. Solve the model
+            print('Attempting to solve the NLP problem with Ipopt...')
+            try:
+                # tee=True will show Ipopt's console output during the solve process.
+                results = solver.solve(model, tee=True)
+            except Exception as e:
+                print(f'An error occurred during solver.solve(): {e}')
+                print('This could be an issue with the model, solver, or their interaction.')
+                sys.exit(1)
+            device_id = self.agent_i                    #agent_get = self.state_horizon.get()
+            self.state_horizon.publish(device_id)
             print("running")
             a = self.state_horizon.get()
             time.sleep(0.1)

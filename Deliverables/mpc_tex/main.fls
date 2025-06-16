@@ -328,12 +328,12 @@ INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm1
 INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm
 INPUT /usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc
 INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
-INPUT ./figures/ieee2areas.png
-INPUT ./figures/ieee2areas.png
-INPUT ./figures/ieee2areas.png
-INPUT ./figures/ieee2areas.png
-INPUT ./figures/ieee2areas.png
 INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
+INPUT ./figures/ieee2areas.png
+INPUT ./figures/ieee2areas.png
+INPUT ./figures/ieee2areas.png
+INPUT ./figures/ieee2areas.png
+INPUT ./figures/ieee2areas.png
 INPUT main.aux
 INPUT main.run.xml
 OUTPUT main.run.xml

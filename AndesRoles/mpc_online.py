@@ -285,7 +285,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     delta_equivalent = response_delta_equivalent.json()['value']
     response_delta_equivalent = requests.get(andes_url + '/delta_equivalent', params={'area':self.area})
     p_losses = response_delta_equivalent.json()['losses']
-    p_losses *= 0
+    p_losses *= 1
     delta0 = np.mean(delta_values)
     freq0 = np.dot(M_values, freq_values) / np.sum(M_values)
     model.delta[0].value = delta0
@@ -312,6 +312,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     delta_areas0_dict = {area:delta for area, delta in zip(model.other_areas, [delta_areas0])}
     model.delta0 = pyo.Param(initialize = delta0, mutable=True)
     model.freq0 = pyo.Param(initialize = freq0, mutable=True)
+    model.p_losses = pyo.Param(initialize = p_losses, mutable=True)
     model.delta_areas0 = pyo.Param(model.other_areas, initialize = delta_areas0_dict, mutable=True)
     model.tm0 = pyo.Param(model.generators, initialize = tm0, mutable=True)
     def initial_p(model, i):
@@ -338,7 +339,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     #C4: the generator minimum ramp up
     self.ramp_up = 0.05
     model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.delta[t+1] - model.delta[t])==  self.dt*2*np.pi*fn*(model.freq[t]-1))
-    model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.M*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + p_losses)))
+    model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: model.M*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + model.p_losses)))
     model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
     model.constrains_dynamics4 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: -self.ramp_up*self.dt <= (model.Pg[i, t+1] - model.Pg[i, t]))
 
@@ -696,7 +697,7 @@ def solve_mpc(mpc_problem, verbose = False):
 
         if not mpc_problem.second_stage and i<25:
             mu = 15
-            rho_max = 1e1
+            rho_max = 1e4
             if norm2_error > mu*norm2_dual_error:
                 mpc_problem.rho = min(rho_max, mpc_problem.rho*1.3)
             elif mu*norm2_error < norm2_dual_error and (not mpc_problem.second_stage):
@@ -772,8 +773,8 @@ def online_mpc():
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
     mpc_problem.iter = 200
-    mpc_problem.alpha = 2
-    mpc_problem.rho = 0.9
+    mpc_problem.alpha = 15
+    mpc_problem.rho = 15
     other = {"area_1": agent_2, "area_2": agent_1}
     converged, andes_role_changes, mpc_problem = solve_mpc(mpc_problem)
     agent = mpc_problem.agents[1]
@@ -799,13 +800,12 @@ def online_mpc():
         time.sleep(max(0,dt - time_spent))
     return converged, andes_role_changes, mpc_problem
 
-andes_url = 'http://192.168.10.137:5000'
 andes_url = 'http://192.168.68.74:5000'
 
 responseLoad = requests.post(andes_url + '/start_simulation')
 delta_values = requests.get(andes_url + '/complete_variable_sync', params={'model':'GENROU', 'var':'delta'}).json()['value']
 
-time.sleep(10)
+time.sleep(11)
 #We run the first iteration of the MPC
 
 converged, andes_role_changes, mpc_problem = online_mpc()

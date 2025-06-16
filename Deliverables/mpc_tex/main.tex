@@ -434,29 +434,29 @@ The following pseudocode describes the online control loop executed by each loca
 
 In this section we discuss how the different tools provided by COLMENA are used to set up the grid. Specifically, how the data and contexts decorators are used by the Distributed MPC role to be implemented in parallel. The parallel implementation is key to 
 
-\subsubsection*{Data Decorators}
-
-We define 2 Data Channels to share information between the different agents running the ADMM:
-
-\begin{itemize}
-    \item State Horizon Channel: Channel where the copies of all the coupled primal variables are stored, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
-    \item Dual Variables Channel: Channel where the dual variables are stored.
-    \item Iteration Channel: Channel where the agents shared their iteration in the MPC.
-\end{itemize}
-
-The different agents read these channels to get the values for the dual variables and the copies of the primal variables and then post their updates primal values.
-
 \subsubsection*{Contexts Decorators}
 
-The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific conmtexts when they belong to an area. For example, we could have contexts defined by the agents ID beforehand or, if we consider the initial prototype, if an agent is paired to an electrical device then the agent would belong to that area's context.
+The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific contexts when they belong to an area. For example, we could have contexts defined by the agents ID beforehand or, if we consider the initial prototype, if an agent is paired to an electrical device then the agent would belong to that area's context.
 
-We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For example, instead of the MPC including the dynamics of certain roles the MPC can set objectives that then other roles inside the area can react to. 
+We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For example, instead of the MPC including the dynamics of certain roles the MPC can set objectives that then other roles inside the area can react to. For this case we define \textit{Grid Areas} a context where each colmena agent is associated with their 
+
+\subsubsection*{Data Decorators}
+
+We define 3 different types of data channels to share information between the different agents running the ADMM:
+
+\begin{itemize}
+    \item State Horizon  Data: Channel where the copies of all the coupled primal variables are stored, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
+    \item Dual Variables Data: Channel where the dual variables are stored, this specific channel is scoped with respect to the context \textit{Grid Areas}. This makes it so that each area stores their own copy of the dual variables. This can be leveraged so that different agents in the same area could run different iterations of the online control.
+    \item Error Data: Channel where the agents update the dual error of the ADMM algorithm. When the error goes below a specific tolerance we consider the ADMM has reached convergence. Then the agents send the control actions to the ANDES simulation and wait until the next step.
+\end{itemize}
+
+\subsubsection*{Coordination}
+
+The different agents read this channel to get the values for the primal variables and the copies of the primal variables and then post their updates primal values. To avoid agents overwriting the changes of other agents we also add a coordination feature. This consists in the different agents having to update the data channels in a specific order. We add this coordination requirement to both the Error and State Horizon data channels. We also considered defining a new coordinating agent to perform this task that receives the different agents messages but decided against it.
 
 \section{Case Study and Results}
 
 We consider the IEEE39 \cite{grids:ieee39} grid to perform multiple case studies and see how the COLMENA frameworks performs in controlling the frequency. The grid consists of 39 buses, 10 generators, 14 lines and others electrical devices responsible for the electrical control. The line is simulated in python using the open source package ANDES \cite{grids:models}. This grid is divided in two different areas of similar size, where each bus belongs to one area or the other. The setup is identical to the one explained in the previous deliverable: ANDES is set up as an app that simulates the grid in real time. This app is also set up to receive queries to from COLMENA on the state on the grid, akin to making measurement of specific metrics on the grid. And it can also change the parameters of the simulation similar to a role acting on the grid.
-
-
 
 \begin{figure}[ht]
     \centering

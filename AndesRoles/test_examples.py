@@ -151,7 +151,7 @@ class TestExamples:
         """
         role = role_class(service)
         role.execute()
-        time.sleep(5)
+        time.sleep(20)
         role.stop()
 
     def test_build(self):
