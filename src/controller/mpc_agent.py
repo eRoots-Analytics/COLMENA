@@ -252,24 +252,6 @@ class MPCAgent:
         for gen, val in zip(self.generators, self.u_values): #NOTE: to clean because of consistency 
             self.model.u_values[gen] = val
 
-    # def compute_offset(self): #NOTE: can be merged with intial_variable_values
-    #     # Angles
-    #     self.theta0 = self.andes.get_partial_variable("Bus", "a", self.interface_buses[self.area])
-
-    #     self.theta0_areas = {
-    #         area: self.andes.get_partial_variable("Bus", "a", bus_list)
-    #         for area, bus_list in self.interface_buses.items()
-    #         if area != self.area
-    #     }
-
-    #     # Mechanical power
-    #     self.P = sum(self.andes.get_partial_variable("GENROU", "tm", self.generators))
-
-        # # P_offset computation and assignment
-        # self.P_offset = self.P - self.b_areas[self.other_areas[0]] * (self.theta0[0] - self.theta0_areas[self.other_areas[0]][0]) - self.Pd 
-        # for k in self.model.TimeHorizon:
-        #     self.model.P_offset[k] = self.P_offset
-
     def compute_demand(self):
         # Demand
         self.Pd = 0.0
