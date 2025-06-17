@@ -9,7 +9,6 @@ from src.config.config import Config
 class ADMM:
     def __init__(self, coordinator):
         self.alpha =    Config.alpha
-        self.beta =     Config.beta
         self.max_iter = Config.max_iter
         self.tol =      Config.tol
 
@@ -28,7 +27,7 @@ class ADMM:
                 if i==0: 
                     # Initialize the model for the first iteration
                     agent.initialize_variables_values()
-                    agent.compute_offset()
+                    agent.compute_demand()
 
                 self._solve_agent(agent, i)
 
@@ -49,6 +48,7 @@ class ADMM:
 
     def _solve_agent(self, agent, i):
         if agent.setup:
+            # agent.compute_offset()
             model = agent.setup_dmpc(self.coordinator)
             agent.setup = False #NOTE realiability check
         else:
@@ -77,8 +77,8 @@ class ADMM:
         ######################################
 
         # Save results in the coordinator map NOTE: this could be converted into a function for readibility
-        for k in model.TimeHorizon:
-            self.coordinator.variables_horizon_values[agent.area, agent.area, k] = model.theta[k].value                                    
+        for k in model.TimeInput:
+            self.coordinator.variables_horizon_values[agent.area, agent.area, k] = model.theta[k + 1].value                                    
             for nbr in self.coordinator.neighbours[agent.area]:
                 self.coordinator.variables_horizon_values[nbr, agent.area, k] = model.theta_areas[nbr, k].value   
         
@@ -90,7 +90,7 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for k in range(self.coordinator.K + 1):
+                for k in range(self.coordinator.K):
                     # Get local and neighbor values
                     theta_ii = vars_dict[area, area, k]
                     theta_ij = vars_dict[area, nbr, k]
@@ -121,7 +121,7 @@ class ADMM:
             model = agent.model
             area = agent.area
             for nbr in self.coordinator.neighbours[area]:
-                for k in range(self.coordinator.K + 1):
+                for k in range(self.coordinator.K):
                     model.variables_horizon_values[area, nbr, k].value = vars_dict[area, nbr, k]
                     model.variables_horizon_values[nbr, nbr, k].value = vars_dict[nbr, nbr, k]
 
@@ -134,7 +134,7 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for k in range(self.coordinator.K + 1):
+                for k in range(self.coordinator.K):
                     theta_ii = vars_dict[area, area, k]
                     theta_ij = vars_dict[area, nbr, k]
 
@@ -149,7 +149,7 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for k in range(self.coordinator.K + 1):
+                for k in range(self.coordinator.K):
                     theta_ii = vars_dict[area, area, k]
                     theta_ij = vars_dict[area, nbr, k]
 

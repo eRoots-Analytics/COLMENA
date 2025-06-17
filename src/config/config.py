@@ -11,34 +11,28 @@ class Config:
     tf = 10.0
 
     # Disturbance 
-    td = tf/2
+    td = 1.0
 
     # MPC
     # Status 
     controlled = True
     # Horizon
-    dt = tstep
-    K = 30
+    dt = tstep * 5
+    K = 20
     # Execution
-    tdmpc = tstep # imporves numeric performance
+    tdmpc = 1.0
 
-    ramp_up = 0.01
-    ramp_down = 0.01
+    ramp_up = 0.1
+    ramp_down = 0.1
 
     omega_ref = 1.0
 
     q = 1e7
-    alpha = 5
-    beta = 0
-    rho = 1e5
-    q_terminal = 5e10
+    alpha = 1e4
+    rho = 1e7
 
-    max_iter = 400
+    max_iter = 300
     tol = 1e-3
 
-    P_exchange_max = 20
-    P_exchange_min = 20
-
-    fn = 50
-    D = 12500
+    fn = 60
 
