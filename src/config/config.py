@@ -8,10 +8,10 @@ class Config:
 
     # Simulator 
     tstep = 0.1
-    tf = 10.0
+    tf = 50.0
 
     # Disturbance 
-    td = 1.0
+    td = 5.0
 
     # MPC
     # Status 
@@ -20,19 +20,19 @@ class Config:
     dt = tstep * 5
     K = 20
     # Execution
-    tdmpc = 1.0
+    tdmpc = 2.5
 
     ramp_up = 0.1
     ramp_down = 0.1
 
     omega_ref = 1.0
 
-    q = 1e7
-    alpha = 1e4
-    rho = 1e7
+    q = 10
+    alpha = 15
+    rho = 1e3
 
-    max_iter = 300
-    tol = 1e-3
+    max_iter = 500
+    tol = 1e-2
 
     fn = 60
 

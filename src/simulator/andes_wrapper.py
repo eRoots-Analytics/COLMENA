@@ -104,15 +104,19 @@ class AndesWrapper:
         
         return response_json['value']
     
-    def get_theta_equivalent(self, area: int):    #NOTE: Hard coded, needs to be changed
-        response = requests.get(
-            f"{self.andes_url}/delta_equivalent", #NOTE: name needs to be changed
-            params={"area": 1}
-        )
-        response.raise_for_status() 
-        raw = response.json()
+    def set_value(self, set_value_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/set_value",
+                json=set_value_dict
+            )
+            if response.status_code != 200:
+                print(f"[Set] Server error: {response.json()}")
+            else:
+                print(f"[Set] Success: {set_value_dict}")
+        except Exception as e:
+            print(f"[Set] Failed to send value: {e}")
 
-        return [float(v) for v in raw["value"].values()]
 
     def send_setpoint(self, role_change_dict: dict):
         try:
@@ -142,3 +146,18 @@ class AndesWrapper:
         else:
             print("Step failed:", response.text)
             return False, None
+    
+    def get_exact_power_transfer(self, area: int, interface_buses: dict[int, list[int]]):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/exact_power_transfer",
+                json={
+                    "area": area,
+                    "interface_buses": interface_buses
+                }
+            )
+            return response.json()["power_transfer"]
+        except Exception as e:
+            print(f"[Get] Failed to get power transfer: {e}")
+            return {}
+

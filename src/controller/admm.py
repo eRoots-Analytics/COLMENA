@@ -27,12 +27,11 @@ class ADMM:
                 if i==0: 
                     # Initialize the model for the first iteration
                     agent.initialize_variables_values()
-                    agent.compute_demand()
 
                 self._solve_agent(agent, i)
 
             # Residual computation
-            primal_residual = self._compute_primal_residual_mse()
+            primal_residual = self._compute_primal_residual_inf()
             self.coordinator.error_save.append(primal_residual) 
 
             print(f"Iteration {i}, Primal Residual: {primal_residual}")
@@ -42,7 +41,7 @@ class ADMM:
                 return True, self.coordinator.collect_role_changes()
 
             self._update_duals(i)
-            self._update_pyomo_params() # NOTE: convergence can be improved by updating only the changed agents
+            self._update_pyomo_params() 
 
         return False, self.coordinator.collect_role_changes()
 
@@ -76,12 +75,13 @@ class ADMM:
         })
         ######################################
 
-        # Save results in the coordinator map NOTE: this could be converted into a function for readibility
-        for k in model.TimeInput:
-            self.coordinator.variables_horizon_values[agent.area, agent.area, k] = model.theta[k + 1].value                                    
-            for nbr in self.coordinator.neighbours[agent.area]:
-                self.coordinator.variables_horizon_values[nbr, agent.area, k] = model.theta_areas[nbr, k].value   
-        
+        # Save results in the coordinator map
+        # NOTE: this could be converted into a function for readibility
+        # NOTE: inconsistent!!!!!!
+        for nbr in self.coordinator.neighbours[agent.area]:
+            self.coordinator.variables_horizon_values[agent.area, agent.area] = model.P_exchange[nbr].value  
+            self.coordinator.variables_horizon_values[agent.area, nbr] = model.P_exchange_areas[nbr].value
+
         agent.save_warm_start()
                   
     def _update_duals(self, i):
@@ -90,42 +90,37 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for k in range(self.coordinator.K):
-                    # Get local and neighbor values
-                    theta_ii = vars_dict[area, area, k]
-                    theta_ij = vars_dict[area, nbr, k]
+                # Get local and neighbor values
+                theta_ii = vars_dict[area, area]
+                theta_ij = vars_dict[nbr, area]
 
-                    # Update the dual variable
-                    key = (area, nbr, k)
-                    lambda_old = self.coordinator.dual_vars[key]
-                    lambda_new = lambda_old + alpha * (theta_ii - theta_ij)
-                    self.coordinator.dual_vars[key] = lambda_new
+                # Update the dual variable
+                key = (area, nbr)
+                lambda_old = self.coordinator.dual_vars[key]
+                lambda_new = lambda_old + alpha * (theta_ii - theta_ij)
+                self.coordinator.dual_vars[key] = lambda_new
 
-                    ########### FOR PLOTTING #############
-                    self.primal_log.append({
-                        "iteration": i,
-                        "k": k,
-                        "area": area,
-                        "nbr": nbr,
-                        "theta_ii": theta_ii,
-                        "theta_ij": theta_ij,
-                        "residual": abs(theta_ii - theta_ij),
-                        "dual": lambda_new
-                    })
-                    ######################################
+                ########### FOR PLOTTING #############
+                self.primal_log.append({
+                    "iteration": i,
+                    "area": area,
+                    "nbr": nbr,
+                    "theta_ii": theta_ii,
+                    "theta_ij": theta_ij,
+                    "residual": abs(theta_ii - theta_ij),
+                    "dual": lambda_new
+                })
+                ######################################
     
     def _update_pyomo_params(self):
         vars_dict = self.coordinator.variables_horizon_values
-
         for agent in self.coordinator.agents.values():
             model = agent.model
             area = agent.area
             for nbr in self.coordinator.neighbours[area]:
-                for k in range(self.coordinator.K):
-                    model.variables_horizon_values[area, nbr, k].value = vars_dict[area, nbr, k]
-                    model.variables_horizon_values[nbr, nbr, k].value = vars_dict[nbr, nbr, k]
-
-                    model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
+                model.variables_horizon_values[area, area].value = vars_dict[area, area]
+                model.variables_horizon_values[area, nbr].value = vars_dict[area, nbr]
+                model.dual_vars[area, nbr].value = self.coordinator.dual_vars[area, nbr]
 
     def _compute_primal_residual_mse(self):
         residual_sum = 0.0
@@ -134,12 +129,11 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for k in range(self.coordinator.K):
-                    theta_ii = vars_dict[area, area, k]
-                    theta_ij = vars_dict[area, nbr, k]
+                theta_ii = vars_dict[area, area]
+                theta_ij = vars_dict[nbr, area]
 
-                    residual_sum += (theta_ii - theta_ij)**2
-                    count += 2
+                residual_sum += (theta_ii - theta_ij)**2
+                count += 2
 
         return np.sqrt(residual_sum / count) if count else 0.0
     
@@ -149,12 +143,11 @@ class ADMM:
 
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
-                for k in range(self.coordinator.K):
-                    theta_ii = vars_dict[area, area, k]
-                    theta_ij = vars_dict[area, nbr, k]
+                theta_ii = vars_dict[area, area]
+                theta_ij = vars_dict[nbr, area]
 
-                    residual = abs(theta_ii - theta_ij)
+                residual = abs(theta_ii - theta_ij)
 
-                    max_residual = max(max_residual, residual)
+                max_residual = max(max_residual, residual)
 
         return max_residual

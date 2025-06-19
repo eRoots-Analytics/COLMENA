@@ -44,6 +44,17 @@ def load_simulation():
         system.files.no_output = True # no .lst, .npz and .txt output
         system.PFlow.run()
 
+        # Force PQ loads to behave as constant power in TDS
+        system.PQ.config.p2p = 1.0
+        system.PQ.config.p2i = 0.0
+        system.PQ.config.p2z = 0.0
+
+        system.PQ.config.q2q = 1.0
+        system.PQ.config.q2i = 0.0
+        system.PQ.config.q2z = 0.0
+
+        system.PQ.pq2z = 0
+
         # Initialize ANDES TDS
         tds = TDS(system)
         tds.config.fixt = 1
@@ -189,78 +200,74 @@ def interface_buses():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
-@app.route('/delta_equivalent', methods=['GET'])
-def delta_equivalent():
+@app.route('/exact_power_transfer', methods=['POST'])
+def exact_power_transfer():
     global system
     try:
-        data = request.args.to_dict()
+        data = request.get_json()
         area = int(data['area'])
-        other_areas = system.Area.idx.v
-        other_areas = [x_area for x_area in other_areas if x_area != area]
-        connecting_lines = {}
-        connecting_susceptance = {}
-        delta_equivalent = {}
-        for x_area in other_areas:
-            connecting_lines[x_area] = []
+        interface_buses = {int(k): [int(b) for b in v] for k, v in data['interface_buses'].items()}
+
+        power_transfer = {int(other_area): 0.0 for other_area in interface_buses.keys() if int(other_area) != area}
+
 
         for i, line in enumerate(system.Line.idx.v):
+            line_uid = system.Line.idx2uid(line)
+            if system.Line.u.v[line_uid] == 0:
+                continue  # skip out-of-service lines
+
             bus1 = system.Line.bus1.v[i]
             bus2 = system.Line.bus2.v[i]
-            bus1_index = system.Bus.idx2uid(bus1)
-            bus2_index = system.Bus.idx2uid(bus2)
-            area1 = system.Bus.area.v[bus1_index]
-            area2 = system.Bus.area.v[bus2_index]
+            bus1_uid = system.Bus.idx2uid(bus1)
+            bus2_uid = system.Bus.idx2uid(bus2)
 
-            if area1 != area2 and area in [area1, area2]:
-                connecting_area = area2 if area == area1 else area1
-                connecting_lines[connecting_area].append(line)
+            area1 = system.Bus.area.v[bus1_uid]
+            area2 = system.Bus.area.v[bus2_uid]
+
+            # Only process lines where this area is the 'from' side
+            if area1 == area and area2 != area and area2 in interface_buses.keys():
+                v1 = system.Bus.v.v[bus1_uid]
+                v2 = system.Bus.v.v[bus2_uid]
+                a1 = system.Bus.a.v[bus1_uid]
+                a2 = system.Bus.a.v[bus2_uid]
+                gh = system.Line.gh.v[line_uid]
+                ghk = system.Line.ghk.v[line_uid]
+                bhk = system.Line.bhk.v[line_uid]
+                phi = system.Line.phi.v[line_uid]
+                itap = system.Line.itap.v[line_uid]
+                itap2 = system.Line.itap2.v[line_uid]
+                u = system.Line.u.v[line_uid]
+
+                p_flow = u * (v1**2 * (gh + ghk) * itap2 -
+                              v1 * v2 * (ghk * np.cos(a1 - a2 - phi) +
+                                         bhk * np.sin(a1 - a2 - phi)) * itap)
+
+                power_transfer[int(area2)] += p_flow
             
-        for x_area, lines in connecting_lines.items():
-            bi = 0
-            for line in lines:
-                line_uid = system.Line.idx2uid(line)
-                connection_status = system.Line.u.v[line_uid]
-                xi = system.Line.x.v[line_uid]
-                Sn = system.Line.Sn.v[line_uid]
-                bi += (1/xi)*connection_status
-            connecting_susceptance[int(x_area)] = bi
-        
-        for x_area, lines in connecting_lines.items():
-            p_exchanged = 0
-            p_exchanged_other = 0
-            for line in lines:
-                i = system.Line.idx2uid(line)
-                bus1 = system.Line.bus1.v[i]
-                bus2 = system.Line.bus2.v[i]
-                bus1_index = system.Bus.idx2uid(bus1)
-                bus2_index = system.Bus.idx2uid(bus2)
-                area1 = system.Bus.area.v[bus1_index]
-                area2 = system.Bus.area.v[bus2_index]
-                delta1 = system.Bus.a.v[bus1_index]
-                delta2 = system.Bus.a.v[bus2_index]
-                v1 = system.Bus.v.v[bus1_index]
-                v2 = system.Bus.v.v[bus2_index]
-                line_uid = system.Line.idx2uid(line)
-                xi = system.Line.x.v[line_uid]
-                ri = system.Line.r.v[line_uid]
-                b_shunt = system.Line.b.v[line_uid]
-                if area == area1:
-                    sign = 1
-                else:
-                    sign = -1
-                p_exchanged += 1*sign*(-1/xi)*np.sin(delta1-delta2)*v1*v2
-                p_exchanged += 0*sign*(v1*v2*((ri/xi**2)*np.cos(delta1-delta2)+(1/xi)*np.sin(delta1-delta2)) - v1*v1*((ri/xi**2)+b_shunt))
-            if connecting_susceptance[int(x_area)] != 0:
-                delta_equivalent[int(x_area)] = p_exchanged/connecting_susceptance[int(x_area)]
-            else:
-                delta_equivalent[int(x_area)] = 0
-        
-        result = {}
-        result['value'] = delta_equivalent
-        return jsonify(result), 200
+            elif area2 == area and area1 != area and area1 in interface_buses.keys():
+                v1 = system.Bus.v.v[bus1_uid]
+                v2 = system.Bus.v.v[bus2_uid]
+                a1 = system.Bus.a.v[bus1_uid]
+                a2 = system.Bus.a.v[bus2_uid]
+                gh = system.Line.gh.v[line_uid]
+                ghk = system.Line.ghk.v[line_uid]
+                bhk = system.Line.bhk.v[line_uid]
+                phi = system.Line.phi.v[line_uid]
+                itap = system.Line.itap.v[line_uid]
+                u = system.Line.u.v[line_uid]
+
+                p_flow = u * (v2 ** 2 * (gh + ghk) -
+                              v1 * v2 * (ghk * np.cos(a1 - a2 - phi) -
+                                         bhk * np.sin(a1 - a2 - phi)) * itap)
+
+                power_transfer[int(area1)] += p_flow
+
+        return jsonify({"power_transfer": power_transfer}), 200
+
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
     
 @app.route('/complete_variable_sync', methods=['GET'])
 def complete_variable_sync(all_devices = False):
@@ -363,6 +370,41 @@ def area_variable_sync(all_devices = False):
         print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/set_value', methods=['POST'])
+def set_value():
+    global system
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No JSON data received"}), 400
+
+        required = ['model', 'src', 'idx', 'attr', 'value']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"Missing required field '{field}'"}), 400
+
+        model_name = data['model']
+        src = data['src']
+        idx = data['idx']
+        attr = data['attr']
+        value = data['value']
+
+        if not hasattr(system, model_name):
+            return jsonify({"error": f"Model '{model_name}' not found"}), 400
+
+        model = getattr(system, model_name)
+
+        # Apply the value using .set()
+        model.set(src=src, idx=idx, attr=attr, value=value)
+
+        return jsonify({"message": "Value set successfully"}), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/send_set_point', methods=['POST'])
 def send_set_point():

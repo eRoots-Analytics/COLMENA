@@ -88,65 +88,35 @@ if __name__ == '__main__':
     plt.xlabel("Time [s]")
     plt.ylabel("Omega")
     plt.xlim(0, Config.tf)
-    plt.ylim(0.995, 1.005)
+    plt.ylim(0.85, 1.15)
     plt.title("Generator Speeds")
     plt.legend()
     plt.grid()
     plt.savefig("plots/first_test_omega.png")
     plt.show()
 
-    #
-    matplotlib.use('TkAgg')  
-    delta_log = sim.delta_log
+    # ==== PLOT DELTA PG PROFILES ====
+    delta_pg_log = sim.pg_delta_log
     times = []
-    gen_series = defaultdict(list)
+    gen_delta_pg_series = defaultdict(list)
 
-    for time, delta_by_agent in delta_log:
+    for time, delta_pg_by_agent in delta_pg_log:
         times.append(time)
-        for agent_id, delta_list in delta_by_agent.items():
-            for local_gen_index, delta_val in enumerate(delta_list):
+        for agent_id, delta_pg_dict in delta_pg_by_agent.items():
+            for local_gen_index, (gen_id, delta_pg_val) in enumerate(delta_pg_dict.items()):
                 gen_name = f"A{agent_id}_G{local_gen_index}"
-                gen_series[gen_name].append(delta_val)
+                gen_delta_pg_series[gen_name].append(delta_pg_val)
 
     plt.figure()
-    for gen_name, delta_vals in gen_series.items():
+    for gen_name, delta_vals in gen_delta_pg_series.items():
         plt.plot(times, delta_vals, label=gen_name)
 
     plt.xlabel("Time [s]")
-    plt.ylabel("Delta")
-    plt.xlim(0, Config.tf)
-    # plt.ylim(0.95, 1.05)
-    plt.title("Generator Delta")
-    plt.legend()
+    plt.ylabel("Delta Pg [pu]")
+    plt.title("Delta Pg (Setpoint - Pref) Over Time")
     plt.grid()
-    # plt.savefig("plots/first_test_omega.png")
-    plt.show()
-
-    #
-    matplotlib.use('TkAgg')  
-    theta_log = sim.theta_log
-    times = []
-    bus_series = defaultdict(list)
-
-    for time, theta_by_agent in theta_log:
-        times.append(time)
-        for agent_id, theta_list in theta_by_agent.items():
-            for local_bus_index, theta_val in enumerate(theta_list):
-                bus_name = f"A{agent_id}_B{local_bus_index}"
-                bus_series[bus_name].append(theta_val)
-
-    plt.figure()
-    for bus_name, delta_vals in bus_series.items():
-        plt.plot(times, delta_vals, label=bus_name)  # fixed line
-
-    plt.xlabel("Time [s]")
-    plt.ylabel("Theta")
-    plt.xlim(0, Config.tf)
-    # plt.ylim(0.95, 1.05)
-    plt.title("Bus Angle")
     plt.legend()
-    plt.grid()
-    # plt.savefig("plots/first_test_omega.png")
+    plt.savefig("plots/first_test_delta_pg.png")
     plt.show()
 
     # ==== PLOT GEN POWER PROFILES ====
@@ -171,49 +141,6 @@ if __name__ == '__main__':
     plt.grid()
     plt.legend()
     plt.savefig("plots/first_test_pg.png")
-    plt.show()
-
-    # ==== PLOT COST ====
-    cost_log = sim.admm.cost_log
-
-    iterations = [entry["iteration"] for entry in cost_log]
-    freq_vals = [entry["freq_val"] for entry in cost_log]
-    lagrangian_vals = [entry["lagrangian_val"] for entry in cost_log]
-    convex_vals = [entry["convex_val"] for entry in cost_log]
-    total_costs = [entry["total_cost"] for entry in cost_log]
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(iterations, freq_vals, label="Frequency Cost")
-    plt.plot(iterations, lagrangian_vals, label="Lagrangian Term")
-    plt.plot(iterations, convex_vals, label="Convex Term")
-    plt.plot(iterations, total_costs, label="Total Cost", linewidth=2)
-
-    plt.xlabel("ADMM Iteration")
-    plt.ylabel("Cost Value")
-    plt.title("Cost Terms During ADMM Iterations")
-    plt.grid()
-    plt.legend()
-    plt.savefig("plots/first_test_costs.png")
-    plt.show()
-
-
-    # ========== Horizon prediction vs simulation ==========
-    t_plot = 26  # scegli un tempo in cui l’MPC ha fatto almeno K iterazioni
-
-    agent_id = 'Agent_1'
-    pred = sim.theta_pred_horizon[agent_id][t_plot]  # predizione da t_plot a t_plot+K
-    simu = sim.theta_sim_log[agent_id][t_plot:t_plot + len(pred)]  # realtà nei successivi K passi
-
-    time_pred = np.arange(len(pred)) * Config.dt + t_plot * Config.dt
-
-    plt.figure()
-    plt.plot(time_pred, pred, '--', label='Predicted θ')
-    plt.plot(time_pred, simu, '-', label='Simulated θ')
-    plt.xlabel("Time [s]")
-    plt.ylabel("Theta [rad]")
-    plt.title(f"Horizon prediction vs simulation (t={t_plot}) - {agent_id}")
-    plt.legend()
-    plt.grid(True)
     plt.show()
 
 

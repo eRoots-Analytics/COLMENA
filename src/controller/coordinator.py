@@ -10,8 +10,6 @@ from src.controller.admm import ADMM
 from src.controller.mpc_agent import MPCAgent
 from src.simulator.andes_wrapper import AndesWrapper
 
-import pdb
-
 class Coordinator:
     
     def __init__(self, andes: AndesWrapper, agents: list):
@@ -38,17 +36,15 @@ class Coordinator:
         }
 
         self.variables_horizon_values = {
-            (i, j, t): 0.0 #NOTE: could be initialized differently
+            (i, j): 0.0 
             for i in self.agents
             for j in self.agents
-            for t in range(self.K)
             }
         
         self.dual_vars = {
-            (i, j, t): 0.0 #NOTE: could be initialized differently
+            (i, j): 0.0 
             for i in self.agents
             for j in self.agents
-            for t in range(self.K)
             }
 
         self.error_save = [] # to store error
@@ -56,6 +52,7 @@ class Coordinator:
         self.pg_log = []
         self.delta_log = []
         self.theta_log = []
+        self.pg_delta_log = []
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
@@ -93,10 +90,11 @@ class Coordinator:
                 if self.k == int(self.td/self.tstep):
                     print("[Loop] Disturbance acting")
 
-                    self.andes.change_parameter_value({'param': 'u', 
-                                                       'model': 'Line', 
-                                                       'idx': 'Line_0', 
-                                                       'value': 0})
+                    self.andes.set_value({'model': 'PQ',
+                                          'idx': 'PQ_0',
+                                          'src': 'Ppf',
+                                          'attr': 'v',
+                                          'value': 5.0})
 
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
@@ -106,20 +104,6 @@ class Coordinator:
                     omega_snapshot[agent_id] = omega
                 # Log time and omega values
                 self.omega_log.append((self.t, omega_snapshot))
-
-                theta_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    theta = self.andes.get_partial_variable("Bus", "a", agent.loads_bus)
-                    theta_snapshot[agent_id] = theta
-                # Log time and omega values
-                self.theta_log.append((self.t, theta_snapshot))
-
-                delta_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    delta = self.andes.get_partial_variable("GENROU", "delta", agent.generators)
-                    delta_snapshot[agent_id] = delta
-                # Log time and omega values
-                self.delta_log.append((self.t, delta_snapshot))
                 ######################################################
 
                 # 1. Run DMPC - ADMM algorithm
@@ -133,18 +117,23 @@ class Coordinator:
 
                         # Send set points
                         for role_change in role_change_list:
-                            self.andes.send_setpoint(role_change)
+                            self.andes.set_value(role_change)
 
                 #################FOR PLOTTING#####################
                 pg_snapshot = {}
                 for agent_id, agent in self.agents.items():
-                    pg_vals = {gen_id: agent.model.Pg[gen_id, 1].value for gen_id in agent.generators}
+                    pg_vals = {gen_id: agent.model.Pg[gen_id].value for gen_id in agent.generators}
                     pg_snapshot[agent_id] = pg_vals
                 self.pg_log.append((self.t, pg_snapshot))
 
-                for agent in self.agents.values():
-                    theta_horizon = [pyo.value(agent.model.theta[k]) for k in range(agent.K + 1)]
-                    self.theta_pred_horizon[agent.agent_id].append(theta_horizon)
+                delta_pg_snapshot = {}
+                for agent_id, agent in self.agents.items():
+                    delta_pg_vals = {
+                        gen_id: agent.model.Pg[gen_id].value - agent.pref0[i]
+                        for i, gen_id in enumerate(agent.generators)
+                    }
+                    delta_pg_snapshot[agent_id] = delta_pg_vals
+                self.pg_delta_log.append((self.t, delta_pg_snapshot))
                 ######################################################
 
                 # 2. Run one ANDES simulation step
@@ -152,12 +141,6 @@ class Coordinator:
                 if not success:
                     print(f"[Error] Simulation step failed at simulation time {new_time}.")
                     break
-
-                #################FOR PLOTTING#####################
-                for agent in self.agents.values():
-                    theta_sim = agent.andes.get_partial_variable("Bus", "a", agent.interface_buses[agent.area])  # <- usa il metodo corretto
-                    self.theta_sim_log[agent.agent_id].append(theta_sim)
-                ######################################################
                 
                 self.k += 1
                 self.t += self.tstep
@@ -176,23 +159,14 @@ class Coordinator:
             for i, gen_id in enumerate(agent.generators):
 
                 role_change = {
-                    'var': 'paux0',
-                    'model': 'TGVO1',
+                    'model': 'TGOV1',
+                    'src': 'pref0',
                     'idx': gen_id,
-                    'value': agent.model.Pg[gen_id, 0].value - agent.pref[i]
+                    'attr': 'v',
+                    'value': agent.model.Pg[gen_id].value #- agent.pref0[i]
                 }
 
-                self.andes.send_setpoint(role_change)
+                # self.andes.set_value(role_change)
                 andes_role_changes.append(role_change.copy())
 
         return andes_role_changes
-    
-
-            
-        
-
-
-        
-
-
-
