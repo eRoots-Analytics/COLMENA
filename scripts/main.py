@@ -95,6 +95,31 @@ if __name__ == '__main__':
     plt.savefig("plots/first_test_omega.png")
     plt.show()
 
+    # ==== PLOT TM PG PROFILES ====
+
+    tm_log = sim.tm_log
+    times = []
+    gen_series = defaultdict(list)
+
+    for time, tm_by_agent in tm_log:
+        times.append(time)
+        for agent_id, tm_list in tm_by_agent.items():
+            for local_gen_index, tm_val in enumerate(tm_list):
+                gen_name = f"A{agent_id}_G{local_gen_index}"
+                gen_series[gen_name].append(tm_val)
+
+    plt.figure()
+    for gen_name, tm_vals in gen_series.items():
+        plt.plot(times, tm_vals, label=gen_name)
+
+    plt.xlabel("Time [s]")
+    plt.ylabel("Tm")
+    plt.xlim(0, Config.tf)
+    plt.title("Generator Tm")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
     # ==== PLOT DELTA PG PROFILES ====
     delta_pg_log = sim.pg_delta_log
     times = []

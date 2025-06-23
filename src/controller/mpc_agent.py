@@ -69,13 +69,16 @@ class MPCAgent:
 
         # Decision variables
         def _get_power_bounds(model, i):
+            # Otherwise, assign bounds based on generator bus type
             gen_bus = self.gen_location[i]
             if gen_bus in self.PV_bus:
                 j = self.PV_bus.index(gen_bus)
-                return (self.pmin_pv[j], self.pmax_pv[j] + 0.2) 
+                return (self.pmin_pv[j] - 0.1, self.pmax_pv[j] + 0.2)
             elif gen_bus in self.slack_bus:
                 j = self.slack_bus.index(gen_bus)
-                return (self.pmin_slack[j], self.pmax_slack[j] + 0.2)
+                return (self.pmin_slack[j] - 0.1, self.pmax_slack[j] + 0.2)
+            else:
+                raise ValueError(f"Generator at bus {gen_bus} not found in PV or slack bus lists.")
 
         self.model.P =                   pyo.Var()
         self.model.Pg =                  pyo.Var(self.model.generators, bounds=_get_power_bounds)
@@ -84,6 +87,12 @@ class MPCAgent:
 
         ### Constraints ### 
         # Power transmission
+        def _tripping_constraint(model, i):
+            # Get the upper bound of Pg[i]
+            lb, ub = _get_power_bounds(model, i)
+            return model.Pg[i] <= model.u_GENROU_values[i] * ub
+
+        self.model.trip_constr =          pyo.Constraint(self.model.generators, rule=_tripping_constraint)
         self.model.balance_constr_area =  pyo.Constraint(rule=lambda model: model.P == sum(model.u_GENROU_values[gen] * model.Pg[gen] for gen in model.generators))
         self.model.power_exchang_constr = pyo.Constraint(self.model.other_areas, rule=lambda model, nbr: model.P_exchange_areas[nbr] == -model.P_exchange[nbr])
         
@@ -98,7 +107,7 @@ class MPCAgent:
                                                               initialize=coordinator.variables_horizon_values, mutable=True)
         ### Cost ###
         def _freq_cost(model):
-            return model.q * (model.P - self.model.P0)**2
+            return model.q * (model.P - model.P0)**2 #- model.P0
 
         def _lagrangian_term(model):
             return sum(

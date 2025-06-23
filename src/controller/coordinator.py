@@ -53,6 +53,7 @@ class Coordinator:
         self.delta_log = []
         self.theta_log = []
         self.pg_delta_log = []
+        self.tm_log = []  # to store (time, tm_values_dict)
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
@@ -90,11 +91,22 @@ class Coordinator:
                 if self.k == int(self.td/self.tstep):
                     print("[Loop] Disturbance acting")
 
+                    # self.andes.set_value({'model': 'GENROU',
+                    #                       'idx': 1,
+                    #                       'src': 'tm0',
+                    #                       'attr': 'v',
+                    #                       'value': 0})
+                    # self.andes.set_value({'model': 'GENROU',
+                    #                       'idx': 1,
+                    #                       'src': 'u',
+                    #                       'attr': 'v',
+                    #                       'value': 0})
+
                     self.andes.set_value({'model': 'PQ',
                                           'idx': 'PQ_0',
                                           'src': 'Ppf',
                                           'attr': 'v',
-                                          'value': 5.0})
+                                          'value': 0.0})
 
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
@@ -104,6 +116,13 @@ class Coordinator:
                     omega_snapshot[agent_id] = omega
                 # Log time and omega values
                 self.omega_log.append((self.t, omega_snapshot))
+
+                tm_snapshot = {}
+                for agent_id, agent in self.agents.items():
+                    tm = self.andes.get_partial_variable("GENROU", "tm", agent.generators)
+                    tm_snapshot[agent_id] = tm
+                # Log time and omega values
+                self.tm_log.append((self.t, tm_snapshot))
                 ######################################################
 
                 # 1. Run DMPC - ADMM algorithm

@@ -48,10 +48,9 @@ def load_simulation():
         system.PQ.config.p2p = 1.0
         system.PQ.config.p2i = 0.0
         system.PQ.config.p2z = 0.0
-
-        system.PQ.config.q2q = 1.0
-        system.PQ.config.q2i = 0.0
-        system.PQ.config.q2z = 0.0
+        # system.PQ.config.p2p = 0.5
+        # system.PQ.config.p2i = 0.3
+        # system.PQ.config.p2z = 0.2
 
         system.PQ.pq2z = 0
 

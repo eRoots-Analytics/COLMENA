@@ -4,7 +4,7 @@ This class contains all the parameter values for the configuration of the simula
 class Config:
 
     andes_url = "http://127.0.0.1:5000" # andes_url = 'http://192.168.68.59:5000'
-    case_path = "kundur/kundur_full.xlsx"
+    case_path = "kundur/kundur_full.json"
 
     # Simulator 
     tstep = 0.1
@@ -27,9 +27,13 @@ class Config:
 
     omega_ref = 1.0
 
-    q = 10
+    q = 20
     alpha = 15
-    rho = 1e3
+    rho = 5e3
+
+    # q = 10/20
+    # alpha = 15
+    # rho = 1e3
 
     max_iter = 500
     tol = 1e-2
