@@ -18,7 +18,7 @@ class Config:
     controlled = True
     # Horizon
     dt = tstep * 5
-    K = 20
+    K = 10
     # Execution
     tdmpc = 2.5
 
@@ -27,9 +27,9 @@ class Config:
 
     omega_ref = 1.0
 
-    q = 20
-    alpha = 15
-    rho = 5e3
+    q = 1e7
+    alpha = 100
+    rho = 2.5e3
 
     # q = 10/20
     # alpha = 15

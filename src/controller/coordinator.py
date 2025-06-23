@@ -36,15 +36,17 @@ class Coordinator:
         }
 
         self.variables_horizon_values = {
-            (i, j): 0.0 
+            (i, j, t): 0.0 
             for i in self.agents
             for j in self.agents
+            for t in range(self.K)
             }
         
         self.dual_vars = {
-            (i, j): 0.0 
+            (i, j, t): 0.0
             for i in self.agents
             for j in self.agents
+            for t in range(self.K)
             }
 
         self.error_save = [] # to store error
@@ -106,7 +108,7 @@ class Coordinator:
                                           'idx': 'PQ_0',
                                           'src': 'Ppf',
                                           'attr': 'v',
-                                          'value': 0.0})
+                                          'value': 5.0})
 
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
@@ -141,14 +143,14 @@ class Coordinator:
                 #################FOR PLOTTING#####################
                 pg_snapshot = {}
                 for agent_id, agent in self.agents.items():
-                    pg_vals = {gen_id: agent.model.Pg[gen_id].value for gen_id in agent.generators}
+                    pg_vals = {gen_id: agent.model.Pg[0, gen_id].value for gen_id in agent.generators}
                     pg_snapshot[agent_id] = pg_vals
                 self.pg_log.append((self.t, pg_snapshot))
 
                 delta_pg_snapshot = {}
                 for agent_id, agent in self.agents.items():
                     delta_pg_vals = {
-                        gen_id: agent.model.Pg[gen_id].value - agent.pref0[i]
+                        gen_id: agent.model.Pg[0, gen_id].value - agent.pref0[i]
                         for i, gen_id in enumerate(agent.generators)
                     }
                     delta_pg_snapshot[agent_id] = delta_pg_vals
@@ -182,7 +184,7 @@ class Coordinator:
                     'src': 'pref0',
                     'idx': gen_id,
                     'attr': 'v',
-                    'value': agent.model.Pg[gen_id].value #- agent.pref0[i]
+                    'value': agent.model.Pg[0, gen_id].value #- agent.pref0[i]
                 }
 
                 # self.andes.set_value(role_change)
