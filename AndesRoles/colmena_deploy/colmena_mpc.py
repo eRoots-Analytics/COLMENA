@@ -5,6 +5,14 @@ import time
 pre_command = 'source /home/pablo/myenv/bin/activate'
 script_name = "roles_tests/data_test"
 script_name = "andes_mpc/mpc_multiple_areas"
+
+
+colmena_command = f"""
+/home/pablo/myenv/bin/python -m colmena_build \
+--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/andes_mpc/mpc_multiple_areas.py' \
+--build_file='/home/pablo/Desktop/Colmena/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' 
+"""
+
 build_command = {
         "cmd": "/home/pablo/myenv/bin/python -m colmena_build "
                f"--service_path='/home/pablo/Desktop/eroots/COLMENA/AndesRoles/{script_name}.py' "
@@ -51,7 +59,7 @@ build_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_en
 #terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
 #process = subprocess.Popen(terminal_cmd, shell=True)
 subprocess.Popen(terminal_cmd,shell=True)
-subprocess.Popen(build_cmd,shell=True)
+#subprocess.Popen(build_cmd,shell=True)
 
 time.sleep(6)
 for cmd in commands:

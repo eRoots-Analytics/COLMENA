@@ -559,7 +559,7 @@ class AgentControl(Service):
                 self.dual_vars = self.agent.initialize_dual_vars()
                 self.state_horizon = self.agent.initialize_horizon()
                 self.state_horizon_jsonlike = {f"{i}_{j}_{t}": val for (i, j, t), val in self.state_horizon.items()}
-                self.data_write.publish(self.state_horizon_jsonlike)
+                self.data_write.publish(self.state_horizon)
                 self.initialized_decorators = True
 
             time_start = time.time()
@@ -595,7 +595,7 @@ class AgentControl(Service):
                     for area_i in self.model.other_areas:
                         self.state_horizon[area_i, self.area, t] = self.model.delta_areas[area_i, t].value
                 self.state_horizon_jsonlike = {f"{i}_{j}_{t}": val for (i, j, t), val in self.state_horizon.items()}
-                self.data_write.publish(self.state_horizon_jsonlike)
+                self.data_write.publish(self.state_horizon)
 
                 #Agent i updates the dual variables lambda_{j,i}
                 self.error = 0

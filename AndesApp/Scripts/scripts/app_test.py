@@ -20,18 +20,18 @@ def plot_response(responseAndes, filename):
     else:
         print("Failed to get plot:", responseAndes.text)
 
+
 andes_directory = ad.get_case("ieee14/ieee14_gentrip.xlsx")
 andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.68.74:5000'
-
+andes_url = 'http://192.168.10.138:5000'
+#responseAndes = requests.get(andes_url + '/plot', params={'model': 'Bus', 'var':'v'})
 responseLoad = requests.post(andes_url + '/load_simulation', json=andes_dict)   
-
 queries = [('GENROU', 'Pe'), ('TGOV1N', 'b'), ('TGOV1N', 'p_direct'), ('TGOV1N', 'pout'), ('PQ', 'p0'), ('PQ', 'Ppf')]
 
-def query_variables(label):
+def query_variables(label): 
     if label == 'initial':
         started = False
         while not started:
@@ -46,7 +46,7 @@ def query_variables(label):
         print(f" sum of {key} is {sum(value)}")
 
 def run_simulation():
-    response = requests.get(f"{andes_url}/run_stopping_time", params={'t_run':20, 'delta_t': 0.1})
+    response = requests.get(f"{andes_url}/run_colmena_time", params={'t_run':35, 'delta_t': 0.1})
     print("[Simulation] Response:", response)
     print("[Simulation] Output:", response.json())
 

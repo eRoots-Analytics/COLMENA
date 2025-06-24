@@ -16,7 +16,7 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "env": {
-          "AGENT_ID": "ab1",  // Change this to your main Flask file
+          "AGENT_ID": "area_2",  // Change this to your main Flask file
       },
     },
     {

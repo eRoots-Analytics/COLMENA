@@ -36,7 +36,6 @@ for i in system.Bus.a.v:
     print(f"initial bus angle is {i}")
 
 system.TDS.run()
-
 lines = [7,17,20,31,21]
 for i, line_id in enumerate(system.Line.idx.v):
     print(i)
@@ -146,9 +145,9 @@ for area in [1, 2]:
     print(f"gamma is {gamma_exchange}")
 
 system.TDS_stepwise.load_plotter()
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 #fig, ax = system.TDS_stepwise.plt.plot(system.REDUAL.Qe, a = n_tuple)
-fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta)
+fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.delta, savefig=True)
 fig, ax = system.TDS_stepwise.plt.plot(system.GENROU.omega)
 fig, ax = system.TDS_stepwise.plt.plot(system.Bus.a, a = (0,1,2,3))
 _ = 0

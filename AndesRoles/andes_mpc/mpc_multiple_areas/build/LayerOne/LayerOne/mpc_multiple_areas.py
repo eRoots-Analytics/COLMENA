@@ -566,7 +566,8 @@ class AgentControl(Service):
             while self.error > self.agent.tol and self.iter < self.max_iter:
                 print(f'Iteration {self.iter}')
                 #We read the new data through the appropriate channel
-                self.state_horizon_jsonlike = json.loads(self.data_read.get().decode('utf-8')) 
+                self.state_horizon_jsonlike = json.loads(self.data_read.get()) 
+                print(self.state_horizon_jsonlike)
                 state_horizon_read = {tuple(map(int, key.split("_"))): val for key, val in self.state_horizon_jsonlike.items()}
                 self.state_horizon.update(state_horizon_read)
                 initial_state_horizon_jsonlike = self.state_horizon_jsonlike
@@ -610,11 +611,11 @@ class AgentControl(Service):
                 track_error = False
                 if track_error:
                     #We update the error
-                    global_error_data = json.loads(self.global_error.get().decode('utf-8')) 
+                    global_error_data = json.loads(self.global_error.get()) 
                     while global_error_data['agent'] != self.area and self.area != 1:
                         print(f'Waiting 1 for area {self.area}')
                         time.sleep(0.001)
-                        global_error_data = json.loads(self.global_error.get().decode('utf-8')) 
+                        global_error_data = json.loads(self.global_error.get()) 
                     updated_error = max(global_error_data['error'], self.error)
                     if self.area == 1:
                         updated_error = self.error
@@ -622,11 +623,11 @@ class AgentControl(Service):
                     self.global_error.publish({'agent':next_agent, 'error':updated_error})
 
                     #We check the updated global error
-                    global_error_data = json.loads(self.global_error.get().decode('utf-8')) 
+                    global_error_data = json.loads(self.global_error.get()) 
                     while global_error_data['agent'] != self.n_areas + 1:
                         print(f'Waiting 2 for area {self.area}')
                         time.sleep(0.001)
-                        global_error_data = json.loads(self.global_error.get().decode('utf-8')) 
+                        global_error_data = json.loads(self.global_error.get()) 
                     global_error_data['error'] = self.error
 
                 else:
@@ -634,7 +635,7 @@ class AgentControl(Service):
                     changed_horizon = False
                     change_time_start = time.time()
                     while not changed_horizon: 
-                        state_horizon_jsonlike = json.loads(self.data_read.get().decode('utf-8')) 
+                        state_horizon_jsonlike = json.loads(self.data_read.get()) 
                         print(f'Waiting 3 for iter {self.iter} and online step {self.online_step}')
                         if state_horizon_jsonlike != initial_state_horizon_jsonlike:
                             changed_horizon = True

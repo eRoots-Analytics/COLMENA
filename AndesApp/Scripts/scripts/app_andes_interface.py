@@ -74,6 +74,10 @@ def load_simulation():
             system.setup()
             system.PFlow.run()
             #system.TDS.init()
+            system.PQ.config.p2p = 1.0
+            system.PQ.config.p2i = 0
+            system.PQ.config.p2z = 0
+
             print(f"system area is {system.Area}")
             app.config['areas'] = system.Area.n
 
@@ -306,6 +310,8 @@ def delta_equivalent():
             connecting_lines[x_area] = []
 
         for i, line in enumerate(system.Line.idx.v):
+            if not system.Line.u.v[i]:
+                continue 
             bus1 = system.Line.bus1.v[i]
             bus2 = system.Line.bus2.v[i]
             bus1_index = system.Bus.idx2uid(bus1)
@@ -332,6 +338,8 @@ def delta_equivalent():
             p_exchanged = 0
             for line in lines:
                 i = system.Line.idx2uid(line)
+                if not system.Line.u.v[i]:
+                    continue 
                 bus1 = system.Line.bus1.v[i]
                 bus2 = system.Line.bus2.v[i]
                 bus1_index = system.Bus.idx2uid(bus1)
@@ -356,18 +364,31 @@ def delta_equivalent():
                 delta_equivalent[int(x_area)] = p_exchanged/connecting_susceptance[int(x_area)]
             else:
                 delta_equivalent[int(x_area)] = 0
+            print(f'delta eq is {delta_equivalent[int(x_area)]}')
         
         p_gen = 0
         d_omega = 0
         d_M_omega = 0
+        timeseries_data = system.dae.ts.df
         for i, gen_idx in enumerate(system.GENROU.idx.v):
             bus_idx = system.GENROU.bus.v[i]
             bus_uid = system.Bus.idx2uid(bus_idx) 
             bus_area = system.Bus.area.v[bus_uid]
+
+            last = int(gen_idx.split('_')[-1])
+            col_name = f"omega GENROU {last}"
+            omega = timeseries_data[col_name].iloc[-10:]
+            times = timeseries_data.index[-10:]
+
+            # Compute slope: (omega[-1] - omega[-10]) / (t[-1] - t[-10])
+            delta_omega = omega.iloc[-1] - omega.iloc[0]
+            delta_time = times[-1] - times[0]
+            d_omega_i = delta_omega/delta_time
+
             if bus_area == area:
                 p_gen += system.GENROU.tm.v[i]
-                d_M_omega += system.GENROU.M.v[i]*(system.GENROU.omega.e[i])
-                d_omega += (system.GENROU.omega.e[i])
+                d_M_omega += system.GENROU.M.v[i]*d_omega_i
+                d_omega += (d_omega_i)
         p_demand = 0
         for i, gen_idx in enumerate(system.PQ.idx.v):
             bus_idx = system.PQ.bus.v[i]
@@ -376,9 +397,12 @@ def delta_equivalent():
             if bus_area == area:
                 p_demand -= system.PQ.p0.v[i]
         p_losses = 0*d_M_omega - p_exchanged - p_demand - p_gen
+        p_losses_alter = d_M_omega - p_exchanged - p_demand - p_gen
         result = {}
         result['value'] = delta_equivalent
         result['losses'] = p_losses
+        result['alter_losses'] = p_losses_alter
+        result['d_M_omega'] = d_M_omega
 
         verbose = True
         if verbose:
@@ -799,7 +823,7 @@ def run_real_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            set_points += [{'model':'Line', 'idx':'Line_19', 't':5, 'param':'u', 'value':0, 'add':False}]
+            set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
@@ -839,7 +863,7 @@ def set_last_control_time():
     try: 
         t = float(request.args.get('t', None))  
         app.config['last_control_time'] = t
-        return jsonify({"Message": 'Success'}), 200
+        return jsonify({"Message": f'Success: Last Control Time set to {t}'}), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -866,8 +890,8 @@ def run_stopping_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+            #set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':4*Ppf_pq5, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
             time.sleep(0.2)
@@ -882,7 +906,7 @@ def run_stopping_time():
             if app.config['stop']:
                 time_started = time.time()
                 while app.config['last_control_time'] <= system.dae.t:  
-                    if time.time() - time_started > 20 or False:
+                    if time.time() - time_started > 60 or False:
                         return jsonify({"Message": 'Wait time exceeded'}), 200
                     time.sleep(0.02)
             start_time = time.time()
@@ -913,9 +937,11 @@ def run_colmena_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':6, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
+            #set_points += [{'model':'Line', 'idx':'Line_4', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'Line', 'idx':'Line_21', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':3, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':3, 'param':'Ppf', 'value':3.0*Ppf_pq6, 'add':False}]
 
         print(f"Running Simulation 2")
         t_run = float(request.args.get('t_run', 40))  
@@ -924,7 +950,7 @@ def run_colmena_time():
         system.PFlow.run()
         t_0 = time.time()
         while system.dae.t <= t_run:
-            if app.config['set_time_limit'][1] <= system.dae.t + delta_t or app.config['set_time_limit'][0] != 0:
+            if app.config['set_time_limit'][1] <= round(system.dae.t + delta_t,1) or app.config['set_time_limit'][0] != 0:
                 time.sleep(0.01)
                 print(f'waiting for control limit is {app.config['set_time_limit']}, {system.dae.t}')
                 continue 
@@ -957,6 +983,11 @@ def plot():
         model = getattr(system, model_name)
         var = getattr(model, var_name)
         system.TDS_stepwise.load_plotter()
+        system.TDS_stepwise.plt.export_csv(path="plots/data.csv", idx=system.TDS_stepwise.plt.find('omega')[0])
+        a = system.TDS_stepwise.plt.export_csv(path="data_2.csv")
+        print(a) 
+
+        return
         matplotlib.use('TkAgg')
         plots = {
             'bus_v': system.Bus.v,
@@ -975,7 +1006,7 @@ def plot():
 
         system.TDS_stepwise.plt.export_csv(path="plots/data.csv", idx=system.TDS_stepwise.plt.find('omega')[0])
         for name, variable in plots.items():
-            fig, ax = system.TDS_stepwise.plt.plot(variable)
+            fig, ax = system.TDS_stepwise.plt.plot(variable, savefig=True)
             fig.savefig(f'plots/{name}.png', format='png')
             fig.savefig(os.path.join(desktop_path, f'{name}.svg'), format='svg')
             matplotlib.pyplot.close(fig)
