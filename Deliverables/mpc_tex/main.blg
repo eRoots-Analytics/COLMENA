@@ -1,17 +1,17 @@
 [0] Config.pm:308> INFO - This is Biber 2.20
 [0] Config.pm:311> INFO - Logfile is 'main.blg'
-[179] biber:340> INFO - === Wed Jun 25, 2025, 19:42:01
-[224] Biber.pm:420> INFO - Reading 'main.bcf'
-[367] Biber.pm:991> INFO - Using all citekeys in bib section 0
-[399] Biber.pm:4463> INFO - Processing section 0
-[425] Biber.pm:4654> INFO - Looking for bibtex file 'ref.bib' for section 0
-[426] bibtex.pm:1713> INFO - LaTeX decoding ...
-[445] bibtex.pm:1519> INFO - Found BibTeX data source 'ref.bib'
-[604] Utils.pm:410> ERROR - Name "Pol Olivella-Rosell, Francesc Rullan, Pâu Lloret-Gallego, Eduardo Prieto-Araujo, Ricard Ferrer-San-José, Sara Barja-Martinez, Sigurd Bjarghov" has too many commas, skipping entry 'ADMM:edu'
-[713] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[713] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[713] Biber.pm:4283> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[714] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
-[725] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
-[734] bbl.pm:779> INFO - Output to main.bbl
-[735] Biber.pm:136> INFO - ERRORS: 1
+[54] biber:340> INFO - === Wed Jun 25, 2025, 19:44:00
+[65] Biber.pm:420> INFO - Reading 'main.bcf'
+[106] Biber.pm:991> INFO - Using all citekeys in bib section 0
+[114] Biber.pm:4463> INFO - Processing section 0
+[122] Biber.pm:4654> INFO - Looking for bibtex file 'ref.bib' for section 0
+[123] bibtex.pm:1713> INFO - LaTeX decoding ...
+[131] bibtex.pm:1519> INFO - Found BibTeX data source 'ref.bib'
+[152] Utils.pm:410> ERROR - Name "Pol Olivella-Rosell, Francesc Rullan, Pâu Lloret-Gallego, Eduardo Prieto-Araujo, Ricard Ferrer-San-José, Sara Barja-Martinez, Sigurd Bjarghov" has too many commas, skipping entry 'ADMM:edu'
+[196] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[196] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[196] Biber.pm:4283> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[196] Biber.pm:4289> INFO - No sort tailoring available for locale 'en-US'
+[204] bbl.pm:676> INFO - Writing 'main.bbl' with encoding 'UTF-8'
+[207] bbl.pm:779> INFO - Output to main.bbl
+[207] Biber.pm:136> INFO - ERRORS: 1
