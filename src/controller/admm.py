@@ -8,6 +8,8 @@ from src.config.config import Config
 
 class ADMM:
     def __init__(self, coordinator):
+        self.controlled = Config.controlled
+        
         self.alpha =    Config.alpha
         self.max_iter = Config.max_iter
         self.tol =      Config.tol
@@ -22,23 +24,23 @@ class ADMM:
 
         i = 0
         for i in range(self.max_iter):
-            for agent in agents:
+            for agent in agents:   
+                if agent.generators: 
+                    if i==0: 
+                        # Initialize the model for the first iteration
+                        agent.initialize_variables_values()
+                    if self.controlled:
+                        self._solve_agent(agent, i)
 
-                if i==0: 
-                    # Initialize the model for the first iteration
-                    agent.initialize_variables_values()
+                    # Residual computation
+                    primal_residual = self._compute_primal_residual_inf()
+                    self.coordinator.error_save.append(primal_residual) 
 
-                self._solve_agent(agent, i)
+                    print(f"Iteration {i}, Primal Residual: {primal_residual}")
 
-            # Residual computation
-            primal_residual = self._compute_primal_residual_inf()
-            self.coordinator.error_save.append(primal_residual) 
-
-            print(f"Iteration {i}, Primal Residual: {primal_residual}")
-
-            if primal_residual < self.tol:
-                print("Distributed MPC converged (via primal residual)")
-                return True, self.coordinator.collect_role_changes()
+                    if primal_residual < self.tol:
+                        print("Distributed MPC converged (via primal residual)")
+                        return True, self.coordinator.collect_role_changes()
 
             self._update_duals(i)
             self._update_pyomo_params() 
@@ -47,7 +49,6 @@ class ADMM:
 
     def _solve_agent(self, agent, i):
         if agent.setup:
-            # agent.compute_offset()
             model = agent.setup_dmpc(self.coordinator)
             agent.setup = False #NOTE realiability check
         else:
@@ -118,13 +119,14 @@ class ADMM:
     def _update_pyomo_params(self):
         vars_dict = self.coordinator.variables_horizon_values
         for agent in self.coordinator.agents.values():
-            model = agent.model
-            area = agent.area
-            for nbr in self.coordinator.neighbours[area]:
-                for k in range(self.coordinator.K):
-                    model.variables_horizon_values[area, area, k].value = vars_dict[area, area, k]
-                    model.variables_horizon_values[area, nbr, k].value = vars_dict[area, nbr, k]
-                    model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
+            if agent.generators:
+                model = agent.model
+                area = agent.area
+                for nbr in self.coordinator.neighbours[area]:
+                    for k in range(self.coordinator.K):
+                        model.variables_horizon_values[area, area, k].value = vars_dict[area, area, k]
+                        model.variables_horizon_values[area, nbr, k].value = vars_dict[area, nbr, k]
+                        model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
 
     def _compute_primal_residual_mse(self):
         residual_sum = 0.0

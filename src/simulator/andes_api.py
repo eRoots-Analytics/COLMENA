@@ -345,16 +345,37 @@ def area_variable_sync(all_devices = False):
         var = getattr(model, var_name)
 
         res = []
-        #check this is not a bus
+
+        # Handle Bus model separately
         if model_name == 'Bus':
             bus_iterate = model.idx.v
+            for i, bus in enumerate(bus_iterate):
+                if bus in area_buses:
+                    value = var.v[i]
+                    res.append(value)
+
+        # Handle governor models (TGOV1, TGOV1N) that use `.syn` to reference GENROUs
+        elif model_name in ['TGOV1', 'TGOV1N']:
+            # Step 1: Get GENROU names connected to area buses
+            genrou_names = [
+                system.GENROU.name.v[i]
+                for i, bus in enumerate(system.GENROU.bus.v)
+                if bus in area_buses
+            ]
+
+            # Step 2: Match .syn to those GENROUs
+            for i, syn_name in enumerate(model.syn.v):
+                if syn_name in genrou_names:
+                    value = var.v[i]
+                    res.append(value)
+
+        # Handle all other models with a 'bus' field
         else:
             bus_iterate = model.bus.v
-
-        for i, bus in enumerate(bus_iterate):
-            if bus in area_buses:
-                value = var.v[i]
-                res.append(value)
+            for i, bus in enumerate(bus_iterate):
+                if bus in area_buses:
+                    value = var.v[i]
+                    res.append(value)
 
         try:
             response['value'] = res

@@ -78,6 +78,13 @@ class AndesWrapper:
             json={'model': model, 'var': var, 'area': area}
         )
         return response.json()['value']
+    
+    def get_derived_variable(self, model: str, var: str, device: int):
+        response = requests.post(
+            f"{self.andes_url}/get_derived_variable",
+            json={'model': model, 'var': var, 'device': device}
+        )
+        return response.json()['value']
 
     def get_complete_variable(self, model: str, var: str, area: int = None):
         params = {'model': model, 'var': var}

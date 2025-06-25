@@ -10,7 +10,6 @@ import pandas as pd
 from pathlib import Path
 from collections import defaultdict
 
-    
 # Move to one level up, i.e. project root folder (COLMENA). 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
@@ -55,7 +54,7 @@ def main():
 
     # 3. Create Coordinator
     print("[Main] Initializing Coordinator...")
-    coordinator = Coordinator(andes, agents=[1, 2]) #TODO: to automitize 
+    coordinator = Coordinator(andes) #TODO: to automitize 
     print(f"[Main] Coordinator run loop finished at t = {coordinator.t}")
     
     return coordinator
@@ -68,7 +67,38 @@ if __name__ == '__main__':
     else: 
         print("[Main] Simulation failed.")
 
-    # ==== PLOT OMEGA ====
+    matplotlib.use('TkAgg')
+    # === Initialize logs ===
+    omega_log = sim.omega_log
+    pg_log = sim.pg_log
+    pd_log = sim.pd_log
+
+    # === Extract time and data ===
+    times = []
+    gen_series_omega = defaultdict(list)
+    gen_series_pg = defaultdict(list)
+    load_series_pd = defaultdict(list)
+
+    for t_idx, (time, omega_by_agent) in enumerate(omega_log):
+        times.append(time)
+        for agent_id, omega_list in omega_by_agent.items():
+            for local_gen_index, omega_val in enumerate(omega_list):
+                gen_name = f"A{agent_id}_G{local_gen_index}"
+                gen_series_omega[gen_name].append(omega_val)
+
+    for t_idx, (time, pg_by_agent) in enumerate(pg_log):
+        for agent_id, pg_dict in pg_by_agent.items():
+            for local_gen_index, (gen_id, pg_val) in enumerate(pg_dict.items()):
+                gen_name = f"A{agent_id}_G{local_gen_index}"
+                gen_series_pg[gen_name].append(pg_val)
+
+    for t_idx, (time, pd_by_agent) in enumerate(pd_log):
+        for agent_id, pd_list in pd_by_agent.items():
+            for local_load_index, pd_val in enumerate(pd_list):
+                load_name = f"A{agent_id}_L{local_load_index}"
+                load_series_pd[load_name].append(pd_val)
+
+     # ==== PLOT OMEGA ====
     matplotlib.use('TkAgg')  
     omega_log = sim.omega_log
     times = []
@@ -85,87 +115,50 @@ if __name__ == '__main__':
     for gen_name, omega_vals in gen_series.items():
         plt.plot(times, omega_vals, label=gen_name)
 
-    plt.xlabel("Time [s]")
-    plt.ylabel("Omega")
+    plt.xlabel(r"Time [s]")
+    plt.ylabel(r"\omega")
     plt.xlim(0, Config.tf)
-    plt.ylim(0.85, 1.15)
-    plt.title("Generator Speeds")
+    plt.ylim(0.98, 1.02)
+    plt.title(r"Generator Frequency Over Time")
     plt.legend()
     plt.grid()
-    plt.savefig("plots/first_test_omega.png")
+    plt.tight_layout()
+    # plt.savefig("plots/Kundur_Frequency_GenFail1_Uncontrolled.png")
     plt.show()
 
-    # ==== PLOT TM PG PROFILES ====
+    # # === Create subplots ===
+    # fig, axs = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-    tm_log = sim.tm_log
-    times = []
-    gen_series = defaultdict(list)
+    # # --- Plot Omega ---
+    # for gen_name, omega_vals in gen_series_omega.items():
+    #     axs[0].plot(times, omega_vals, label=gen_name)
+    # axs[0].set_ylabel(r"$\Omega$")
+    # axs[0].set_ylim(0.98, 1.02)
+    # axs[0].set_title("Generator Frequency Over Time")
+    # axs[0].legend()
+    # axs[0].grid()
 
-    for time, tm_by_agent in tm_log:
-        times.append(time)
-        for agent_id, tm_list in tm_by_agent.items():
-            for local_gen_index, tm_val in enumerate(tm_list):
-                gen_name = f"A{agent_id}_G{local_gen_index}"
-                gen_series[gen_name].append(tm_val)
+    # # --- Plot Pg ---
+    # for gen_name, pg_vals in gen_series_pg.items():
+    #     axs[1].plot(times, pg_vals, label=gen_name)
+    # axs[1].set_ylabel(r"$P_{\mathrm{mech, ref}}$ [pu]")
+    # axs[1].set_title("Generator Active Power Setpoints Over Time")
+    # axs[1].legend()
+    # axs[1].grid()
 
-    plt.figure()
-    for gen_name, tm_vals in gen_series.items():
-        plt.plot(times, tm_vals, label=gen_name)
+    # # # --- Plot Pd ---
+    # # for load_name, pd_vals in load_series_pd.items():
+    # #     axs[1].plot(times, pd_vals, label=load_name)
+    # # axs[1].set_xlabel("Time [s]")
+    # # axs[1].set_ylabel(r"$P_{\mathrm{load}}$ [pu]")
+    # # axs[1].set_title("Load Active Power Consumption Over Time")
+    # # axs[1].legend()
+    # # axs[1].grid()
 
-    plt.xlabel("Time [s]")
-    plt.ylabel("Tm")
-    plt.xlim(0, Config.tf)
-    plt.title("Generator Tm")
-    plt.legend()
-    plt.grid()
-    plt.show()
+    # # === Finalize and save ===
+    # plt.tight_layout()
+    # # plt.savefig("plots/Kundur_GenFail1_Controlled.png", dpi=300)
+    # plt.show()
 
-    # ==== PLOT DELTA PG PROFILES ====
-    delta_pg_log = sim.pg_delta_log
-    times = []
-    gen_delta_pg_series = defaultdict(list)
-
-    for time, delta_pg_by_agent in delta_pg_log:
-        times.append(time)
-        for agent_id, delta_pg_dict in delta_pg_by_agent.items():
-            for local_gen_index, (gen_id, delta_pg_val) in enumerate(delta_pg_dict.items()):
-                gen_name = f"A{agent_id}_G{local_gen_index}"
-                gen_delta_pg_series[gen_name].append(delta_pg_val)
-
-    plt.figure()
-    for gen_name, delta_vals in gen_delta_pg_series.items():
-        plt.plot(times, delta_vals, label=gen_name)
-
-    plt.xlabel("Time [s]")
-    plt.ylabel("Delta Pg [pu]")
-    plt.title("Delta Pg (Setpoint - Pref) Over Time")
-    plt.grid()
-    plt.legend()
-    plt.savefig("plots/first_test_delta_pg.png")
-    plt.show()
-
-    # ==== PLOT GEN POWER PROFILES ====
-    pg_log = sim.pg_log
-    times = []
-    gen_pg_series = defaultdict(list)
-
-    for time, pg_by_agent in pg_log:
-        times.append(time)
-        for agent_id, pg_dict in pg_by_agent.items():
-            for local_gen_index, (gen_id, pg_val) in enumerate(pg_dict.items()):
-                gen_name = f"A{agent_id}_G{local_gen_index}"
-                gen_pg_series[gen_name].append(pg_val)
-
-    plt.figure()
-    for gen_name, pg_vals in gen_pg_series.items():
-        plt.plot(times, pg_vals, label=gen_name)
-
-    plt.xlabel("Time [s]")
-    plt.ylabel("Pg [pu]")
-    plt.title("Generator Active Power Setpoints")
-    plt.grid()
-    plt.legend()
-    plt.savefig("plots/first_test_pg.png")
-    plt.show()
 
 

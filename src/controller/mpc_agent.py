@@ -97,6 +97,7 @@ class MPCAgent:
         # Frequency
         self.model.initial_freq =        pyo.Constraint(expr=self.model.omega[0] == self.model.omega0)
         self.model.terminal_freq =       pyo.Constraint(expr=self.model.omega[self.K] == self.omega_ref)
+
         # Power transmission
         def _tripping_constraint(model, k, i):
             # Get the upper bound of Pg[i]
@@ -108,7 +109,7 @@ class MPCAgent:
         self.model.power_exchang_constr = pyo.Constraint(self.model.TimeInput, self.model.other_areas, rule=lambda model, k, nbr: model.P_exchange_areas[k, nbr] == -model.P_exchange[k, nbr])
         
         # Steady-state
-        self.model.ss_constr_freq =       pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
+        self.model.ss_constr_freq =       pyo.Constraint(self.model.TimeInput, rule=lambda model, k: 0.5 * model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
 
     def setup_dmpc(self, coordinator):
         ### Set up distirbuted optimization model ###
@@ -150,6 +151,7 @@ class MPCAgent:
         """
         # List of devices 
         self.generators =    self.andes.get_area_variable("GENROU", "idx", self.area)
+        self.governors =     self.andes.get_area_variable("TGOV1N", "idx", self.area)
         self.loads =         self.andes.get_area_variable("PQ", "idx", self.area)
         self.buses =         self.andes.get_area_variable("Bus", "idx", self.area)
         self.PV_bus =        self.andes.get_area_variable("PV", "bus", self.area)
@@ -164,19 +166,28 @@ class MPCAgent:
         # List of neighbour areas, interface buses and susceptance
         self.other_areas = self.andes.get_neighbour_areas(self.area)
         self.interface_buses = self.andes.get_interface_buses(self.area, self.other_areas)
-        self.b_areas = self.andes.get_system_susceptance(self.area, self.other_areas)
+        # self.b_areas = self.andes.get_system_susceptance(self.area, self.other_areas)
 
         self.pmax_slack = self.andes.get_complete_variable("Slack", "pmax", self.area)
         self.pmin_slack = self.andes.get_complete_variable("Slack", "pmin", self.area)
         self.pmax_pv =    self.andes.get_area_variable("PV", "pmax", self.area)
         self.pmin_pv =    self.andes.get_area_variable("PV", "pmin", self.area)
 
-        self.pref0 = self.andes.get_partial_variable("TGOV1", "pref0", self.generators)
+        self.pref0 = self.andes.get_partial_variable("TGOV1N", "pref0", self.governors)
 
         self.Sn_values = self.andes.get_partial_variable("GENROU", "Sn", self.generators)
-        self.M_values = self.andes.get_partial_variable("GENROU", "M", self.generators)
-        self.M_coi =  sum(self.M_values)
-    
+        self.M_values = np.array(self.andes.get_partial_variable("GENROU", "M", self.generators))
+
+        for i in range(len(self.generators)):
+            self.M_values[i] = self.M_values[i] / self.Sn_values[i] * 100  # Normalize M values by Sn values 
+        
+        self.S_coi = sum(self.Sn_values)
+        # self.M_coi =  sum(self.M_values)
+        self.M_coi = 0.0 
+        if self.generators:
+            for i in range(len(self.generators)):
+                self.M_coi += self.M_values[i] * self.Sn_values[i] # Normalize M values by Sn values 
+            self.M_coi /= self.S_coi  # Normalize M_coi by S_coi
 
     def initialize_variables_values(self): 
         # Frequency

@@ -12,7 +12,7 @@ from src.simulator.andes_wrapper import AndesWrapper
 
 class Coordinator:
     
-    def __init__(self, andes: AndesWrapper, agents: list):
+    def __init__(self, andes: AndesWrapper):
         # Constants
         self.tstep =      Config.tstep
         self.tf =         Config.tf
@@ -23,11 +23,16 @@ class Coordinator:
 
         self.controlled = Config.controlled
 
+        self.disturbance = False
+
         # Andes interface
         self.andes = andes
 
+        # Get areas
+        self.areas = self.andes.get_complete_variable("Area", "idx")
+
         # System agents and cache 
-        self.agents = {agent: MPCAgent(agent, andes) for agent in agents}
+        self.agents = {agent: MPCAgent(agent, andes) for agent in self.areas}
         self.thetas = {}
 
         self.neighbours = {
@@ -56,6 +61,7 @@ class Coordinator:
         self.theta_log = []
         self.pg_delta_log = []
         self.tm_log = []  # to store (time, tm_values_dict)
+        self.pd_log = []
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
@@ -68,7 +74,6 @@ class Coordinator:
         except Exception as e:
             print(f"[Exception] Error during simulation run: {e}")
             traceback.print_exc()
-
 
     def run_admm(self):
         return self.admm.solve()
@@ -91,24 +96,25 @@ class Coordinator:
 
                 # 3. Check for disturbances/events
                 if self.k == int(self.td/self.tstep):
+                    self.disturbance = True
                     print("[Loop] Disturbance acting")
 
                     # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 1,
+                    #                       'idx': 'GENROU_2',
                     #                       'src': 'tm0',
                     #                       'attr': 'v',
                     #                       'value': 0})
                     # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 1,
+                    #                       'idx': 'GENROU_2',
                     #                       'src': 'u',
                     #                       'attr': 'v',
                     #                       'value': 0})
 
                     self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_0',
+                                          'idx': 'PQ_3',
                                           'src': 'Ppf',
                                           'attr': 'v',
-                                          'value': 5.0})
+                                          'value': 0.0})
 
                 #################FOR PLOTTING#####################
                 # HORRIBLE Retrieve omega values from each agent ###
@@ -125,18 +131,25 @@ class Coordinator:
                     tm_snapshot[agent_id] = tm
                 # Log time and omega values
                 self.tm_log.append((self.t, tm_snapshot))
+
+                pd_snapshot = {}
+                for agent_id, agent in self.agents.items():
+                    pd = self.andes.get_partial_variable("PQ", "Ppf", agent.loads)
+                    pd_snapshot[agent_id] = pd
+                # Log time and pd values
+                self.pd_log.append((self.t, pd_snapshot))
                 ######################################################
 
                 # 1. Run DMPC - ADMM algorithm
-                if self.controlled:
-                    if self.k >= j * int(self.tdmpc/self.tstep):
-                        j += 1
-                        success, role_change_list = self.run_admm()
-                        if not success:
-                            print("[Error] ADMM failed.")
-                            # break
+                if self.k >= j * int(self.tdmpc/self.tstep):
+                    j += 1
+                    success, role_change_list = self.run_admm()
+                    if not success:
+                        print("[Error] ADMM failed.")
+                        # break
 
-                        # Send set points
+                    # Send set points
+                    if self.controlled and self.disturbance:
                         for role_change in role_change_list:
                             self.andes.set_value(role_change)
 
@@ -147,14 +160,14 @@ class Coordinator:
                     pg_snapshot[agent_id] = pg_vals
                 self.pg_log.append((self.t, pg_snapshot))
 
-                delta_pg_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    delta_pg_vals = {
-                        gen_id: agent.model.Pg[0, gen_id].value - agent.pref0[i]
-                        for i, gen_id in enumerate(agent.generators)
-                    }
-                    delta_pg_snapshot[agent_id] = delta_pg_vals
-                self.pg_delta_log.append((self.t, delta_pg_snapshot))
+                # delta_pg_snapshot = {}
+                # for agent_id, agent in self.agents.items():
+                #     delta_pg_vals = {
+                #         gen_id: agent.model.Pg[0, gen_id].value - agent.pref0[i]
+                #         for i, gen_id in enumerate(agent.generators)
+                #     }
+                #     delta_pg_snapshot[agent_id] = delta_pg_vals
+                # self.pg_delta_log.append((self.t, delta_pg_snapshot))
                 ######################################################
 
                 # 2. Run one ANDES simulation step
@@ -176,18 +189,19 @@ class Coordinator:
         andes_role_changes = []
         agents = list(self.agents.values())
 
-        for agent in agents:
-            for i, gen_id in enumerate(agent.generators):
+        if self.controlled:
+            for agent in agents:
+                for i, (gen_id, gov_id) in enumerate(zip(agent.generators, agent.governors)):
 
-                role_change = {
-                    'model': 'TGOV1',
-                    'src': 'pref0',
-                    'idx': gen_id,
-                    'attr': 'v',
-                    'value': agent.model.Pg[0, gen_id].value #- agent.pref0[i]
-                }
+                    role_change = {
+                        'model': 'TGOV1N',
+                        'src': 'paux0',
+                        'idx': gov_id,
+                        'attr': 'v',
+                        'value': agent.model.Pg[0, gen_id].value - agent.pref0[i]
+                    }
 
-                # self.andes.set_value(role_change)
-                andes_role_changes.append(role_change.copy())
+                    # self.andes.set_value(role_change)
+                    andes_role_changes.append(role_change.copy())
 
         return andes_role_changes
