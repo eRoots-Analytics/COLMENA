@@ -19,7 +19,7 @@
 
 \refsection{0}
   \datalist[entry]{none/global//global/global/global}
-    \entry{grid:ieee39}{article}{}{}
+    \entry{grids:ieee39}{article}{}{}
       \name{author}{3}{}{%
         {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
            family={Athay},
@@ -57,6 +57,130 @@
       \field{volume}{PAS-98}
       \field{year}{1979}
     \endentry
+    \entry{ADMM:boyd}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=ec94d94cc487dd71939a90cbeaaf47d0}{%
+           family={Boyd},
+           familyi={B\bibinitperiod},
+           given={Stephen},
+           giveni={S\bibinitperiod}}}%
+        {{hash=2e1b520f90d2b5de02de6cf5f9896399}{%
+           family={Parikh},
+           familyi={P\bibinitperiod},
+           given={Neal},
+           giveni={N\bibinitperiod}}}%
+        {{hash=a9b44e6e637f2b45f96e1c9c60803c93}{%
+           family={Chu},
+           familyi={C\bibinitperiod},
+           given={Eric},
+           giveni={E\bibinitperiod}}}%
+        {{hash=bc21df4b6c3255996b02e140a1419ecf}{%
+           family={Peleato},
+           familyi={P\bibinitperiod},
+           given={Borja},
+           giveni={B\bibinitperiod}}}%
+        {{hash=f98eab9d67187905cc9b153a02f0b3f4}{%
+           family={Eckstein},
+           familyi={E\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Now Publishers Inc.}%
+      }
+      \strng{namehash}{60ec9bf707fa51b002fec03e755dd98d}
+      \strng{fullhash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{fullhashraw}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{bibnamehash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{authorbibnamehash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{authornamehash}{60ec9bf707fa51b002fec03e755dd98d}
+      \strng{authorfullhash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{authorfullhashraw}{0ed62155139f29aa99cdd8d945a2291b}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Foundations and Trends in Machine Learning}
+      \field{number}{1}
+      \field{title}{Distributed optimization and statistical learning via the alternating direction method of multipliers}
+      \field{volume}{3}
+      \field{year}{2011}
+      \field{pages}{1\bibrangedash 122}
+      \range{pages}{122}
+      \verb{urlraw}
+      \verb https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf
+      \endverb
+      \verb{url}
+      \verb https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf
+      \endverb
+    \endentry
+    \entry{paper:DMPC}{thesis}{}{}
+      \name{author}{1}{}{%
+        {{hash=c5c37d0e922d0b289bb4d0b76cb7d5e8}{%
+           family={Negenborn},
+           familyi={N\bibinitperiod},
+           given={R.\bibnamedelimi R.},
+           giveni={R\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Delft University of Technology}%
+      }
+      \strng{namehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{fullhash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{fullhashraw}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{bibnamehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authorbibnamehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authornamehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authorfullhash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authorfullhashraw}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Accessed: 2025-06-25}
+      \field{title}{Model Predictive Control for the Management of Large-Scale Power Systems}
+      \field{type}{phdthesis}
+      \field{year}{2007}
+      \verb{urlraw}
+      \verb https://www.dcsc.tudelft.nl/~bdeschutter/research/phd_theses/phd_negenborn_2007.pdf
+      \endverb
+      \verb{url}
+      \verb https://www.dcsc.tudelft.nl/~bdeschutter/research/phd_theses/phd_negenborn_2007.pdf
+      \endverb
+    \endentry
+    \entry{paper:marco}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=c562f6e916080c7a57d20ac75b6fe8af}{%
+           family={Bettoni},
+           familyi={B\bibinitperiod},
+           given={Alessandro},
+           giveni={A\bibinitperiod}}}%
+        {{hash=625b49df415678e73522e1fe12c1f474}{%
+           family={Mastroddi},
+           familyi={M\bibinitperiod},
+           given={Giacomo},
+           giveni={G\bibinitperiod}}}%
+        {{hash=3df9a14c247225d6b5866931b1b1b20f}{%
+           family={Muttoni},
+           familyi={M\bibinitperiod},
+           given={Marco},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{a47118822db0b63a9f9eb9edfa09671d}
+      \strng{fullhash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{fullhashraw}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{bibnamehash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{authorbibnamehash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{authornamehash}{a47118822db0b63a9f9eb9edfa09671d}
+      \strng{authorfullhash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{authorfullhashraw}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Distributed Nonlinear Model Predictive Control for District Heating Networks}
+      \field{year}{2021}
+    \endentry
     \entry{grids:models}{article}{}{}
       \name{author}{1}{}{%
         {{hash=ecec65b415b19b3621e8d452315cd17f}{%
@@ -73,8 +197,8 @@
       \strng{authornamehash}{ecec65b415b19b3621e8d452315cd17f}
       \strng{authorfullhash}{ecec65b415b19b3621e8d452315cd17f}
       \strng{authorfullhashraw}{ecec65b415b19b3621e8d452315cd17f}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://docs.andes.app/en/latest/modelref.html}}
@@ -107,8 +231,8 @@
       \strng{authornamehash}{74a7cbe732a920845d1f4a25588b490b}
       \strng{authorfullhash}{74a7cbe732a920845d1f4a25588b490b}
       \strng{authorfullhashraw}{74a7cbe732a920845d1f4a25588b490b}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://github.com/eRoots-Analytics/COLMENA}}
@@ -116,8 +240,229 @@
       \field{title}{COLMENA: Decentralized Control Framework for Power Grids}
       \field{year}{2024}
     \endentry
+    \entry{grids:kundur}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Qiuhua},
+           giveni={Q\bibinitperiod}}}%
+      }
+      \strng{namehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{bibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorbibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \field{extraname}{1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
+      \field{title}{RLGC repository}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+      \verb{url}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+    \endentry
+    \entry{grids:ieee14}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/
+      \endverb
+    \endentry
+    \entry{grids:ieee118}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+    \endentry
+    \entry{test2}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+    \endentry
+    \entry{grids:kundur2}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Qiuhua},
+           giveni={Q\bibinitperiod}}}%
+      }
+      \strng{namehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{bibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorbibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
+      \field{title}{RLGC repository}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+      \verb{url}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+    \endentry
+    \entry{tool:andes}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=f9791becca66cbf7603e9fefb5c525b3}{%
+           family={Qi},
+           familyi={Q\bibinitperiod},
+           given={Shuang},
+           giveni={S\bibinitperiod}}}%
+        {{hash=a6a624e10979d64f225ea3eecae2f258}{%
+           family={Milano},
+           familyi={M\bibinitperiod},
+           given={Federico},
+           giveni={F\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier}%
+      }
+      \strng{namehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{fullhash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{fullhashraw}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{bibnamehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authorbibnamehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authornamehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authorfullhash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authorfullhashraw}{53ff3a0b2c2c9fc175480f6254340c61}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{SoftwareX}
+      \field{title}{ANDES: A Python tool for power system modeling and analysis}
+      \field{volume}{11}
+      \field{year}{2020}
+      \true{nocite}
+      \field{pages}{100453}
+      \range{pages}{1}
+    \endentry
   \enddatalist
-  \missing{grids:ieee39}
 \endrefsection
 \endinput
 

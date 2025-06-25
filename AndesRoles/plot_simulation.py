@@ -20,11 +20,11 @@ def plot_response(responseAndes, filename):
     else:
         print("Failed to get plot:", responseAndes.text)
 
-
-andes_directory = ad.get_case("ieee14/ieee14_gentrip.xlsx")
 andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
-andes_url = 'http://192.168.68.74:5000'
+andes_url = 'http://127.0.0.1:5000'
+response_delta_equivalent = requests.get(andes_url + '/delta_equivalent', params={'area':1})
+print(response_delta_equivalent.json())
 responseAndes = requests.get(andes_url + '/plot', params={'model': 'Bus', 'var':'v'})

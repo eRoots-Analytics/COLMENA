@@ -1,9 +1,9 @@
-ANDES 1.0.1.post25.dev0+g9e470d6
+ANDES 1.0.1.post26.dev0+g8f5ba1c
 Copyright (C) 2015-2022 Hantao Cui
 
 ANDES comes with ABSOLUTELY NO WARRANTY
 Case file: /home/pablo/Desktop/eroots/COLMENA/AndesApp/andes/cases/ieee39/ieee39_full.xlsx
-Report time: 06/24/2025 03:55:46 PM
+Report time: 06/25/2025 06:49:22 PM
 
 Power flow converged in 5 iterations.
 Flat-start: No

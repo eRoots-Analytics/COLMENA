@@ -24,6 +24,8 @@ two_levels_up = os.path.dirname(os.path.dirname(current_directory))
 sys.path.insert(0, two_levels_up)
 from andes.utils.paths import get_case, cases_root, list_cases
 import andes as ad
+import pandas as pd
+from scipy.signal import butter, filtfilt
 
 started = None  
 print(sys.path)
@@ -35,6 +37,18 @@ available_devices ={'device_1':{'model':'REDUAL', 'idx':'GENROU_1', 'assigned':F
                     'device_2':{'model':'REDUAL', 'idx':'GENROU_2', 'assigned':False}}
 agent_names = ['agent_a','agent_b','agent_c','agent_d','area_1','area_2']
 
+
+def low_pass_filter_series(series: pd.Series, dt: float, cutoff_period_s: float = 2.0, order: int = 4) -> pd.Series:
+    fs = 1.0 / dt  # Sampling frequency (Hz)
+    cutoff_freq = 1.0 / cutoff_period_s  # Cutoff frequency in Hz
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff_freq / nyq
+
+    b, a = butter(N=order, Wn=normal_cutoff, btype='low', analog=False)
+    filtered = filtfilt(b, a, series.values)
+    return pd.Series(filtered, index=series.index, name=series.name + "_filtered")
+
+
 # Route to load the simulation case
 @app.route('/load_simulation', methods=['POST'])
 def load_simulation():
@@ -42,6 +56,7 @@ def load_simulation():
     global started
     global system_initial
     global agent_actions
+    global saved_omega_values
     try:
         # Load the Andes simulation (but don't run it yet)
         data = request.get_json()
@@ -53,6 +68,7 @@ def load_simulation():
         elif 'ieee14' in case_file:
             app.config['grid'] = 'ieee14'
 
+        saved_omega_values = pd.DataFrame()
         agent_actions = {}
         app.config['stop'] = False
         app.config['last_control_time'] = 0
@@ -60,7 +76,7 @@ def load_simulation():
             agent_actions[agent_name] = []
         app.config['started'] = False
         app.config['await_start'] = True
-        app.config['set_time_limit'] = [0, 15]
+        app.config['set_time_limit'] = [0, 4.2]
 
         n_redual = 4
         system_ieee = ad.load(case_file, setup=False)
@@ -368,8 +384,10 @@ def delta_equivalent():
         
         p_gen = 0
         d_omega = 0
+        df = saved_omega_values
         d_M_omega = 0
-        timeseries_data = system.dae.ts.df
+        d_M_omega_alter = 0
+
         for i, gen_idx in enumerate(system.GENROU.idx.v):
             bus_idx = system.GENROU.bus.v[i]
             bus_uid = system.Bus.idx2uid(bus_idx) 
@@ -377,8 +395,11 @@ def delta_equivalent():
 
             last = int(gen_idx.split('_')[-1])
             col_name = f"omega GENROU {last}"
-            omega = timeseries_data[col_name].iloc[-10:]
-            times = timeseries_data.index[-10:]
+            dt = df.index.to_series().diff().iloc[1] 
+            copy_omega = deepcopy(df[col_name])
+            omega_filtered = low_pass_filter_series(copy_omega, dt=dt, cutoff_period_s=3.0)
+            omega = omega_filtered.iloc[-2:]
+            times = df.index[-2:]
 
             # Compute slope: (omega[-1] - omega[-10]) / (t[-1] - t[-10])
             delta_omega = omega.iloc[-1] - omega.iloc[0]
@@ -387,7 +408,8 @@ def delta_equivalent():
 
             if bus_area == area:
                 p_gen += system.GENROU.tm.v[i]
-                d_M_omega += system.GENROU.M.v[i]*d_omega_i
+                d_M_omega += system.GENROU.M.v[i]*d_omega_i*system.GENROU.u.v[i]
+                d_M_omega_alter += system.GENROU.omega.e[i]
                 d_omega += (d_omega_i)
         p_demand = 0
         for i, gen_idx in enumerate(system.PQ.idx.v):
@@ -395,7 +417,7 @@ def delta_equivalent():
             bus_uid = system.Bus.idx2uid(bus_idx) 
             bus_area = system.Bus.area.v[bus_uid]
             if bus_area == area:
-                p_demand -= system.PQ.p0.v[i]
+                p_demand -= system.PQ.Ppf.v[i]
         p_losses = 0*d_M_omega - p_exchanged - p_demand - p_gen
         p_losses_alter = d_M_omega - p_exchanged - p_demand - p_gen
         result = {}
@@ -403,7 +425,16 @@ def delta_equivalent():
         result['losses'] = p_losses
         result['alter_losses'] = p_losses_alter
         result['d_M_omega'] = d_M_omega
-
+        result['d_M_omega_alter'] = d_M_omega_alter
+        omega_filtered.plot()
+        plt.xlabel("Time [s]")
+        plt.ylabel("Filtered Omega")
+        plt.title("Low-Pass Filtered GENROU Omega Signals")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig("filtered_omega.png", dpi=300)
+        plt.close()
         verbose = True
         if verbose:
             print(f"d_omega are {d_omega}")
@@ -465,7 +496,7 @@ def delta_equivalent_balanced():
                 bus_area = system.Bus.area.v[bus_uid]
                 if bus_area == area:
                     p_gen += system.GENROU.tm.v[i]
-                    d_M_omega += system.GENROU.M.v[i]*(system.GENROU.omega.e[i])
+                    d_M_omega += system.GENROU.M.v[i]*system.GENROU.omega.e[i]*system.GENROU.u.v[i]
                     d_omega += (system.GENROU.omega.e[i])
             P_balance += p_gen
 
@@ -475,7 +506,7 @@ def delta_equivalent_balanced():
                 bus_uid = system.Bus.idx2uid(bus_idx) 
                 bus_area = system.Bus.area.v[bus_uid]
                 if bus_area == area:
-                    p_demand -= system.PQ.p0.v[i]
+                    p_demand -= system.PQ.Ppf.v[i]
             P_balance += p_demand
             
             #This works if there are only 2 areas if not we have to solve a linear system
@@ -656,8 +687,10 @@ def complete_variable_sync(all_devices = False):
         print(f"System other is {system.GENROU}")
         print("System area is", system.Area, f"model name is {model_name}")
         var = getattr(model, var_name)
-        value = var.v
-
+        if var_name == 'M':
+            value = var.v
+        else:
+            value = var.v
         try:
             response['value'] = value
         except:
@@ -691,7 +724,10 @@ def partial_variable_sync(all_devices = False):
         print("var is", var)
         for idx in idxs:
             uid = model.idx2uid(idx)
-            value = var.v[uid]
+            if var_name == 'M':
+                value = var.v[uid]
+            else:
+                value = var.v[uid]
             res.append(value)
         try:
             response['value'] = res
@@ -734,7 +770,10 @@ def area_variable_sync(all_devices = False):
 
         for i, bus in enumerate(bus_iterate):
             if bus in area_buses:
-                value = var.v[i]
+                if var_name == 'M':
+                    value = var.v[i]
+                else:
+                    value = var.v[i]
                 res.append(value)
 
         try:
@@ -823,7 +862,8 @@ def run_real_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':3, 'param':'Ppf', 'value':2.0*Ppf_pq6, 'add':False}]
+            set_points += [{'model':'GENROU', 'idx':'GENROU_2', 't':3, 'param':'u', 'value':0, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':20, 'param':'Ppf', 'value':1.5*Ppf_pq5, 'add':False}]
             #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':35, 'param':'Ppf', 'value':1.3*Ppf_pq6, 'add':False}]
         while app.config['await_start']:
@@ -930,6 +970,7 @@ def run_stopping_time():
 @app.route('/run_colmena_time', methods=['GET'])
 def run_colmena_time():
     global set_points
+    global saved_omega_values
     try:
         print(f"Running Simulation 1")
         set_points = []
@@ -937,11 +978,9 @@ def run_colmena_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            #set_points += [{'model':'Line', 'idx':'Line_4', 't':3, 'param':'u', 'value':0, 'add':False}]
-            #set_points += [{'model':'Line', 'idx':'Line_19', 't':3, 'param':'u', 'value':0, 'add':False}]
+            set_points += [{'model':'GENROU', 'idx':'GENROU_1', 't':3, 'param':'u', 'value':0, 'add':False}]
             #set_points += [{'model':'Line', 'idx':'Line_21', 't':3, 'param':'u', 'value':0, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_5', 't':3, 'param':'Ppf', 'value':5*Ppf_pq5, 'add':False}]
-            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':3, 'param':'Ppf', 'value':3.0*Ppf_pq6, 'add':False}]
+            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':3, 'param':'Ppf', 'value':2.0*Ppf_pq6, 'add':False}]
 
         print(f"Running Simulation 2")
         t_run = float(request.args.get('t_run', 40))  
@@ -958,15 +997,27 @@ def run_colmena_time():
                 app.config['set_time_limit'][0] = 0
             start_time = time.time()
             print(f"Running Simulation 3")
+            print(f"setpoints are {set_points}")
             system.TDS_stepwise.set_set_points(set_points)
             system.TDS_stepwise.run_individual_batch(t_sim = delta_t*speed_factor)
+            if system.dae.t > 5:
+                set_points = set_points[-500:]    
             app.config['started'] = True
             print(f't_run is {t_run}')
             print(f'delta_t is {delta_t}')
             print(f't_dae is {system.dae.t}')
             time.sleep(max(0,delta_t-(time.time()-start_time)))
             t_0 = time.time()
-            
+            current_row = {}
+            for i in range(10):
+                col_name = f"omega GENROU {i+1}"
+                omega_value = system.GENROU.omega.v[i]  # direct access to omega variable
+                current_row[col_name] = omega_value
+            current_time = float(system.dae.t) 
+            row_df = pd.DataFrame([current_row], index=[current_time])
+
+            # Append to the full time series
+            saved_omega_values = pd.concat([saved_omega_values, row_df])
         app.config['await_start'] = True
         return jsonify({"Message": 'Success', "Time":t_run}), 200
     except Exception as e:

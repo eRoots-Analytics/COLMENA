@@ -66,7 +66,7 @@ COLMENA aims to enable decentralized decision-making by coordinating autonomous 
 
 Distributed Model Predictive Control (MPC) is a particularly well-suited control strategy in this context. MPC anticipates future states and disturbances, optimizes control actions over a prediction horizon, and incorporates constraints in a clear manner. When implemented in a distributed fashion through COLMENA, each agent can locally solve an MPC problem to manage its area, while coordinating with neighboring agents to respect power flow constraints and system-wide objectives.
 
-This report will first explain the physical models and equations used to build the MPC, we will then explain the optimisation background used for to implement the Distributed MPC, and finally we will use the MPC control in the grid \cite{grid:ieee39} in ANDES to showcase its capability for frequency control.
+This report will first explain the physical models and equations used to build the MPC, we will then explain the optimisation background used for to implement the Distributed MPC, and finally we will use the MPC control in the grid \cite{grids:ieee39} in ANDES to showcase its capability for frequency control.
 
 \section{Modeling}
 
@@ -232,11 +232,15 @@ With this we can redefine the global problem as follows:
 \text{s.t.} \quad & x_{i,t} = x_{j,t}, \quad \forall (i,j) \text{ areas s.t. } B_{i,j} \neq 0,\ \forall t \label{eq:coupling_constraint}
 \end{align}
 
-In this formulation, the objective function itself is unchanged only the dependencies of the frequency values $f_{i,t}$ changes to a function of the local state $x_{i,t}$. The key modeling change introduced here is the inclusion of a coupling constraint of the form $x_{i,t} = x_{j,t}$ for all connected pairs of areas $(i,j)$ and time $t$.
+In this formulation, the objective function itself is unchanged only the dependencies of the frequency values $f_{i,t}$ changes to a function of the local state $x_{i,t}$. The key modeling change introduced here is the inclusion of a coupling constraint of the form $x_{i,t} = x_{j,t}$ for all connected pairs of areas $(i,j)$ and time $t$. Given that $f_{i,t}$ directly depends on $\delta_{j,t}$ this can be simplified to the following set of coupled constraints, where $\delta_{j, i, t}$ is the value of the area's $i$ angle seen in the area's $j$ subproblem:
+
+\begin{equation}
+    \delta_{i, i, t} = \delta_{j, i, t} \quad \forall t, i \quad \forall j \in \mathcal{N}_i
+\end{equation}
 
 This constraint enforces that the local copies of shared state variables maintained by each agent (e.g., voltage angles or neighboring states) must agree with those of their neighbors. Although each agent $i$ solves its problem using its local state $x_{i,t}$, coordination is required so that all local views converge to a common global state.
 
-This structure enables the use of distributed optimization techniques, such as the Alternating Direction Method of Multipliers (ADMM), where each agent optimizes independently and the consistency across agents is enforced iteratively through dual variables and auxiliary updates.
+This structure enables the use of distributed optimization techniques, such as the Alternating Direction Method of Multipliers (ADMM), where each agent optimizes independently and the consistency across agents is enforced iteratively through dual variables and auxiliary updates \cite{ADMM:boyd}. The use of ADMM to solve a frequency control problem is inspired by \cite{paper:DMPC} and \cite{paper:marco}.
 
 \subsection{Distributed MPC via ADMM}
 
@@ -274,16 +278,16 @@ With this we can define a local subproblem for agent $i$. At each iteration of t
 \subsection*{Local Problem Modifications}
 
 \paragraph{A. Damping Term} 
-We addan additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. 
+We add an additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. The use of this term is heavily influenced by \cite{ADMM:edu}.
 \[
  \frac{\beta}{2} \|\delta_{i,t} - \delta_{i,t}^{k-1}\|^2 \quad \forall i,t
 \]
-where $\delta_{i,t}$ is the area's decision variable for the angle and  $\delta_{i,t}^{k-1}$ is its value in the previous iteration, and \( \beta > 0 \) is a damping coefficient. This modification biases the optimizer towards solutions close to the prior iteration, it stabilize convergence and avoids scillations in the horizon state.
+where $\delta_{i,t}$ is the area's decision variable for the angle and  $\delta_{i,t}^{k-1}$ is its value in the previous iteration, and \( \beta > 0 \) is a damping coefficient. This modification biases the optimizer towards solutions close to the prior iteration, it stabilizes convergence and avoids oscillations in the horizon state.
 
 \paragraph{B. Adaptable \(\rho\)} 
 
 
-Instead of using a fixed penalty parameter \( \rho \), we adaptively adjust it based on the ratio of primal and dual residuals. This helps balance the convergence of both residuals and improves performance across different problem scales. The update rule is:
+Instead of using a fixed penalty parameter \( \rho \), we adjust it based on the ratio of primal and dual residuals. This helps balance the convergence of both residuals and improves performance across different problem scales\cite{ADMM:boyd}. The update rule is:
 \[
 \rho^{k+1} := 
 \begin{cases}
@@ -313,7 +317,7 @@ This subproblem defines the core of the distributed MPC framework under ADMM. Ea
 
 \paragraph{D.Smoothing and Terminal cost} 
 
-Finally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
+Additionally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
 
 \begin{equation}
     \alpha_1 \sum_{0 \leq t < T}(f_{i,t+1} - f_{i,t})^2 
@@ -326,6 +330,17 @@ And a Terminal cost term that we define as follows:
 \end{equation}
 
 Overall, these additions help us find a more suitable solution of the frequency's trajectory rather than just minimizing for the cost.
+
+\paragraph{E.Redundant coupled constraints} 
+
+Finally, we add additional coupled constraint to the local MPC formulation. This new constraint do not change the model mathematically but significantly improve convergence speed. The existing formulation can pose problems since it achieves consensus in the states that are further in the horizon and can lock the problem into a suboptimal path. The new coupled constraint intent to achieve consensus between the agents also in the dynamics. They are the following in 
+
+\begin{align}
+    P_{\text{seen from area i}}^{\text{exchanged from i to j}} + P_{\text{seen from area j}}^{\text{exchanged from j to i}} &= 0 \\
+    \omega_{i,i,t} &= \omega_{j,i,t}
+\end{align}
+
+We can also write this equations in terms of $\delta_{j,i,t}$. With this addition we also need to modify the local MPC with new terms. 
 
 \subsection{ADMM Algorithm}
 
@@ -445,14 +460,22 @@ We can use contexts to send control messages from the agent running the Distribu
 We define 3 different types of data channels to share information between the different agents running the ADMM:
 
 \begin{itemize}
-    \item State Horizon  Data: Channel where the copies of all the coupled primal variables are stored, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
+    \item State Horizon  Data: Channel where the copies of all the coupled primal variables are sent between agents, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
     \item Dual Variables Data: Channel where the dual variables are stored, this specific channel is scoped with respect to the context \textit{Grid Areas}. This makes it so that each area stores their own copy of the dual variables. This can be leveraged so that different agents in the same area could run different iterations of the online control.
     \item Error Data: Channel where the agents update the dual error of the ADMM algorithm. When the error goes below a specific tolerance we consider the ADMM has reached convergence. Then the agents send the control actions to the ANDES simulation and wait until the next step.
 \end{itemize}
 
 \subsubsection*{Coordination}
 
-The different agents read this channel to get the values for the primal variables and the copies of the primal variables and then post their updates primal values. To avoid agents overwriting the changes of other agents we also add a coordination feature. This consists in the different agents having to update the data channels in a specific order. We add this coordination requirement to both the Error and State Horizon data channels. We also considered defining a new coordinating agent to perform this task that receives the different agents messages but decided against it.
+The different agents read the state horizon channel to get the values for the primal variables of other agents and then post their updated primal values. To avoid agents overwriting the changes of other agents we also add a coordination feature. This consists in the different agents having to update different data channels depending on the context. We also considered defining a new coordinating agent to perform this task that receives the different agents messages but decided against it.
+
+\subsubsection*{Activation}
+
+The distributed Frequency control role is activated when two KPIs are broken. The role first communicates with ANDES and learns the initial conditions for the problem. It then solves a single iteration of the local problem. In the prototype the other iterations are also run by the same agent. The goal however is to potentially use COLMENA's resource control to run the solver in, for example,  the most computationally powerful agent available. This could be possible thanks to the different communications channels already storing the necessary data independently of the agents.
+
+\subsection*{Testing Setup}
+
+The testing was carried out on a local machine, where the agents in the COLMENA framework run in Docker containers, maintaining the decentralized nature of the system. These agents communicate locally with the ANDES simulation, which is also hosted on the same machine. The use of Docker containers for the agents ensures that the system remains modular and scalable, allowing for independent operation and coordination between agents while still adhering to decentralized principles. 
 
 \section{Case Study and Results}
 
@@ -472,21 +495,47 @@ From the COLMENA side, we deploy multiple agents as docker containers deployed i
     \item Agent 2: Agent with requirement ('converter') 
 \end{itemize}
 
-On the simulation side, we start the simulation with a grid in steady state conditions. Then, we define a perturbation at $t=2s$ that consists in a line tripping. This perturbation provokes a change in frequency. We set up multiple scenarios with the objective of seeing how the different roles act in the grid to counteract this perturbation.
+On the simulation side, we start the simulation with a grid in steady state conditions. We set up multiple scenarios with the objective of seeing how the different roles act in the grid to counteract this perturbation. We set up the Distributed MPC with a horizon of 3 seconds and a time step of 0.1 seconds.
 
 \subsection{Results}
+
+We define a perturbation at $t=3s$ that consists in a load suddenly doubling. This perturbation provokes a drop in frequency. The Distributed frequency optimizer role activates 10 seconds after the KPI is broken since it needs time to set up. Once the role is activated the frequency is brought back closer to the nominal frequency. The grid does not come back perfectly to the nominal frequency because of the assumptions made in the modelling of the grid. The final oscillations can then be cancelled by the Automatic Response Control.
+
+\begin{figure}[ht]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/mpc_load.png}
+        \caption{Frequency Time Series - Distributed MPC}
+        \label{fig:frequency_response_1}
+    \end{minipage}%
+    \hspace{0.1cm}  % Adds horizontal space between the figures
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/non_mpc_load.png}
+        \caption{Frequency Time Series - Default}
+        \label{fig:frequency_response_2}
+    \end{minipage}
+\end{figure}
+
+Other scenarios available in the prototype's repository are also capable of restoring the grid's frequency. 
 
 \section{Milestone Analysis}
 
 \subsection*{Milestone 1}
 
 The final version of the prototype is now fully functional and has been successfully deployed. This version leverages the tools provided by Colmena to enable scalable, modular deployment of decentralized control algorithms. It has been extensively tested using multiple contingency scenarios, including generator outages, line outages and loads increases to validate the robustness of power converter responses under possible stress conditions. The response of the COLMENA control in these scenarios validates the capacity of the roles to respond to perturbations and restore the original frequency. The different testcases along with the prototype are available in the following online repository \cite{repo:colmenaeroots}.
+
 \subsection*{Milestone 2}
 
-The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations.
+The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations. The specific andes app tasked with running the simulation is also available as a docker container in case it is needed further testing is needed. 
 
 \section{Future Work}
 
+The results from the simulations validate that deploying frequency control using the COLMENA framework is an effective approach for maintaining grid stability. The system successfully managed frequency deviations, responding to disturbances in a timely manner and restoring the frequency to its nominal value. This demonstrates the robustness and effectiveness of COLMENA's decentralized control strategy, confirming its potential as a reliable solution for frequency regulation in power grids.
 
+The next steps in the development of the COLMENA framework will focus on scaling the system to handle larger and more complex grid structures. This will involve conducting tests in grids with additional areas to assess the scalability of the Distributed MPC controller. Additionally, we will evaluate the framework’s performance by validating COLMENA's capabilities in terms of speed and accuracy, ensuring that it can handle the increased computational demands of larger grids while maintaining the desired control precision. These tests will help to refine the system's robustness and efficiency in real-world applications.
+
+\nocite{*}  
 \printbibliography
 \end{document}

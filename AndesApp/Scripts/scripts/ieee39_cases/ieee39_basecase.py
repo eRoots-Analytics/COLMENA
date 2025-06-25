@@ -15,14 +15,12 @@ from copy import deepcopy
 
 
 
-ieee_file = get_case('kundur/kundur_full.xlsx')
 ieee_file = get_case('ieee39/ieee39_full.xlsx')
+ieee_file = get_case('kundur/kundur_full.xlsx')
+ieee_file = get_case('kundur/kundur_full.xlsx')
 
 ad.config_logger(stream_level=10)
 system = ad.load(ieee_file, setup = False)
-system.Toggle.alter(src='dev', idx = 'Toggler_1', value = 'GENROU_1')
-system.Toggle.alter(src='t', idx = 'Toggler_1', value = 2)
-system.Toggle.alter(src='u', idx = 'Toggler_1', value = 1)
 system.setup()
 system.PFlow.run()
 system.TDS.init()
