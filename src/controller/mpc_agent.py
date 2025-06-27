@@ -109,13 +109,13 @@ class MPCAgent:
         self.model.power_exchang_constr = pyo.Constraint(self.model.TimeInput, self.model.other_areas, rule=lambda model, k, nbr: model.P_exchange_areas[k, nbr] == -model.P_exchange[k, nbr])
         
         # Steady-state
-        self.model.ss_constr_freq =       pyo.Constraint(self.model.TimeInput, rule=lambda model, k: 0.5 * model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
+        self.model.ss_constr_freq =       pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
 
     def setup_dmpc(self, coordinator):
         ### Set up distirbuted optimization model ###
         self.model.dual_vars =                  pyo.Param(self.model.areas, self.model.areas, self.model.TimeInput,
                                                               initialize=coordinator.dual_vars, mutable=True)
-        self.model.variables_horizon_values =   pyo.Param(self.model.areas, self.model.areas, self.model.TimeInput,
+        self.model.variables_horizon_values =   pyo.Param(self.model.areas, self.model.areas, self.model.TimeInput, self.model.areas,
                                                               initialize=coordinator.variables_horizon_values, mutable=True)
         ### Cost ###
         def _freq_cost(model):
@@ -123,15 +123,15 @@ class MPCAgent:
 
         def _lagrangian_term(model):
             return sum(
-                model.dual_vars[self.area, nbr, k] * (model.P_exchange[k, nbr] - model.variables_horizon_values[self.area, nbr, k]) +   
-                model.dual_vars[nbr, self.area, k] * (model.variables_horizon_values[nbr, self.area, k] - model.P_exchange_areas[k, nbr])
+                model.dual_vars[self.area, nbr, k] * (model.P_exchange[k, nbr] - model.variables_horizon_values[self.area, nbr, k, nbr]) +   
+                model.dual_vars[nbr, self.area, k] * (model.variables_horizon_values[nbr, self.area, k, nbr] - model.P_exchange_areas[k, nbr])
                 for nbr in model.other_areas for k in model.TimeInput
                 )
 
         def _convex_term(model):
             return model.rho * sum(
-                (model.P_exchange[k, nbr] - model.variables_horizon_values[self.area, nbr, k])**2 +
-                (model.variables_horizon_values[nbr, self.area, k] - model.P_exchange_areas[k, nbr])**2
+                (model.P_exchange[k, nbr] - model.variables_horizon_values[self.area, nbr, k, nbr])**2 +
+                (model.variables_horizon_values[nbr, self.area, k, nbr] - model.P_exchange_areas[k, nbr])**2
                 for nbr in model.other_areas for k in model.TimeInput
             )
  
@@ -237,8 +237,8 @@ class MPCAgent:
                 self.vars_saved['P_exchange'][(nbr, k)] = self.model.P_exchange[k, nbr].value                   #self.model.P_exchange[nbr].value
                 self.vars_saved['P_exchange_areas'][(nbr, k)] = -self.model.P_exchange[k, nbr].value
 
-                self.model.variables_horizon_values[self.area, nbr, k] = self.model.P_exchange[k, nbr].value
-                self.model.variables_horizon_values[nbr, self.area, k] = -self.model.P_exchange[k, nbr].value
+                self.model.variables_horizon_values[self.area, nbr, k, nbr] = self.model.P_exchange[k, nbr].value
+                self.model.variables_horizon_values[nbr, self.area, k, nbr] = -self.model.P_exchange[k, nbr].value
 
         self.warm_start()
         

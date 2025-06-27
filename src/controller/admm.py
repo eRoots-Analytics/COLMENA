@@ -29,6 +29,7 @@ class ADMM:
                     if i==0: 
                         # Initialize the model for the first iteration
                         agent.initialize_variables_values()
+
                     if self.controlled:
                         self._solve_agent(agent, i)
 
@@ -67,13 +68,10 @@ class ADMM:
             raise RuntimeError(f"Agent {agent.area} MPC failure at iteration {i}.")
         
         ########### FOR PLOTTING #############
-        self.cost_log.append({
-            "iteration": i,
-            "freq_val" : pyo.value(model.freq_cost),
-            "lagrangian_val" : pyo.value(model.lagrangian_term),
-            "convex_val" : pyo.value(model.convex_term),
-            "total_cost" : pyo.value(model.cost)
-        })
+        omega_coi_pred = [pyo.value(model.omega[k]) for k in model.TimeHorizon]
+        self.coordinator.omega_coi_prediction_log.append(
+            (self.coordinator.t, {str(agent.area): omega_coi_pred})
+        )
         ######################################
 
         # Save results in the coordinator map
@@ -81,8 +79,8 @@ class ADMM:
         # NOTE: inconsistent!!!!!!
         for k in model.TimeInput:
             for nbr in self.coordinator.neighbours[agent.area]:
-                self.coordinator.variables_horizon_values[agent.area, agent.area, k] = model.P_exchange[k, nbr].value  
-                self.coordinator.variables_horizon_values[agent.area, nbr, k] = model.P_exchange_areas[k, nbr].value
+                self.coordinator.variables_horizon_values[agent.area, nbr, k, agent.area] = model.P_exchange[k, nbr].value  
+                self.coordinator.variables_horizon_values[nbr, agent.area, k, agent.area] = model.P_exchange_areas[k, nbr].value
 
         agent.save_warm_start()
                   
@@ -94,8 +92,8 @@ class ADMM:
             for nbr in nbrs:
                 for k in range(self.coordinator.K):
                     # Get local and neighbor values
-                    theta_ii = vars_dict[area, area, k]
-                    theta_ij = vars_dict[nbr, area, k]
+                    theta_ii = vars_dict[area, nbr, k, area]
+                    theta_ij = vars_dict[area, nbr, k, nbr]
 
                     # Update the dual variable
                     key = (area, nbr, k)
@@ -124,8 +122,8 @@ class ADMM:
                 area = agent.area
                 for nbr in self.coordinator.neighbours[area]:
                     for k in range(self.coordinator.K):
-                        model.variables_horizon_values[area, area, k].value = vars_dict[area, area, k]
-                        model.variables_horizon_values[area, nbr, k].value = vars_dict[area, nbr, k]
+                        model.variables_horizon_values[area, nbr, k, area].value = vars_dict[area, nbr, k, area]
+                        model.variables_horizon_values[area, nbr, k, nbr].value = vars_dict[area, nbr, k, nbr]
                         model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
 
     def _compute_primal_residual_mse(self):
@@ -136,8 +134,8 @@ class ADMM:
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
                 for k in range(self.coordinator.K):
-                    theta_ii = vars_dict[area, area, k]
-                    theta_ij = vars_dict[nbr, area, k]
+                    theta_ii = vars_dict[area, nbr, k, area]
+                    theta_ij = vars_dict[area, nbr, k, nbr]
 
                     residual_sum += (theta_ii - theta_ij)**2
                     count += 2
@@ -151,8 +149,8 @@ class ADMM:
         for (area, nbrs) in self.coordinator.neighbours.items():
             for nbr in nbrs:
                 for k in range(self.coordinator.K):
-                    theta_ii = vars_dict[area, area, k]
-                    theta_ij = vars_dict[nbr, area, k]
+                    theta_ii = vars_dict[area, nbr, k, area]
+                    theta_ij = vars_dict[area, nbr, k, nbr]
 
                     residual = abs(theta_ii - theta_ij)
 

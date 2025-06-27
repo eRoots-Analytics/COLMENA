@@ -326,70 +326,68 @@ def partial_variable_sync(all_devices = False):
         return jsonify({"error": str(e)}), 500
     
 @app.route('/area_variable_sync', methods=['POST'])
-def area_variable_sync(all_devices = False):
+def area_variable_sync(all_devices=False):
     global system
-    #method to post the new device role in the app
     try:
         data = request.get_json()
         if data is None:
             return jsonify({"error": "No JSON data received!"}), 400
+
         response = {}
         model_name = data['model']
         var_name = data['var']
-        area = data['area']
-        area = int(area)
-        area_buses = system.Bus.idx.v
-        area_buses = [bus for i, bus in enumerate(area_buses) if system.Bus.area.v[i] == area]
+        area = int(data['area'])
+
+        # Get all buses in this area
+        area_buses = [
+            system.Bus.idx.v[i]
+            for i in range(len(system.Bus.idx.v))
+            if system.Bus.area.v[i] == area
+        ]
 
         model = getattr(system, model_name, None)
         var = getattr(model, var_name)
 
         res = []
 
-        # Handle Bus model separately
         if model_name == 'Bus':
-            bus_iterate = model.idx.v
-            for i, bus in enumerate(bus_iterate):
+            # Simple case: use bus directly
+            for i, bus in enumerate(model.idx.v):
                 if bus in area_buses:
-                    value = var.v[i]
-                    res.append(value)
+                    res.append(var.v[i])
 
-        # Handle governor models (TGOV1, TGOV1N) that use `.syn` to reference GENROUs
         elif model_name in ['TGOV1', 'TGOV1N']:
-            # Step 1: Get GENROU names connected to area buses
-            genrou_names = [
-                system.GENROU.name.v[i]
-                for i, bus in enumerate(system.GENROU.bus.v)
-                if bus in area_buses
-            ]
+            if hasattr(model, 'syn'):
+                # First, get GENROUs in the area
+                genrou_in_area = [
+                    (system.GENROU.idx.v[i], system.GENROU.name.v[i])
+                    for i in range(len(system.GENROU.idx.v))
+                    if system.GENROU.bus.v[i] in area_buses
+                ]
+                genrou_idx_set = set(idx for idx, _ in genrou_in_area)
+                genrou_name_set = set(name for _, name in genrou_in_area)
 
-            # Step 2: Match .syn to those GENROUs
-            for i, syn_name in enumerate(model.syn.v):
-                if syn_name in genrou_names:
-                    value = var.v[i]
-                    res.append(value)
+                for i, syn in enumerate(model.syn.v):
+                    if syn in genrou_idx_set or syn in genrou_name_set:
+                        res.append(var.v[i])
 
-        # Handle all other models with a 'bus' field
+            else:
+                return jsonify({"error": f"{model_name} model lacks 'syn' or 'gen' attribute"}), 400
+
         else:
-            bus_iterate = model.bus.v
-            for i, bus in enumerate(bus_iterate):
+            # All other models assumed to have a bus field
+            for i, bus in enumerate(model.bus.v):
                 if bus in area_buses:
-                    value = var.v[i]
-                    res.append(value)
+                    res.append(var.v[i])
 
-        try:
-            response['value'] = res
-        except:
-            response['value'] = None
-        
-        if type(res) == np.ndarray:
-            response['value'] = res.tolist()
-
+        response['value'] = res.tolist() if isinstance(res, np.ndarray) else res
         return jsonify(response), 200
+
     except Exception as e:
         print(e)
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
     
 @app.route('/set_value', methods=['POST'])
 def set_value():

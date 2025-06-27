@@ -5,6 +5,7 @@ This class contains the logic of the coordinator which is responsible for the co
 import traceback
 
 import pyomo.environ as pyo
+import numpy as np
 from src.config.config import Config
 from src.controller.admm import ADMM
 from src.controller.mpc_agent import MPCAgent
@@ -41,10 +42,11 @@ class Coordinator:
         }
 
         self.variables_horizon_values = {
-            (i, j, t): 0.0 
+            (i, j, t, w): 0.0 
             for i in self.agents
             for j in self.agents
             for t in range(self.K)
+            for w in self.agents
             }
         
         self.dual_vars = {
@@ -62,6 +64,8 @@ class Coordinator:
         self.pg_delta_log = []
         self.tm_log = []  # to store (time, tm_values_dict)
         self.pd_log = []
+        self.omega_coi_prediction_log = []
+        self.omega_coi_log = []
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
@@ -94,7 +98,40 @@ class Coordinator:
             while self.k < int(self.tf/self.tstep): 
                 print(f"[Loop] Time {self.t:.2f}")
 
-                # 3. Check for disturbances/events
+                #################FOR PLOTTING#####################
+                # HORRIBLE Retrieve omega values from each agent ###
+                omega_snapshot = {}
+                for agent_id, agent in self.agents.items():
+                    omega = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
+                    omega_snapshot[agent_id] = omega
+                # Log time and omega values
+                self.omega_log.append((self.t, omega_snapshot))
+
+                # tm_snapshot = {}
+                # for agent_id, agent in self.agents.items():
+                #     tm = self.andes.get_partial_variable("GENROU", "tm", agent.generators)
+                #     tm_snapshot[agent_id] = tm
+                # # Log time and omega values
+                # self.tm_log.append((self.t, tm_snapshot))
+
+                # pd_snapshot = {}
+                # for agent_id, agent in self.agents.items():
+                #     pd = self.andes.get_partial_variable("PQ", "Ppf", agent.loads)
+                #     pd_snapshot[agent_id] = pd
+                # # Log time and pd values
+                # self.pd_log.append((self.t, pd_snapshot))
+
+                for agent in self.agents.values():
+                    omega_values = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
+                    weight = np.array(agent.M_values) * np.array(agent.Sn_values)
+                    omega_coi = np.dot(weight, np.array(omega_values)) / np.sum(weight)
+
+                    self.omega_coi_log.append(
+                    (self.t, {str(agent.area): omega_coi})
+                    )
+                ######################################################
+
+                # 1. Check for disturbances/events
                 if self.k == int(self.td/self.tstep):
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
@@ -111,36 +148,12 @@ class Coordinator:
                     #                       'value': 0})
 
                     self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_3',
+                                          'idx': 'PQ_0',
                                           'src': 'Ppf',
                                           'attr': 'v',
-                                          'value': 0.0})
+                                          'value': 5.0})
 
-                #################FOR PLOTTING#####################
-                # HORRIBLE Retrieve omega values from each agent ###
-                omega_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    omega = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
-                    omega_snapshot[agent_id] = omega
-                # Log time and omega values
-                self.omega_log.append((self.t, omega_snapshot))
-
-                tm_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    tm = self.andes.get_partial_variable("GENROU", "tm", agent.generators)
-                    tm_snapshot[agent_id] = tm
-                # Log time and omega values
-                self.tm_log.append((self.t, tm_snapshot))
-
-                pd_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    pd = self.andes.get_partial_variable("PQ", "Ppf", agent.loads)
-                    pd_snapshot[agent_id] = pd
-                # Log time and pd values
-                self.pd_log.append((self.t, pd_snapshot))
-                ######################################################
-
-                # 1. Run DMPC - ADMM algorithm
+                # 2. Run DMPC - ADMM algorithm
                 if self.k >= j * int(self.tdmpc/self.tstep):
                     j += 1
                     success, role_change_list = self.run_admm()
@@ -151,14 +164,16 @@ class Coordinator:
                     # Send set points
                     if self.controlled and self.disturbance:
                         for role_change in role_change_list:
+                            if not role_change: 
+                                print("[Warning] Empty role change detected.")
                             self.andes.set_value(role_change)
 
                 #################FOR PLOTTING#####################
-                pg_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    pg_vals = {gen_id: agent.model.Pg[0, gen_id].value for gen_id in agent.generators}
-                    pg_snapshot[agent_id] = pg_vals
-                self.pg_log.append((self.t, pg_snapshot))
+                # pg_snapshot = {}
+                # for agent_id, agent in self.agents.items():
+                #     pg_vals = {gen_id: agent.model.Pg[0, gen_id].value for gen_id in agent.generators}
+                #     pg_snapshot[agent_id] = pg_vals
+                # self.pg_log.append((self.t, pg_snapshot))
 
                 # delta_pg_snapshot = {}
                 # for agent_id, agent in self.agents.items():

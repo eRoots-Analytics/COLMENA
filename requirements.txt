@@ -20,3 +20,4 @@ flask
 pyomo
 ipywidgets 
 tqdm
+seaborn
