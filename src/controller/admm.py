@@ -8,6 +8,12 @@ from src.config.config import Config
 
 class ADMM:
     def __init__(self, coordinator):
+        """
+        Initialize ADMM parameters and link to the main coordinator object.
+            
+        Args:
+            coordinator: An instance of the Coordinator class that manages agents and system state.
+        """
         self.controlled = Config.controlled
         
         self.alpha =    Config.alpha
@@ -16,10 +22,14 @@ class ADMM:
 
         self.coordinator = coordinator
 
-        self.primal_log = []
-        self.cost_log = []
-
     def solve(self):
+        """
+        Execute the ADMM algorithm to coordinate agent MPCs.
+
+        Returns:
+            success (bool): Whether convergence was achieved.
+            role_changes (list): Role change instructions for the system actuators.
+        """
         agents = self.coordinator.agents.values()
 
         i = 0
@@ -43,15 +53,23 @@ class ADMM:
                         print("Distributed MPC converged (via primal residual)")
                         return True, self.coordinator.collect_role_changes()
 
-            self._update_duals(i)
+            self._update_duals()
             self._update_pyomo_params() 
 
         return False, self.coordinator.collect_role_changes()
 
     def _solve_agent(self, agent, i):
+        """
+        Solve the local MPC problem for an agent at ADMM iteration i.
+
+        Args:
+            agent: The MPC agent.
+            i (int): Current ADMM iteration.
+        """
+        # 0. Setup
         if agent.setup:
             model = agent.setup_dmpc(self.coordinator)
-            agent.setup = False #NOTE realiability check
+            agent.setup = False 
         else:
             model = agent.model
         
@@ -60,6 +78,7 @@ class ADMM:
         else:
             agent.warm_start() 
 
+        # 1. Solve
         solver = pyo.SolverFactory('ipopt')
         result = solver.solve(model, tee=False)
 
@@ -74,9 +93,7 @@ class ADMM:
         )
         ######################################
 
-        # Save results in the coordinator map
-        # NOTE: this could be converted into a function for readibility
-        # NOTE: inconsistent!!!!!!
+        # 2. Save
         for k in model.TimeInput:
             for nbr in self.coordinator.neighbours[agent.area]:
                 self.coordinator.variables_horizon_values[agent.area, nbr, k, agent.area] = model.P_exchange[k, nbr].value  
@@ -84,7 +101,10 @@ class ADMM:
 
         agent.save_warm_start()
                   
-    def _update_duals(self, i):
+    def _update_duals(self):
+        """
+        Update dual variables based on current power exchange disagreement.
+        """
         alpha = self.alpha
         vars_dict = self.coordinator.variables_horizon_values
 
@@ -100,21 +120,11 @@ class ADMM:
                     lambda_old = self.coordinator.dual_vars[key]
                     lambda_new = lambda_old + alpha * (theta_ii - theta_ij)
                     self.coordinator.dual_vars[key] = lambda_new
-
-                    ########### FOR PLOTTING #############
-                    self.primal_log.append({
-                        "iteration": i,
-                        "k": k,
-                        "area": area,
-                        "nbr": nbr,
-                        "theta_ii": theta_ii,
-                        "theta_ij": theta_ij,
-                        "residual": abs(theta_ii - theta_ij),
-                        "dual": lambda_new
-                    })
-                    ######################################
     
     def _update_pyomo_params(self):
+        """
+        Synchronize shared variables and duals in Pyomo models across agents.
+        """
         vars_dict = self.coordinator.variables_horizon_values
         for agent in self.coordinator.agents.values():
             if agent.generators:
@@ -127,6 +137,12 @@ class ADMM:
                         model.dual_vars[area, nbr, k].value = self.coordinator.dual_vars[area, nbr, k]
 
     def _compute_primal_residual_mse(self):
+        """
+        Compute the Mean Squared Error (MSE) of primal residuals over all agents.
+
+        Returns:
+            float: The root mean squared primal residual.
+        """
         residual_sum = 0.0
         count = 0
         vars_dict = self.coordinator.variables_horizon_values
@@ -143,6 +159,12 @@ class ADMM:
         return np.sqrt(residual_sum / count) if count else 0.0
     
     def _compute_primal_residual_inf(self):
+        """
+        Compute the infinity norm (max absolute) of primal residuals.
+
+        Returns:
+            float: Maximum absolute difference between shared variables.
+        """
         max_residual = 0.0
         vars_dict = self.coordinator.variables_horizon_values
 

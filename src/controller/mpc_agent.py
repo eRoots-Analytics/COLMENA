@@ -10,8 +10,36 @@ from src.config.config import Config
 from src.simulator.andes_wrapper import AndesWrapper
 
 class MPCAgent:
-    def __init__(self, agent_id: str, andes_interface: AndesWrapper):
+    """
+    Distributed Model Predictive Control (DMPC) agent for power system area control.
 
+    This agent interfaces with the Andes simulation backend to construct, initialize, and solve
+    a Pyomo-based MPC model that incorporates inter-area power exchanges, frequency regulation,
+    ramp constraints, and distributed coordination using ADMM.
+
+    Attributes:
+        agent_id (str): Identifier for the agent (e.g., 'Agent_1').
+        area (str): Area identifier used in Andes for this agent.
+        andes (AndesWrapper): Interface to the Andes simulator for data access.
+        model (ConcreteModel): Pyomo optimization model.
+        K (int): Prediction horizon.
+        dt (float): Discretization time step.
+        omega_ref (float): Nominal frequency reference.
+        ramp_up (float): Maximum ramp-up rate.
+        ramp_down (float): Maximum ramp-down rate.
+        q (float): Weight on frequency deviation in cost function.
+        rho (float): Penalty parameter in ADMM convex term.
+        fn (float): Nominal system frequency (e.g., 50 or 60 Hz).
+    """
+
+    def __init__(self, agent_id: str, andes_interface: AndesWrapper):
+        """
+        Initializes the DMPC agent with Andes interface and sets up model structure.
+
+        Args:
+            agent_id (str): Identifier for this agent.
+            andes_interface (AndesWrapper): Interface to the Andes simulator.
+        """
         self.dt =               Config.dt
         self.K =                Config.K
 
@@ -36,7 +64,7 @@ class MPCAgent:
         self.gen_location = {}
         self.bus2idgen = {}
 
-        ### Agent get area params ### NOTE: in case of tripping/distrubance the _init_ should be re-executed.
+        ### Agent get area params
         self._get_area_params()
 
         self.vars_saved = { 
@@ -108,10 +136,16 @@ class MPCAgent:
         self.model.balance_constr_area =  pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.P[k] == sum(model.u_GENROU_values[gen] * model.Pg[k, gen] for gen in model.generators))
         self.model.power_exchang_constr = pyo.Constraint(self.model.TimeInput, self.model.other_areas, rule=lambda model, k, nbr: model.P_exchange_areas[k, nbr] == -model.P_exchange[k, nbr])
         
-        # Steady-state
-        self.model.ss_constr_freq =       pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
+        # Frequency dynamic 
+        self.model.dynamic_constr_freq =  pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
 
     def setup_dmpc(self, coordinator):
+        """
+        Sets up the distributed optimization components including ADMM terms.
+
+        Args:
+            coordinator: Coordinator object containing dual variables and variable history.
+        """
         ### Set up distirbuted optimization model ###
         self.model.dual_vars =                  pyo.Param(self.model.areas, self.model.areas, self.model.TimeInput,
                                                               initialize=coordinator.dual_vars, mutable=True)
@@ -134,13 +168,11 @@ class MPCAgent:
                 (model.variables_horizon_values[nbr, self.area, k, nbr] - model.P_exchange_areas[k, nbr])**2
                 for nbr in model.other_areas for k in model.TimeInput
             )
- 
-        # Define expressions for each cost component such that it is possible to extract the values
+
         self.model.freq_cost =       pyo.Expression(rule=_freq_cost)
         self.model.lagrangian_term = pyo.Expression(rule=_lagrangian_term)
         self.model.convex_term =     pyo.Expression(rule=_convex_term)
 
-        # Define the total objective using these expressions
         self.model.cost = pyo.Objective(expr=self.model.freq_cost + self.model.lagrangian_term + self.model.convex_term, sense=pyo.minimize)
 
         return self.model
@@ -190,6 +222,9 @@ class MPCAgent:
             self.M_coi /= self.S_coi  # Normalize M_coi by S_coi
 
     def initialize_variables_values(self): 
+        """
+        Initializes model variables from Andes snapshot data.
+        """
         # Frequency
         omega_values = self.andes.get_partial_variable("GENROU", "omega", self.generators)
         weight = np.array(self.M_values) * np.array(self.Sn_values)

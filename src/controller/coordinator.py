@@ -4,7 +4,6 @@ This class contains the logic of the coordinator which is responsible for the co
 
 import traceback
 
-import pyomo.environ as pyo
 import numpy as np
 from src.config.config import Config
 from src.controller.admm import ADMM
@@ -12,8 +11,39 @@ from src.controller.mpc_agent import MPCAgent
 from src.simulator.andes_wrapper import AndesWrapper
 
 class Coordinator:
-    
+    """
+    Central coordinator for running a distributed MPC simulation using ADMM.
+
+    This class manages agent initialization, logging, disturbance handling,
+    and coordination of decentralized control via ADMM.
+
+    Attributes:
+        tstep (float): Time step of the simulation.
+        tf (float): Final simulation time.
+        dt (float): Discretization time step for MPC.
+        K (int): Prediction horizon length.
+        tdmpc (float): Time delay between DMPC activations.
+        td (float): Time of disturbance.
+        controlled (bool): Flag indicating if control actions should be applied.
+        disturbance (bool): Flag indicating if a disturbance has occurred.
+        andes (AndesWrapper): Interface to the power system simulator.
+        areas (list): List of area identifiers.
+        agents (dict): Mapping of area IDs to their respective MPC agents.
+        neighbours (dict): Neighbourhood graph between areas.
+        variables_horizon_values (dict): Horizon-wide shared variable values.
+        dual_vars (dict): ADMM dual variables (Lagrangian multipliers).
+        logs (...): Time-series logs for various system states.
+        admm (ADMM): ADMM solver instance.
+        terminated (bool): Simulation termination status.
+    """
+
     def __init__(self, andes: AndesWrapper):
+        """
+        Initialize the Coordinator with configuration and simulation interface and run the simulation.
+
+        Args:
+            andes (AndesWrapper): Simulator interface for power system model.
+        """
         # Constants
         self.tstep =      Config.tstep
         self.tf =         Config.tf
@@ -29,12 +59,11 @@ class Coordinator:
         # Andes interface
         self.andes = andes
 
-        # Get areas
+        # Areas
         self.areas = self.andes.get_complete_variable("Area", "idx")
 
         # System agents and cache 
         self.agents = {agent: MPCAgent(agent, andes) for agent in self.areas}
-        self.thetas = {}
 
         self.neighbours = {
             area: self.andes.get_neighbour_areas(area)
@@ -56,14 +85,9 @@ class Coordinator:
             for t in range(self.K)
             }
 
-        self.error_save = [] # to store error
-        self.omega_log = []  # to store (time, omega_values_dict)
-        self.pg_log = []
-        self.delta_log = []
-        self.theta_log = []
-        self.pg_delta_log = []
-        self.tm_log = []  # to store (time, tm_values_dict)
-        self.pd_log = []
+        # Logs
+        self.error_save = [] 
+        self.omega_log = []  
         self.omega_coi_prediction_log = []
         self.omega_coi_log = []
 
@@ -72,7 +96,7 @@ class Coordinator:
 
         print("[Main] Coordinator initialized.")
 
-        # Run simulation
+        # Start simulation
         try:
             self.terminated = self.run()
         except Exception as e:
@@ -80,16 +104,26 @@ class Coordinator:
             traceback.print_exc()
 
     def run_admm(self):
+        """
+        Execute one iteration of the ADMM algorithm.
+
+        Returns:
+            tuple: (success flag, list of role changes to apply)
+        """
         return self.admm.solve()
     
     def run(self):
+        """
+        Main simulation loop handling:
+        - disturbance injection
+        - control execution
+        - system evolution
 
+        Returns:
+            bool: True if simulation completed successfully, False otherwise.
+        """
         self.k = 0
         self.t = 0.0
-
-        self.theta_mpc_log = {agent.agent_id: [] for agent in self.agents.values()}
-        self.theta_sim_log = {agent.agent_id: [] for agent in self.agents.values()}
-        self.theta_pred_horizon = {agent.agent_id: [] for agent in self.agents.values()}
 
         print(f"[Init] Starting MPC loop at t = {self.t}, final time = {self.tf}")
 
@@ -98,29 +132,14 @@ class Coordinator:
             while self.k < int(self.tf/self.tstep): 
                 print(f"[Loop] Time {self.t:.2f}")
 
-                #################FOR PLOTTING#####################
-                # HORRIBLE Retrieve omega values from each agent ###
+                # === Log omega for plotting ===
+                # Omega
                 omega_snapshot = {}
                 for agent_id, agent in self.agents.items():
                     omega = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
                     omega_snapshot[agent_id] = omega
-                # Log time and omega values
                 self.omega_log.append((self.t, omega_snapshot))
-
-                # tm_snapshot = {}
-                # for agent_id, agent in self.agents.items():
-                #     tm = self.andes.get_partial_variable("GENROU", "tm", agent.generators)
-                #     tm_snapshot[agent_id] = tm
-                # # Log time and omega values
-                # self.tm_log.append((self.t, tm_snapshot))
-
-                # pd_snapshot = {}
-                # for agent_id, agent in self.agents.items():
-                #     pd = self.andes.get_partial_variable("PQ", "Ppf", agent.loads)
-                #     pd_snapshot[agent_id] = pd
-                # # Log time and pd values
-                # self.pd_log.append((self.t, pd_snapshot))
-
+                # Omegas COI
                 for agent in self.agents.values():
                     omega_values = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
                     weight = np.array(agent.M_values) * np.array(agent.Sn_values)
@@ -129,9 +148,8 @@ class Coordinator:
                     self.omega_coi_log.append(
                     (self.t, {str(agent.area): omega_coi})
                     )
-                ######################################################
 
-                # 1. Check for disturbances/events
+                # === Disturbance injection ===
                 if self.k == int(self.td/self.tstep):
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
@@ -153,7 +171,7 @@ class Coordinator:
                                           'attr': 'v',
                                           'value': 5.0})
 
-                # 2. Run DMPC - ADMM algorithm
+                # === Execute control ===
                 if self.k >= j * int(self.tdmpc/self.tstep):
                     j += 1
                     success, role_change_list = self.run_admm()
@@ -168,24 +186,7 @@ class Coordinator:
                                 print("[Warning] Empty role change detected.")
                             self.andes.set_value(role_change)
 
-                #################FOR PLOTTING#####################
-                # pg_snapshot = {}
-                # for agent_id, agent in self.agents.items():
-                #     pg_vals = {gen_id: agent.model.Pg[0, gen_id].value for gen_id in agent.generators}
-                #     pg_snapshot[agent_id] = pg_vals
-                # self.pg_log.append((self.t, pg_snapshot))
-
-                # delta_pg_snapshot = {}
-                # for agent_id, agent in self.agents.items():
-                #     delta_pg_vals = {
-                #         gen_id: agent.model.Pg[0, gen_id].value - agent.pref0[i]
-                #         for i, gen_id in enumerate(agent.generators)
-                #     }
-                #     delta_pg_snapshot[agent_id] = delta_pg_vals
-                # self.pg_delta_log.append((self.t, delta_pg_snapshot))
-                ######################################################
-
-                # 2. Run one ANDES simulation step
+                # === Simulate system forward ===
                 success, new_time = self.andes.run_step()
                 if not success:
                     print(f"[Error] Simulation step failed at simulation time {new_time}.")
@@ -201,6 +202,12 @@ class Coordinator:
         return False
 
     def collect_role_changes(self):
+        """
+        Collect role changes (i.e., setpoints) from all agents to apply via ANDES.
+
+        Returns:
+            list: A list of role change dictionaries suitable for `andes.set_value()`.
+        """
         andes_role_changes = []
         agents = list(self.agents.values())
 
@@ -216,7 +223,6 @@ class Coordinator:
                         'value': agent.model.Pg[0, gen_id].value - agent.pref0[i]
                     }
 
-                    # self.andes.set_value(role_change)
                     andes_role_changes.append(role_change.copy())
 
         return andes_role_changes
