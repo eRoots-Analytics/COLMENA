@@ -22,8 +22,8 @@ def plot_response(responseAndes, filename):
 
 
 andes_directory = ad.get_case("ieee14/ieee14_gentrip.xlsx")
-andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 andes_directory = ad.get_case("ieee39/ieee39_full.xlsx")
+andes_directory = ad.get_case("kundur/kundur_full.xlsx")
 
 andes_dict = {"case_file":andes_directory, 'redual':False}
 andes_url = 'http://127.0.0.1:5000'
@@ -46,7 +46,7 @@ def query_variables(label):
         print(f" sum of {key} is {sum(value)}")
 
 def run_simulation():
-    response = requests.get(f"{andes_url}/run_colmena_time", params={'t_run':35, 'delta_t': 0.1})
+    response = requests.get(f"{andes_url}/run_colmena_time", params={'t_run':25, 'delta_t': 0.1})
     print("[Simulation] Response:", response)
     print("[Simulation] Output:", response.json())
 

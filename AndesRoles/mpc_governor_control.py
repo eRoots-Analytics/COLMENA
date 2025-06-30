@@ -7,7 +7,6 @@ import matplotlib
 import andes as ad
 import pyomo.environ as pyo
 import pyomo
-import math
 from collections import defaultdict
 
 #Service to deploy a one layer control
@@ -97,7 +96,6 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
 
 
     gen_location = {gen:generator_bus[i] for i, gen in enumerate(generators)}
-    gen_order= {gen:i for i, gen in enumerate(generators)}
     bus2idgen = {generator_bus[i]:gen for i, gen in enumerate(generators)}
     self.bus2idgen = bus2idgen
 
@@ -205,6 +203,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     model.delta_areas = pyo.Var(model.other_areas, model.TimeHorizon, initialize = 0.0, bounds=(-50, 50))
     model.freq = pyo.Var(model.TimeHorizon, bounds = (0.99, 1.01))
     model.Pg = pyo.Var(model.generators, model.TimeHorizon, bounds=power_bounds)
+    #model.Pref = pyo.Var(model.generators, model.TimeHorizon, bounds=power_bounds)
     model.P = pyo.Var(model.TimeHorizon, initialize = 0.0)
     model.P_exchange = pyo.Var(model.TimeHorizon, initialize = 0.0)
 
@@ -242,6 +241,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     p_losses = response_delta_equivalent.json()['losses']
     d_M_omega = response_delta_equivalent.json()['d_M_omega']
     d_M_omega_alter = response_delta_equivalent.json()['d_M_omega_alter']
+    d_M_ts = response_delta_equivalent.json()['d_M_omega_ts']
     M_omega_sum = 0
     for area in areas:
         response_delta_equivalent = requests.get(andes_url + '/delta_equivalent', params={'area':area})
@@ -269,20 +269,24 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         initial_area_values[x_area] = np.mean(delta_area)
     
     tm0 = {generator:tm_values[i] for i,generator in enumerate(model.generators)}
+    p_losses = {t:p_losses for i,t in enumerate(model.TimeHorizon)}
     
     rho_scale = {t:1.3e1*max(min(1,0.98**t),0.01) for t in model.TimeHorizon}
     model.delta0 = pyo.Param(initialize = delta0, mutable=True)
     model.freq0 = pyo.Param(initialize = freq0, mutable=True)
-    model.p_losses = pyo.Param(initialize = p_losses, mutable=True)
     model.d_M_omega = pyo.Param(initialize = d_M_omega, mutable=True)
     model.tm0 = pyo.Param(model.generators, initialize = tm0, mutable=True)
+    model.p_losses = pyo.Param(model.TimeHorizon, initialize = p_losses, mutable=True)
     model.rho_scaled = pyo.Param(model.TimeHorizon, initialize = rho_scale)
 
     #we recalculate p_losses
     #d_M_omega = M_omega/2
-    p_losses_expression = d_M_omega -((-model.D(model.freq[0]-1) + sum(value(v) for v in model.tm0.values()) - model.Pd[0] - sum(model.b[area]*(delta0 - Ddelta0) for area in model.other_areas)))
+    p_losses_expression = self.correcting_factor*d_M_omega -((-model.D(model.freq[0]-1) + sum(value(v) for v in model.tm0.values()) - model.Pd[0] - sum(model.b[area]*(delta0 - Ddelta0) for area in model.other_areas)))
     p_losses_expression_bis = -((-model.D(model.freq[0]-1) + sum(value(v) for v in model.tm0.values()) - model.Pd[0] - sum(model.b[area]*(delta0 - Ddelta0) for area in model.other_areas)))
-    model.p_losses.value = 0*pyo.value(p_losses_expression)
+    for t in model.TimeHorizon:
+        print(f't is {t}')
+        p_losses_expression = d_M_ts[t] -((-model.D(model.freq[0]-1) + sum(value(v) for v in model.tm0.values()) - model.Pd[0] - sum(model.b[area]*(delta0 - Ddelta0) for area in model.other_areas)))
+        model.p_losses[t].value = 0*pyo.value(p_losses_expression)
     print(f'd_M_omega is {d_M_omega}')
     print(f'M_omega_sum is {M_omega_sum}')
     print(f'd_M_omega_alter is {d_M_omega_alter}')
@@ -290,7 +294,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     print(f'plosses is {p_losses} alternative is {p_losses_expression_bis}')
     time.sleep(3)
 
-    self.ramp_up = 1e-1
+    self.ramp_up = 5e-1
     def initial_p(model, i):
         return (model.tm0[i]*model.u_generators[i] - self.dt*self.ramp_up*model.u_generators[i], model.Pg[i,0], 
                 model.tm0[i]*model.u_generators[i] + self.dt*self.ramp_up*model.u_generators[i])
@@ -315,12 +319,12 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     #C2: the current frequency angle derivative
     #C3: the generator maximum ramp up
     #C4: the generator minimum ramp up
+    #C5: the governor's dynamics
     model.constrains_dynamics1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.delta[t+1] - model.delta[t])==  self.dt*2*np.pi*fn*(model.freq[t]-1))
-    model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: 1.3*self.correcting_factor*model.M*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + math.exp(-t)*model.p_losses)))
-    model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
-    model.constrains_dynamics4 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: -self.ramp_up*self.dt*model.u_generators[i] <= (model.Pg[i, t+1] - model.Pg[i, t])*model.u_generators[i])
-    model.constrains_dynamics5 = pyo.Constraint(model.generators, rule=lambda model, i: model.Pg[i, self.T] <= self.tm_initial[gen_order[i]] + self.ramp_up*self.T*self.dt)
-    model.constrains_dynamics6 = pyo.Constraint(model.generators, rule=lambda model, i: model.Pg[i, self.T] >= self.tm_initial[gen_order[i]] - self.ramp_up*self.T*self.dt)
+    model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: 1.3*self.correcting_factor*model.M*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + model.p_losses[t])))
+    model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up*model.u_generators[i])
+    model.constrains_dynamics4 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: -self.ramp_up*self.dt*model.u_generators[i] <= (model.Pg[i, t+1] - model.Pg[i, t]))
+    #model.constrains_dynamics5 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: model.Pg[i, t] == model.Pref[i, t] - 1/model.R*(model.freq[i] - 1))
 
     #We limit the change in P_exchange:
     #model.power_exchanged_limit_1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.P_exchange[t+1] - model.P_exchange[t]) <=  self.ramp_up*10)
@@ -410,10 +414,10 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         b = 0
         a += sum((model.delta[t+1] - model.delta[t])**2 for t in model.TimeDynamics)
         a += 0*sum((model.delta_areas[i,t+1] - model.delta_areas[i,t])**2 for i in model.other_areas for t in model.TimeDynamics)
-        b += 1*sum((model.freq[t+1] - model.freq[t])**2 for t in model.TimeDynamics)
-        return 0*a + b
-    model.cost = pyo.Objective(rule=lambda model: 1e8*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
-                       + penalty_term(model) + 5e1*damping_term(model) + 1e7*terminal_cost(model) + 1e6*smoothing_term(model) + 0.00*power_normalization(model), sense=pyo.minimize)
+        b += 0*sum((model.freq[t+1] - model.freq[t])**2 for t in model.TimeDynamics)
+        return a + 0*b
+    model.cost = pyo.Objective(rule=lambda model: 1e3*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
+                       + penalty_term(model) + 1e1*damping_term(model) + 1e2*terminal_cost(model) + 1e3*smoothing_term(model) + 0.00*power_normalization(model), sense=pyo.minimize)
     return model
 
 class mpc_agent:
@@ -429,7 +433,7 @@ class mpc_agent:
         responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
         self.device_dict = responseAndes.json()
         self.t_start = time.time()
-        self.T = 20 #number of timesteps when performing the MPC
+        self.T = 18 #number of timesteps when performing the MPC
         self.rho_diff = 10
         self.areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         self.other_areas = [i for i in self.areas if i != self.area]
@@ -439,7 +443,6 @@ class mpc_agent:
         self.state_saved_values = {}
         self.alpha = 0.3
         self.rho = 2
-        self.tm_initial = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'tm', 'area':self.area}).json()['value']
         self.delta_primal_vars = []
         self.delta_areas_primal_vars = []
         self.history_cost = []
@@ -526,7 +529,7 @@ class mpc:
         self.areas = {}
         self.error = 100
         self.rho_diff = 100
-        self.T_send = min(20, self.T)
+        self.T_send = min(10, self.T)
         self.error_save = []
         self.Ki = 2e-2
         self.Kd = 5e-4
@@ -890,7 +893,7 @@ for t in model.TimeHorizon:
 for agent in agents:
     for t in model.TimeHorizon:
         model = agent.model
-        a = ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + model.p_losses))
+        a = ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + model.p_losses[t]))
         print(f'a has value {pyo.value(a)}')
 
 

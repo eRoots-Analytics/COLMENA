@@ -9,7 +9,7 @@ df = pd.read_csv("data_2.csv")
 time = df["Time [s]"]
 
 # Define omega columns to plot
-omega_cols = [f"omega GENROU {i}" for i in range(1, 11)]
+omega_cols = [f"omega GENROU {i}" for i in range(1, 5)]
 
 # Check that all required columns are present
 missing = [col for col in omega_cols if col not in df.columns]

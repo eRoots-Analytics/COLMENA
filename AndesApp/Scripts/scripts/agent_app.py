@@ -2,7 +2,6 @@ from flask import Flask
 from markupsafe import escape
 from flask import url_for, request, render_template_string, jsonify
 from andes.utils.paths import get_case, cases_root, list_cases
-from flask_sqlalchemy import SQLAlchemy
 import os, sys
 import andes as ad
 import requests

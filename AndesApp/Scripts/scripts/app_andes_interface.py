@@ -5,6 +5,7 @@ from threading import Thread
 from PIL import Image
 import pandas as pd
 import os
+from scipy.optimize import curve_fit
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop", "plots")
 os.makedirs(desktop_path, exist_ok=True)
@@ -37,7 +38,6 @@ available_devices ={'device_1':{'model':'REDUAL', 'idx':'GENROU_1', 'assigned':F
                     'device_2':{'model':'REDUAL', 'idx':'GENROU_2', 'assigned':False}}
 agent_names = ['agent_a','agent_b','agent_c','agent_d','area_1','area_2']
 
-
 def low_pass_filter_series(series: pd.Series, dt: float, cutoff_period_s: float = 2.0, order: int = 4) -> pd.Series:
     fs = 1.0 / dt  # Sampling frequency (Hz)
     cutoff_freq = 1.0 / cutoff_period_s  # Cutoff frequency in Hz
@@ -48,6 +48,48 @@ def low_pass_filter_series(series: pd.Series, dt: float, cutoff_period_s: float 
     filtered = filtfilt(b, a, series.values)
     return pd.Series(filtered, index=series.index, name=series.name + "_filtered")
 
+# Define the new model: A * exp(-k2 * t) * cos(k1 * t + phi_0)
+def exp_cosine_model(t, A, k1, phi_0, k2 = 1):
+    res = A * np.exp(-k2 * t) * np.cos(k1 * t + phi_0)
+    res = A * np.cos(k1 * t + phi_0)
+    return res
+
+def fit_omega_dot_as_exp_cosine(omega):
+    """
+    Fits omega_dot as A * exp(-k2 * t) * cos(k1 * t + phi_0) to the given omega time series.
+    
+    Parameters:
+    - omega: Pandas Series with a time-based index (e.g., DatetimeIndex).
+    
+    Returns:
+    - A: Amplitude of the exponential cosine model.
+    - k1: Frequency of the cosine model.
+    - k2: Decay rate of the exponential term.
+    - phi_0: Phase offset of the cosine model.
+    - omega_dot_fit: The fitted function (A * exp(-k2 * t) * cos(k1 * t + phi_0)).
+    """
+    
+    # Step 1: Extract time from the Pandas index (convert to numeric if needed)
+    t = omega.index.astype(np.float64) 
+    
+    # Step 2: Compute the numerical derivative of omega
+    omega_dot = np.gradient(omega.values, t)  # Derivative of omega
+
+    # Step 3: Initial guesses for A, k1, phi_0, and k2
+    A_guess = (np.max(omega_dot) - np.min(omega_dot)) / 2  # Approximate amplitude
+    k1_guess = 2 * np.pi / (t[-1] - t[0])  # Guess frequency based on the time range
+    phi_0_guess = 0  # Initial phase guess
+    k2_guess = 0.1  # Initial guess for decay rate
+
+    # Step 4: Use curve_fit to fit the exponential cosine model to the omega_dot data
+    popt, _ = curve_fit(exp_cosine_model, t, omega_dot, p0=[A_guess, k1_guess, phi_0_guess])
+
+    A, phi_0, k2 = popt  # Extract the fitted parameters
+
+    # Step 5: Define the fitted omega_dot function
+    omega_dot_fit = lambda t: exp_cosine_model(t, A, phi_0, k2)
+
+    return omega_dot_fit
 
 # Route to load the simulation case
 @app.route('/load_simulation', methods=['POST'])
@@ -90,14 +132,17 @@ def load_simulation():
             system.setup()
             system.PFlow.run()
             #system.TDS.init()
-            system.PQ.config.p2p = 1.0
-            system.PQ.config.p2i = 0
-            system.PQ.config.p2z = 0
+            
+            if app.config['grid'] != 'kundur':
+                system.PQ.config.p2p = 1.0
+                system.PQ.config.p2i = 0
+                system.PQ.config.p2z = 0
 
             print(f"system area is {system.Area}")
             app.config['areas'] = system.Area.n
 
             return jsonify({"message": f"Simulation loaded successfully"}), 200
+        
         app.config['redual'] = True
         print("redual is true")
         system = aux.build_new_system_legacy(system_ieee, new_model_name = 'REDUAL', n_redual =n_redual)
@@ -393,11 +438,34 @@ def delta_equivalent():
             bus_uid = system.Bus.idx2uid(bus_idx) 
             bus_area = system.Bus.area.v[bus_uid]
 
-            last = int(gen_idx.split('_')[-1])
+            try:
+                last = int(gen_idx.split('_')[-1])
+            except:
+                last = gen_idx
             col_name = f"omega GENROU {last}"
             dt = df.index.to_series().diff().iloc[1] 
             copy_omega = deepcopy(df[col_name])
-            omega_filtered = low_pass_filter_series(copy_omega, dt=dt, cutoff_period_s=3.0)
+            if app.config['grid'] != 'kundur':
+                omega_filtered = low_pass_filter_series(copy_omega, dt=dt, cutoff_period_s=3.0)
+            else:
+                omega_filtered = low_pass_filter_series(copy_omega, dt=dt, cutoff_period_s=3.0)
+
+            omega_dot_fit = fit_omega_dot_as_exp_cosine(copy_omega[-40:])
+    
+            # Predict omega_dot using the model for the next 3 seconds
+            # Assuming omega_dot_fit is a function that returns the predicted values
+            # (as a lambda function or previously defined prediction function)
+            forecast_steps = int(3 / dt)  # Number of steps for the next 3 seconds based on dt
+            
+            # Generate prediction for the next 3 seconds
+            t_new = np.linspace(df.index[-1], df.index[-1] + 3, forecast_steps)  # Time vector for the next 3 seconds
+            omega_dot_forecast = omega_dot_fit(t_new)  # Using the omega_dot_fit function to get the forecasted omega_dot
+            
+            # Initialize point_wise_sum to zeros with the correct length
+            if i == 0:
+                d_M_omega_ts = np.zeros(forecast_steps)  # Initialize only once
+            # Point-wise sum: accumulate the predicted omega_dot at each time step
+
             omega = omega_filtered.iloc[-2:]
             times = df.index[-2:]
 
@@ -410,6 +478,7 @@ def delta_equivalent():
                 p_gen += system.GENROU.tm.v[i]
                 d_M_omega += system.GENROU.M.v[i]*d_omega_i*system.GENROU.u.v[i]
                 d_M_omega_alter += system.GENROU.omega.e[i]
+                d_M_omega_ts += system.GENROU.M.v[i]*omega_dot_forecast
                 d_omega += (d_omega_i)
         p_demand = 0
         for i, gen_idx in enumerate(system.PQ.idx.v):
@@ -426,6 +495,7 @@ def delta_equivalent():
         result['alter_losses'] = p_losses_alter
         result['d_M_omega'] = d_M_omega
         result['d_M_omega_alter'] = d_M_omega_alter
+        result['d_M_omega_ts'] = list(d_M_omega_ts)
         omega_filtered.plot()
         plt.xlabel("Time [s]")
         plt.ylabel("Filtered Omega")
@@ -442,6 +512,7 @@ def delta_equivalent():
             print(f"p_exchanged are {p_exchanged}")
             print(f"p_demand are {p_demand}")
             print(f"p_gen are {p_gen}")
+            print(f"d_M_omega_ts are {d_M_omega_ts}")
             print(f"losses are {p_losses}")
         return jsonify(result), 200
     except Exception as e:
@@ -1009,7 +1080,7 @@ def run_colmena_time():
             time.sleep(max(0,delta_t-(time.time()-start_time)))
             t_0 = time.time()
             current_row = {}
-            for i in range(10):
+            for i in range(system.GENROU.n):
                 col_name = f"omega GENROU {i+1}"
                 omega_value = system.GENROU.omega.v[i]  # direct access to omega variable
                 current_row[col_name] = omega_value
