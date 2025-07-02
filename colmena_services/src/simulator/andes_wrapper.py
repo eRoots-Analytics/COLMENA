@@ -5,6 +5,7 @@ Andes client API wrapper to simplfy calls.
 import requests
 
 from src.config.config import Config
+from andes import get_case
 
 class AndesWrapper:
     def __init__(self):
@@ -173,7 +174,6 @@ class AndesWrapper:
             response = requests.get(
                 f"{self.andes_url}/sync_time"
             )
-            time = response.json()["time"]
             return response.json()["time"]
         except Exception as e:
             print(f"[Get] Failed to get power transfer: {e}")

@@ -44,7 +44,7 @@ class Coordinator:
         Args:
             andes (AndesWrapper): Simulator interface for power system model.
         """
-        # Constants
+        # ConstantsTrue
         self.tstep =      Config.tstep
         self.tf =         Config.tf
         self.dt =         Config.dt
@@ -93,9 +93,12 @@ class Coordinator:
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
-        self.colmena = True
+        self.colmena = Config.colmena
         print("[Main] Coordinator initialized.")
 
+
+        if Config.agent:
+            return
         # Start simulation
         try:
             if self.colmena:

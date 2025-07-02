@@ -72,8 +72,7 @@ def load_simulation():
 @app.route('/sync_time', methods=['GET'])
 def sync_time():
     try:
-        t = tds.t
-        print(f't is {t}, { type(t)}')
+        t = system.dae.t
         return jsonify({"message": "Step executed successfully", "time": t}), 200
     except Exception as e:
         traceback.print_exc()

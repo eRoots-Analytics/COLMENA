@@ -44,4 +44,4 @@ class Config:
     tol = 1e-2
 
     fn = 60
-    colmena = False
+

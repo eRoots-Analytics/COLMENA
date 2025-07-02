@@ -1,0 +1,10 @@
+FROM pablodejuan/docker_ipopt_combined
+
+# Set the working directory to the home directory of the container
+WORKDIR /home
+
+# Set the PYTHONPATH environment variable
+ENV PYTHONPATH=/home/src:$PYTHONPATH
+
+# Copy the 'src' folder from the host machine into the container's home directory
+COPY src/ /home/src/

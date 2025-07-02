@@ -218,7 +218,6 @@ class Coordinator:
         self.t = 0.0
 
         print(f"[Init] Starting MPC loop at t = {self.t}, final time = {self.tf}")
-        success, new_time = self.andes.run_step()
 
         try:
             j = 0 # Counter for DMPC activation
@@ -267,15 +266,10 @@ class Coordinator:
 
                 # === Simulate system forward ===
                 sync_time = self.andes.get_dae_time()
-                if self.t < 2:
-                    success, new_time = self.andes.run_step()
-                    self.k += 1
-                    self.t += self.tstep
-                else:
-                    while sync_time == initial_time:
-                        sync_time = self.andes.get_dae_time()
-                        time.sleep(0.1)
-                        print('Sleeping')
+                while sync_time == initial_time and sync_time >4:
+                    time.sleep(0.01)
+                self.k += 1
+                self.t += self.tstep
 
             return True
         except Exception as e:

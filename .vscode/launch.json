@@ -7,6 +7,17 @@
       "request": "launch",
       "program": "${workspaceFolder}/scripts/main.py",
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Run Current File with Env Var",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "justMyCode": false,
+      "console": "integratedTerminal",
+      "env": {
+        "AGENT_ID": "area_1"
+      }
     }
   ]
 }
