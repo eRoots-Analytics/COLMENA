@@ -58,7 +58,7 @@ class ADMM:
 
         return False, self.coordinator.collect_role_changes()
 
-    def _solve_agent(self, agent, i):
+    def _solve_agent(self, agent, i, colmena = False):
         """
         Solve the local MPC problem for an agent at ADMM iteration i.
 
@@ -88,9 +88,10 @@ class ADMM:
         
         ########### FOR PLOTTING #############
         omega_coi_pred = [pyo.value(model.omega[k]) for k in model.TimeHorizon]
-        self.coordinator.omega_coi_prediction_log.append(
-            (self.coordinator.t, {str(agent.area): omega_coi_pred})
-        )
+        if not colmena:
+            self.coordinator.omega_coi_prediction_log.append(
+                (self.coordinator.t, {str(agent.area): omega_coi_pred})
+            )
         ######################################
 
         # 2. Save
@@ -121,12 +122,14 @@ class ADMM:
                     lambda_new = lambda_old + alpha * (theta_ii - theta_ij)
                     self.coordinator.dual_vars[key] = lambda_new
     
-    def _update_pyomo_params(self):
+    def _update_pyomo_params(self, agent_a = None):
         """
         Synchronize shared variables and duals in Pyomo models across agents.
         """
         vars_dict = self.coordinator.variables_horizon_values
         for agent in self.coordinator.agents.values():
+            if agent_a is not None:
+                agent = agent_a
             if agent.generators:
                 model = agent.model
                 area = agent.area

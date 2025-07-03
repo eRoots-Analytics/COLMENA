@@ -73,7 +73,6 @@ class AgentControl(Service):
         #@KPI('MPCControl/frequency[10s] < 0')
         @Context(class_ref = Global, name='all')
         @Context(class_ref = GridAreas, name='grid_areas')
-        @Context(class_ref = Global, name='all')
         @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
         @Dependencies(*["pyomo", "requests"])
         @Data(name = 'Data_1', scope = 'all/id = .')
@@ -87,7 +86,7 @@ class AgentControl(Service):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
             requests.post(self.andes_url + '/start_simulation')
-            self.n_areas = 2
+            self.n_areas = 6
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
@@ -100,8 +99,7 @@ class AgentControl(Service):
             self.agent = MPCAgent(self.area, andes)
             self.coordinator = Coordinator(andes)
             self.admm = ADMM(self.coordinator)
-            self.model = self.agent.setup_dmpc()
-            self.agent.model = copy.copy(self.model)
+            self.model = self.agent.setup_dmpc(self.coordinator)
             self.initialized_decorators = False
             self.online_step = 0
 
@@ -111,7 +109,9 @@ class AgentControl(Service):
             responseAndes = requests.get(self.andes_url + '/stop_simulation')
             self.error = 100
             self.iter = 0
-            self.agent.reset_starting_points()
+            self.agent.initialize_variables_values()
+            self.agent.first_warm_start()
+
             self.global_error.publish({'agent':1, 'error':self.error})
 
             if not self.initialized_decorators:
@@ -121,7 +121,7 @@ class AgentControl(Service):
 
             # Stop Flask logs
             time_start = time.time()
-            while self.error > self.agent.tol and self.iter < self.max_iter:
+            while self.error > self.admm.tol and self.iter < self.max_iter:
                 print(f'Iteration {self.iter}')
                 initial_state_horizon_jsonlike = self.data_read.get()
                 if self.agent.generators: 

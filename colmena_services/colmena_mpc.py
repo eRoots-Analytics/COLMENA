@@ -42,10 +42,16 @@ agents = [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_a'},
           {'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_d'}] 
 
 mpc_agents = True
+n_area = 6
 if mpc_agents:
     agents = [{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_1'},{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_2'}] 
 
-commands =  [zenoh_command, agent_command, agent_command, deploy_command]  
+agents = []
+if n_area >= 2:
+    for i in range(1, n_area+1):
+        agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}]
+        
+commands =  [zenoh_command] + [agent_command]*n_area + [deploy_command]  
 #commands = [build_command]
 #commands = [deploy_command]
 processes = []

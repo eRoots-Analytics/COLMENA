@@ -45,3 +45,4 @@ class Config:
 
     fn = 60
     colmena = False
+    agent = True

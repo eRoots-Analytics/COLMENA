@@ -87,10 +87,11 @@ class ADMM:
             raise RuntimeError(f"Agent {agent.area} MPC failure at iteration {i}.")
         
         ########### FOR PLOTTING #############
-        omega_coi_pred = [pyo.value(model.omega[k]) for k in model.TimeHorizon]
-        self.coordinator.omega_coi_prediction_log.append(
+        if not Config.colmena:
+            omega_coi_pred = [pyo.value(model.omega[k]) for k in model.TimeHorizon]
+            self.coordinator.omega_coi_prediction_log.append(
             (self.coordinator.t, {str(agent.area): omega_coi_pred})
-        )
+            )
         ######################################
 
         # 2. Save
@@ -121,12 +122,14 @@ class ADMM:
                     lambda_new = lambda_old + alpha * (theta_ii - theta_ij)
                     self.coordinator.dual_vars[key] = lambda_new
     
-    def _update_pyomo_params(self):
+    def _update_pyomo_params(self, agent_a = None):
         """
         Synchronize shared variables and duals in Pyomo models across agents.
         """
         vars_dict = self.coordinator.variables_horizon_values
         for agent in self.coordinator.agents.values():
+            if agent is not None:
+                agent = agent_a
             if agent.generators:
                 model = agent.model
                 area = agent.area
