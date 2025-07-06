@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 13:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 15:59
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -855,14 +855,14 @@ Overfull \hbox (0.72609pt too wide) in paragraph at lines 65--65
 
 {/usr/local/texlive/2024basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 
-[2{/usr/local/texlive/2024basic/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
-Overfull \hbox (4.59108pt too wide) in paragraph at lines 88--89
+[2]
+
+[3{/usr/local/texlive/2024basic/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
+Overfull \hbox (4.59108pt too wide) in paragraph at lines 92--93
 []\OT1/cmr/bx/n/10 Weather-related con-tin-gen-cies: \OT1/cmr/m/n/10 ex-treme weather events such as storms,
  []
 
 
-
-[3]
 
 [4]
 
@@ -870,66 +870,66 @@ Overfull \hbox (4.59108pt too wide) in paragraph at lines 88--89
 
 [6]
 
-[7] Excluding 'comment' comment.
+[7]
 
-[8]
+[8] Excluding 'comment' comment.
 
 [9]
 
 [10]
 
 [11]
-Underfull \hbox (badness 1715) in paragraph at lines 377--377
+
+[12]
+Underfull \hbox (badness 1715) in paragraph at lines 381--381
 []\OT1/cmr/bx/n/10 Activation Con-
  []
 
 
-Underfull \hbox (badness 6927) in paragraph at lines 381--381
+Underfull \hbox (badness 6927) in paragraph at lines 385--385
 []\OT1/cmr/bx/n/10 Agent Re-quire-
  []
 
 
-Underfull \hbox (badness 4518) in paragraph at lines 385--385
+Underfull \hbox (badness 4518) in paragraph at lines 389--389
 []\OT1/cmr/bx/n/10 Key De-pen-den-
  []
 
 
-Underfull \hbox (badness 1983) in paragraph at lines 385--386
+Underfull \hbox (badness 1983) in paragraph at lines 389--390
 []\OT1/cmr/m/n/10 Access to lo-cal state mea-sure-ments (fre-quency,
  []
 
 
-
-[12]
 
 [13]
 
 [14]
 
 [15]
-<figures/ieee2areas.png, id=72, 675.52374pt x 578.16pt>
+
+[16]
+<figures/ieee2areas.png, id=75, 675.52374pt x 578.16pt>
 File: figures/ieee2areas.png Graphic file (type png)
 <use figures/ieee2areas.png>
-Package pdftex.def Info: figures/ieee2areas.png  used on input line 458.
+Package pdftex.def Info: figures/ieee2areas.png  used on input line 462.
 (pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
 
 
-[16 <./figures/ieee2areas.png>]
-<figures/mpc_load.png, id=78, 951.555pt x 593.21625pt>
+[17 <./figures/ieee2areas.png>]
+<figures/mpc_load.png, id=81, 951.555pt x 593.21625pt>
 File: figures/mpc_load.png Graphic file (type png)
 <use figures/mpc_load.png>
-Package pdftex.def Info: figures/mpc_load.png  used on input line 480.
+Package pdftex.def Info: figures/mpc_load.png  used on input line 484.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
-<figures/non_mpc_load.png, id=79, 951.555pt x 593.21625pt>
+<figures/non_mpc_load.png, id=82, 951.555pt x 593.21625pt>
 File: figures/non_mpc_load.png Graphic file (type png)
 <use figures/non_mpc_load.png>
-Package pdftex.def Info: figures/non_mpc_load.png  used on input line 487.
+Package pdftex.def Info: figures/non_mpc_load.png  used on input line 491.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
 
 
-[17 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
-
-[18]
+[18 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
 
 [19]
 
@@ -946,41 +946,52 @@ Package pdftex.def Info: figures/non_mpc_load.png  used on input line 487.
 [25]
 
 [26]
-Overfull \hbox (5.23892pt too wide) in paragraph at lines 685--685
+
+[27]
+
+[28
+
+]
+Overfull \hbox (5.23892pt too wide) in paragraph at lines 689--689
 \OT1/cmr/m/n/10 vices pro-vi-sion,'' \OT1/cmr/m/it/10 IEEE Trans-ac-tions on Smart Grid\OT1/cmr/m/n/10 , vol. 10, no. 4, pp. 3551{
  []
 
 
 
-[27
-
-]
-
-[28]
-runsystem(latexminted cleantemp  --timestamp 20250706135345 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
+[29]
+runsystem(latexminted cleantemp  --timestamp 20250706155937 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
 
  (./main.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 1
 L3 programming layer <2024-12-09>
  ***********
+
+
+LaTeX Warning: There were undefined references.
+
+
+Package biblatex Warning: Please (re)run Biber on the file:
+(biblatex)                main
+(biblatex)                and rerun LaTeX afterwards.
+
 Package logreq Info: Writing requests to 'main.run.xml'.
 \openout1 = `main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 45907 strings out of 473243
- 1120560 string characters out of 5714659
- 2266406 words of memory out of 5000000
- 68637 multiletter control sequences out of 15000+600000
+ 45910 strings out of 473243
+ 1120728 string characters out of 5714659
+ 2266487 words of memory out of 5000000
+ 68640 multiletter control sequences out of 15000+600000
  568627 words of font info for 77 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,15n,93p,1076b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 85i,15n,93p,1076b,1760s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on main.pdf (28 pages, 518616 bytes).
+Output written on main.pdf (29 pages, 520473 bytes).
 PDF statistics:
- 206 PDF objects out of 1000 (max. 8388607)
- 128 compressed objects within 2 object streams
+ 209 PDF objects out of 1000 (max. 8388607)
+ 130 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  28 words of extra memory for PDF output out of 10000 (max. 10000000)
 

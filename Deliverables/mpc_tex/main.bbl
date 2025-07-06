@@ -19,6 +19,52 @@
 
 \refsection{0}
   \datalist[entry]{none/global//global/global/global}
+    \entry{venkat2008distributed}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=5e0da902e080fc32b3154b5058adef19}{%
+           family={Venkat},
+           familyi={V\bibinitperiod},
+           given={Aswin\bibnamedelima N},
+           giveni={A\bibinitperiod\bibinitdelim N\bibinitperiod}}}%
+        {{hash=e1874de77d978f995679386022d4a872}{%
+           family={Hiskens},
+           familyi={H\bibinitperiod},
+           given={Ian\bibnamedelima A},
+           giveni={I\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=a28ab6b1da316879310a82410e4e8dc4}{%
+           family={Rawlings},
+           familyi={R\bibinitperiod},
+           given={James\bibnamedelima B},
+           giveni={J\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=c49efb16d3fa7eef002cc3620d42ab8a}{%
+           family={Wright},
+           familyi={W\bibinitperiod},
+           given={Stephen\bibnamedelima J},
+           giveni={S\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{d6047bc33b179acec49429de43491dd2}
+      \strng{fullhash}{fedfadb9e6dea3d1caaa089fd6abf832}
+      \strng{fullhashraw}{fedfadb9e6dea3d1caaa089fd6abf832}
+      \strng{bibnamehash}{fedfadb9e6dea3d1caaa089fd6abf832}
+      \strng{authorbibnamehash}{fedfadb9e6dea3d1caaa089fd6abf832}
+      \strng{authornamehash}{d6047bc33b179acec49429de43491dd2}
+      \strng{authorfullhash}{fedfadb9e6dea3d1caaa089fd6abf832}
+      \strng{authorfullhashraw}{fedfadb9e6dea3d1caaa089fd6abf832}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE transactions on control systems technology}
+      \field{number}{6}
+      \field{title}{Distributed MPC strategies with application to power system automatic generation control}
+      \field{volume}{16}
+      \field{year}{2008}
+      \field{pages}{1192\bibrangedash 1206}
+      \range{pages}{15}
+    \endentry
     \entry{grids:ieee39}{article}{}{}
       \name{author}{3}{}{%
         {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
@@ -48,8 +94,8 @@
       \strng{authornamehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
       \strng{authorfullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
       \strng{authorfullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
@@ -78,8 +124,8 @@
       \strng{authornamehash}{5d27cf8d29d611361cbbe77674e69c3c}
       \strng{authorfullhash}{5d27cf8d29d611361cbbe77674e69c3c}
       \strng{authorfullhashraw}{5d27cf8d29d611361cbbe77674e69c3c}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Contingency analysis in power system}
@@ -120,8 +166,8 @@
       \strng{authornamehash}{c74a4341658a77cabcd5e2dbb43969ae}
       \strng{authorfullhash}{f9b48d476931761759afd4f1fb3a6d59}
       \strng{authorfullhashraw}{f9b48d476931761759afd4f1fb3a6d59}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Electric Power Systems Research}
@@ -160,8 +206,8 @@
       \strng{authornamehash}{82d85051b6259e47d1d5fdb0ffa1742b}
       \strng{authorfullhash}{961d65f00b317556f2697cdbca6bf9df}
       \strng{authorfullhashraw}{961d65f00b317556f2697cdbca6bf9df}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Archives of Electrical Engineering}
@@ -214,8 +260,8 @@
       \strng{authornamehash}{f18ef2b7e3bb11ec0b22bbedb590da15}
       \strng{authorfullhash}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
       \strng{authorfullhashraw}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Power Systems}
@@ -250,8 +296,8 @@
       \strng{authornamehash}{bbc6cf0822a4be68595be58f8ab01d65}
       \strng{authorfullhash}{bbc6cf0822a4be68595be58f8ab01d65}
       \strng{authorfullhashraw}{bbc6cf0822a4be68595be58f8ab01d65}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Weather-related power outages and electric system resiliency}
@@ -286,8 +332,8 @@
       \strng{authornamehash}{7c4389d133edda253b070b7bd1eebb72}
       \strng{authorfullhash}{1290a76819d8fc99bdb0d10bbe0ffa54}
       \strng{authorfullhashraw}{1290a76819d8fc99bdb0d10bbe0ffa54}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Power and Energy Magazine}
@@ -314,8 +360,8 @@
       \strng{authornamehash}{39882366f85507fce005c512ac3b2240}
       \strng{authorfullhash}{39882366f85507fce005c512ac3b2240}
       \strng{authorfullhashraw}{39882366f85507fce005c512ac3b2240}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Power system stability and control}
@@ -365,8 +411,8 @@
       \strng{authornamehash}{60ec9bf707fa51b002fec03e755dd98d}
       \strng{authorfullhash}{0ed62155139f29aa99cdd8d945a2291b}
       \strng{authorfullhashraw}{0ed62155139f29aa99cdd8d945a2291b}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Foundations and Trends in Machine Learning}
@@ -619,8 +665,8 @@
       \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
       \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
       \field{extraname}{1}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/}}
