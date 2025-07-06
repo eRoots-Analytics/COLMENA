@@ -318,9 +318,13 @@
       \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
-      \field{journaltitle}{McGraw-Hill}
-      \field{title}{Power system stability and control}
-      \field{year}{1994}
+      \field{journaltitle}{Power system stability and control}
+      \field{number}{1}
+      \field{title}{Power system stability}
+      \field{volume}{10}
+      \field{year}{2007}
+      \field{pages}{7\bibrangedash 1}
+      \range{pages}{-5}
     \endentry
     \entry{ADMM:boyd}{article}{}{}
       \name{author}{5}{}{%
@@ -504,6 +508,61 @@
       \field{note}{Accessed: 2025-06-03}
       \field{title}{COLMENA: Decentralized Control Framework for Power Grids}
       \field{year}{2024}
+    \endentry
+    \entry{ADMM:edu}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=124ddd1cc7f716c826ff83f180e929cf}{%
+           family={Olivella-Rosell},
+           familyi={O\bibinithyphendelim R\bibinitperiod},
+           given={Pol},
+           giveni={P\bibinitperiod}}}%
+        {{hash=080acd36ffe1e81fe04d5561799b103f}{%
+           family={Rullan},
+           familyi={R\bibinitperiod},
+           given={Francesc},
+           giveni={F\bibinitperiod}}}%
+        {{hash=644feda73856b712535a04dee4fb0e5b}{%
+           family={Lloret-Gallego},
+           familyi={L\bibinithyphendelim G\bibinitperiod},
+           given={Pau},
+           giveni={P\bibinitperiod}}}%
+        {{hash=dd60251b6213da382edf3daf634a0ce9}{%
+           family={Prieto-Araujo},
+           familyi={P\bibinithyphendelim A\bibinitperiod},
+           given={Eduardo},
+           giveni={E\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{b03e432d6578a529bc9a2f4dd37be4c2}
+      \strng{fullhash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{fullhashraw}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{bibnamehash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{authorbibnamehash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{authornamehash}{b03e432d6578a529bc9a2f4dd37be4c2}
+      \strng{authorfullhash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{authorfullhashraw}{095a0c11911ed7f28bf33dac694012c6}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Smart Grid}
+      \field{number}{4}
+      \field{title}{Centralised and Distributed Optimization for Aggregated Flexibility Services Provision}
+      \field{volume}{10}
+      \field{year}{2019}
+      \field{pages}{3551\bibrangedash 3565}
+      \range{pages}{15}
+      \verb{doi}
+      \verb 10.1109/TSG.2018.2827684
+      \endverb
+      \verb{urlraw}
+      \verb https://ieeexplore.ieee.org/document/8359283
+      \endverb
+      \verb{url}
+      \verb https://ieeexplore.ieee.org/document/8359283
+      \endverb
     \endentry
     \entry{grids:kundur}{article}{}{}
       \name{author}{1}{}{%

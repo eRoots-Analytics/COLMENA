@@ -176,14 +176,19 @@ To test the system's adaptability, we consider scenarios involving the connectio
 In the proposed framework, each electrical area is represented using two states values:
 \begin{itemize}
     \item \textbf{Frequency} $f_i(t)$: the local frequency of area $i$, which reflects the balance between generation and consumption.
-    \item \textbf{Phase Angle} $\delta_i(t)$: the relative voltage phase angle of area $i$ with respect to the reference area, governing power exchanges with neighboring areas.
+    \item \textbf{Phase angle} $\delta_i(t)$: the relative voltage phase angle of area $i$ with respect to the reference area, governing power exchanges with neighboring areas.
 \end{itemize}
 This abstraction treats each area as a coherent group of generators and loads that tend to oscillate together in response to disturbances. It enables scalable distributed control by reducing the system's dimensionality.
 
 The frequency evolution in each area is governed by a version of the swing equation:
-\begin{equation}
-    M_i \frac{df_i(t)}{dt} = -D_i(f_i(t) - f_0) + \sum_{k \in \text{Area}_i} P^{\text{gen}_k}_{t} - \sum_{j \in \mathcal{N}_i} P^{i,j}_t - P^{\text{demand}}_i(t)
-\end{equation}
+\begin{align}
+    f_{i,t+1} =\ & f_{i,t} + \frac{\Delta t}{M_i} \Big[ -D_i(f_{i,t} - f_0) 
+    + \sum_{k \in \mathcal{G}_i} P^{\text{gen}_k}_t 
+    - P^{\text{demand}}_{i,t} \notag \\
+    &\qquad\qquad\qquad\qquad
+    + \sum_{j \in \mathcal{N}_i} B_{j,i}(\delta_{j,t} - \delta_{i,t}) \Big] \\
+    =:\ & f_{i,t}(x_t)
+\end{align}
 where:
 \begin{itemize}
     \item $M_i$ is the aggregated inertia of area $i$,
@@ -206,7 +211,7 @@ In this formulation, we use the DC power flow approximation to model the active 
     \item Angle differences between buses are small enough that $\sin(\delta_i - \delta_j) \approx \delta_i - \delta_j$.
     \item Line resistance is negligible compared to reactance, so power losses are ignored.
 \end{itemize}
-Under these assumptions, the active power flow from area $i$ to area $j$ can be approximated by, this shows that active power flows are driven by angle differences and line susceptance $B_{i,j}$.:
+Under these assumptions, the active power flow from area $i$ to area $j$ can be approximated by the following. This shows that active power flows are driven by angle differences and line susceptance $B_{i,j}$.:
 \begin{equation}
     P^{i,j}_t = B_{i,j}(\delta_i(t) - \delta_j(t))
 \end{equation}
@@ -216,7 +221,7 @@ where $B_{i,j}$ represents the total susceptance between the two areas. This is 
 \end{equation}
 This aggregation allows us to ignore the specific topologies of the areas during inter-area coordination, while still capturing the essential physics of power exchange via angle differences. It also reduces computational complexity, which is critical for scalable distributed optimisation.
 
-\subsection{Grid Controls}
+\subsection{Grid controls}
 We build a multi-agent system where each agent is responsible for the control of a defined electrical area. Each area comprises several buses, generators, and loads, and interacts with other areas through lines. The objective of the agent is to maintain frequency stability by coordinating with neighboring agents through the sharing of information. 
 
 Each agent is equipped with the capability to perform multiple control functions within its domain, depending on the system design and available actuators. These actions may include:
@@ -227,7 +232,7 @@ Each agent is equipped with the capability to perform multiple control functions
     \item \textbf{Reactive power or voltage support}: engaging voltage control mechanisms to assist in voltage regulation, if needed.
 \end{itemize}
 
-In the broader COLMENA framework, agents could also be capable of activating other roles local roles, provided that the dynamics and interactions of those roles are explicitly defined and known by the agent.
+In the broader COLMENA framework, agents could also be capable of activating other local roles, provided that the dynamics and interactions of those roles are explicitly defined and known by the agent.
 
 In this first implementation, we focus on a simplified setting where each agent directly controls the ramp of generator power outputs within its area. Specifically, the control vector \( u_i \) for agent \( i \) is defined as the difference in power output between two consecutive time steps:
 \begin{equation}
@@ -255,42 +260,54 @@ At every time step, MPC performs the following steps:
 \end{enumerate}
 \end{comment}
 
-\subsection{Centralized Global Problem}
+\subsection{Centralized global problem}
 
 In a distributed formulation of a power system, each area $i$ tracks its own frequency $f_{i,t}$. Although control inputs are applied locally, the physical coupling between areas means that the frequency of area $i$ is influenced by the overall system state, including the states of neighboring areas.
 
 In this formulation, we express the local frequency $f_{i,t}$ as a function of the full system state vector at time $t$, denoted $x_t = \{ \delta_{j,t}, f_{j,t} \}_{j=1}^{N}$.
 
-\textbf{State Variables:}
+\textbf{State variables:}
 \begin{itemize}
     \item $x_t$: The global state vector at time $t$, including:
     \begin{itemize}
-        \item $\delta_{j,t}$: Voltage angle of area $j$
-        \item $f_{j,t}$: Frequency of area $j$
+        \item $\delta_{j,t}$: voltage angle of area $j$
+        \item $f_{j,t}$: frequency of area $j$
     \end{itemize}
 \end{itemize}
 
-\textbf{Local Frequency Dynamics:}
+\textbf{Local frequency dynamics:}
 
 The frequency update in area $i$ can now be written as:
 \begin{equation}
     f_{i,t+1} = f_{i,t}(x_t)
 \end{equation}
 
+% More explicitly, using the physical model:
+% \begin{align}
+%     f_{i,t+1} &= f_{i,t} + \frac{\Delta t}{M_i} \Big[ -D_i(f_{i,t} - f_0) + \sum_{k \in \mathcal{G}_i} P^{\text{gen}_k}_t - P^{\text{demand}}_{i,t} + \sum_{j \in \mathcal{N}_i} B_{j,i}(\delta_{j,t} - \delta_{i,t}) \Big] \\
+%     &=: f_{i,t}(x_t)
+% \end{align}
+
 More explicitly, using the physical model:
 \begin{align}
-    f_{i,t+1} &= f_{i,t} + \frac{\Delta t}{M_i} \Big[ -D_i(f_{i,t} - f_0) + \sum_{k \in \mathcal{G}_i} P^{\text{gen}_k}_t - P^{\text{demand}}_{i,t} + \sum_{j \in \mathcal{N}_i} B_{j,i}(\delta_{j,t} - \delta_{i,t}) \Big] \\
-    &=: f_{i,t}(x_t)
+    f_{i,t+1} =\ & f_{i,t} + \frac{\Delta t}{M_i} \Big[ -D_i(f_{i,t} - f_0) 
+    + \sum_{k \in \mathcal{G}_i} P^{\text{gen}_k}_t 
+    - P^{\text{demand}}_{i,t} \notag \\
+    &\qquad\qquad\qquad\qquad
+    + \sum_{j \in \mathcal{N}_i} B_{j,i}(\delta_{j,t} - \delta_{i,t}) \Big] \\
+    =:\ & f_{i,t}(x_t)
 \end{align}
 
 This shows that $f_{i,t+1}$ depends not only on $f_{i,t}$ and $\delta_{i,t}$ (local state), but also on $\delta_{j,t}$ for $j \in \mathcal{N}_i$ (neighboring states). Hence, local frequency regulation depends on the evolution of the entire system state.
 
-\textbf{Angle Dynamics:}
+\textbf{Angle dynamics:}
+
+In the discretized time formulation that is adopted, the angle dynamics is given by:
 \begin{equation}
     \delta_{i,t+1} = \delta_{i,t} + 2\pi \Delta t (f_{i,t} - f_0)
 \end{equation}
 
-\textbf{Global Optimization Problem:}
+\textbf{Global optimization problem:}
 
 The global frequency control is equivalent to the following optimal control problem:
 \begin{equation}
@@ -306,162 +323,22 @@ Subject to:
 \end{align}
 
 Where we have $u_{i,t} \in \mathbb{R}^{N \times T}$ the set of control variables. From these formulations we introduce the local state for area i, $x_{i,t}$. The variable is defined as the set of local state variables of area $i$ and the state variables of the neighboring areas.
-\[
+\begin{equation}
 x_{i,t} = \left( \delta_{i,t},\ f_{i,t},\ \{ \delta_{j,t} \}_{j \in \mathcal{N}_i} \right)
-\] 
-
+\end{equation}
 With this we can redefine the global problem as follows:
-
 \begin{align}
 \min_{\{u_{i,t}\}} \quad & \sum_{i=1}^{N} \sum_{t=0}^{T} \left( f_{i,t}(x_{i,t}) - f_0 \right)^2 \label{eq:decentralized_obj} \\
 \text{s.t.} \quad & x_{i,t} = x_{j,t}, \quad \forall (i,j) \text{ areas s.t. } B_{i,j} \neq 0,\ \forall t \label{eq:coupling_constraint}
 \end{align}
-
 In this formulation, the objective function itself is unchanged only the dependencies of the frequency values $f_{i,t}$ changes to a function of the local state $x_{i,t}$. The key modeling change introduced here is the inclusion of a coupling constraint of the form $x_{i,t} = x_{j,t}$ for all connected pairs of areas $(i,j)$ and time $t$. Given that $f_{i,t}$ directly depends on $\delta_{j,t}$ this can be simplified to the following set of coupled constraints, where $\delta_{j, i, t}$ is the value of the area's $i$ angle seen in the area's $j$ subproblem:
-
 \begin{equation}
     \delta_{i, i, t} = \delta_{j, i, t} \quad \forall t, i \quad \forall j \in \mathcal{N}_i
 \end{equation}
-
 This constraint enforces that the local copies of shared state variables maintained by each agent (e.g., voltage angles or neighboring states) must agree with those of their neighbors. Although each agent $i$ solves its problem using its local state $x_{i,t}$, coordination is required so that all local views converge to a common global state.
 
-This structure enables the use of distributed optimization techniques, such as the Alternating Direction Method of Multipliers (ADMM), where each agent optimizes independently and the consistency across agents is enforced iteratively through dual variables and auxiliary updates \cite{ADMM:boyd}. The use of ADMM to solve a frequency control problem is inspired by \cite{paper:DMPC} and \cite{paper:marco}.
+This structure enables the use of distributed optimization techniques, such as the Alternating Direction Method of Multipliers (ADMM), where each agent optimizes independently and the consistency across agents is enforced iteratively through dual variables and auxiliary updates \cite{ADMM:boyd}. The use of ADMM to solve a frequency control problem is inspired by \cite{paper:DMPC} and \cite{paper:marco}. Readers are invited to check its mathematical development in the Appendix. 
 
-\subsection{Distributed MPC via ADMM}
-
-In order to enforce consistency across areas while allowing decentralized computation, we adopt the Alternating Direction Method of Multipliers (ADMM) to solve the distributed MPC problem. At each iteration, each agent $i$ solves a local optimal control problem over its prediction horizon. This problem incorporates local dynamics and objectives, along with augmented terms that enforce consensus on shared variables (e.g., voltage angles) with neighboring agents.
-
-The augmented Lagrangian $\mathcal{L}_i$ for agent $i$ combines the local objective with terms enforcing agreement on shared voltage angle variables $\delta_{i,t}$ with its neighbors. Here $\hat{\delta}_{i,j,t}$ is the copy of the variable $\delta{j,t}$ seen from the agent in area $i$. The dual variables $\lambda_{i,j,t}$ and $\lambda_{j,i,t}$ enforce the consensus constraints between agent $i$ and neighbor $j$. The penalty term weighted by $\rho$ further encourages agreement across shared variables through a quadratic penalty.
- 
-\begin{align}
-    \mathcal{L}_i = \sum_{t=0}^{T} (f_{i,t} - f_0)^2 &+ \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ \lambda_{i,j,t} (\delta_{i,t} - \hat{\delta}_{j,i,t}) + \lambda_{j,i,t} (\delta_{j,t} - \hat{\delta}_{i,j,t}) \right] \nonumber \\
-    &+ \frac{\rho}{2} \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ (\delta_{i,t} - \hat{\delta}_{j,i,t})^2 + (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \right]
-\end{align}
-
-With this we can define a local subproblem for agent $i$. At each iteration of the ADMM algorithm agent i will solve minimizes the augmented Lagrangian with respect to its own local decision variable $\{u_{i,t}\}$ over the prediction horizon. The subproblem has the following expression:
-
-\begin{align}
-    \min_{\{u_{i,t}\}} \quad & \sum_{t=0}^{T} (f_{i,t} - f_0)^2 \nonumber \\
-    &+ \sum_{j \in \mathcal{N}_i} \left[ \lambda_{j,i,t}(\delta_{j,t} - \hat{\delta}_{i,j,t})  + \lambda_{j,i,t}(\hat{\delta_{j,t}} - \hat{\delta}_{i, j, t}) \cdot  \right] \nonumber \\
-    &+ \frac{\rho}{2} \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ (\delta_{i,t} - \hat{\delta}_{j,i,t})^2 + (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \right]
-\end{align}
-
-\textbf{Subject to the following local constraints:}
-\begin{align}
-    u^{\min}_k \leq P^{\text{gen}_k}_{t+1} - P^{\text{gen}_k}_t \leq u^{\max}_k \quad &\forall k \in \mathcal{G}_i,\ \forall t \\
-    P^{\text{gen}_k}_{\min} \leq P^{\text{gen}_k}_t \leq P^{\text{gen}_k}_{\max} \quad &\forall k \in \mathcal{G}_i,\ \forall t
-\end{align}
-
-\textbf{Interpretation:}
-\begin{itemize}
-    \item The first term penalizes local frequency deviation over the prediction horizon.
-    \item The second term introduces dual variables $\lambda_{i,j,t}$ and $\lambda_{j,i,t}$ that enforce agreement between shared voltage angle variables $\delta_{i,t}$ and $\delta_{j,t}$ across neighboring agents.
-    \item $\hat{\delta}_{j,i,t}$ is the angle value received from neighbor $j$ during the previous iteration.
-    \item The last term is a quadratic penalty that reinforces consensus via the parameter $\rho$.
-\end{itemize}
-
-\subsection{Local Problem Modifications}
-
-\paragraph{A. Damping Term} 
-We add an additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. The use of this term is heavily influenced by \cite{ADMM:edu}.
-\[
- \frac{\beta}{2} \|\delta_{i,t} - \delta_{i,t}^{k-1}\|^2 \quad \forall i,t
-\]
-where $\delta_{i,t}$ is the area's decision variable for the angle and  $\delta_{i,t}^{k-1}$ is its value in the previous iteration, and \( \beta > 0 \) is a damping coefficient. This modification biases the optimizer towards solutions close to the prior iteration, it stabilizes convergence and avoids oscillations in the horizon state.
-
-\paragraph{B. Adaptable \(\rho\)} 
-
-
-Instead of using a fixed penalty parameter \( \rho \), we adjust it based on the ratio of primal and dual residuals. This helps balance the convergence of both residuals and improves performance across different problem scales\cite{ADMM:boyd}. The update rule is:
-\[
-\rho^{k+1} := 
-\begin{cases}
-\tau \rho^k & \text{if } \|r^k\| > \mu \|s^k\| \\
-\rho^k / \tau & \text{if } \|s^k\| > \mu \|r^k\| \\
-\rho^k & \text{otherwise}
-\end{cases}
-\]
-Here, \( r^k \) and \( s^k \) are the primal and dual residuals respectively, and \( \tau > 1 \), \( \mu > 5 \) are tuning parameters. The residuals in iteration $k$ are defined as follows:
-
-\[
-r_{j,i}^k := \delta{j,i}^k - \delta_j^k
-\]
-
-\[
-s_{j,i}^k := \rho \left( \delta_j^k - \delta_j^{k-1} \right)
-\]
-
-\paragraph{C. Cost Function Scaling} 
-In practice, the magnitudes of the objective terms across agents can differ significantly. Specially, when dealing with the frequency in per unit the cost function can be of the order of $10^{-6}$. This means that if the cost function is not properly scaled the penalty and lagrangian term override the capcity of the solver to converge. This results on reaching consensus easier but with suboptimal horizons. Thats we redefine the frequency cost as follows. In the simulation we use $\gamma = 10^9$.
-
-\begin{equation}
-    \gamma ||f_{i,t} - f_{nom}||_2^2
-\end{equation}
-
-This subproblem defines the core of the distributed MPC framework under ADMM. Each agent optimizes locally, exchanges information with its neighbors, and updates its variables based on the augmented Lagrangian terms, gradually driving the overall system toward a consensus-based optimal trajectory.
-
-\paragraph{D.Smoothing and Terminal cost} 
-
-Additionally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
-
-\begin{equation}
-    \alpha_1 \sum_{0 \leq t < T}(f_{i,t+1} - f_{i,t})^2 
-\end{equation}
-
-And a Terminal cost term that we define as follows:
-
-\begin{equation}
-    \alpha_2 (f_{i,T} - f_{nom})^2 
-\end{equation}
-
-Overall, these additions help us find a more suitable solution of the frequency's trajectory rather than just minimizing for the cost.
-
-\paragraph{E.Redundant coupled constraints} 
-
-Finally, we add additional coupled constraint to the local MPC formulation. This new constraint do not change the model mathematically but significantly improve convergence speed. The existing formulation can pose problems since it achieves consensus in the states that are further in the horizon and can lock the problem into a suboptimal path. The new coupled constraint intent to achieve consensus between the agents also in the dynamics. They are the following in 
-
-\begin{align}
-    P_{\text{seen from area i}}^{\text{exchanged from i to j}} + P_{\text{seen from area j}}^{\text{exchanged from j to i}} &= 0 \\
-    \omega_{i,i,t} &= \omega_{j,i,t}
-\end{align}
-
-We can also write this equations in terms of $\delta_{j,i,t}$. With this addition we also need to modify the local MPC with new terms. 
-
-\subsection{ADMM Algorithm}
-
-\begin{algorithm}[H]
-\caption{Distributed MPC via ADMM}
-\begin{algorithmic}[1]
-    \State Initialize states $x \gets x_0$ by getting the grid's actual state.
-    \While{consensus error $> \epsilon$}
-        \For{each agent $i$}
-            \State Receive $\hat{\delta}_{j,i,t}$ from neighbors $j \in \mathcal{N}_i$ the copies of the shared values in the neighboring agents.
-            \State Solve local MPC with updated dual and penalty terms.
-            \State Send $\delta^*_{i,j,t}$ to agent's $i$ neighbors. 
-        \EndFor
-        \For{each pair $(i,j)$}
-            \State Update dual variables:
-            \[
-                \lambda_{i,j,t} \gets \lambda_{i,j,t} + \rho (\delta_{j,j,t} - \hat{\delta}_{i,j,t})
-            \]
-        \EndFor
-    \EndWhile
-\end{algorithmic}
-\end{algorithm}
-
-This distributed MPC approach converges to the centralized solution while allowing each agent to optimize its control strategy independently and in parallel. The dual variables ensure consensus across shared variables, and ADMM iterations enforce global coordination. 
-
-In the prototype we aim to implement an online implementation of this ADMM by solving the ADMM algorithm iteratively. In practice this means that each area solves its local optimization problem over a finite horizon and exchanges boundary variables  with neighboring areas. Once there is convergence, only the first control action of the optimal sequence is applied to the physical system. This includes updating the setpoints of generators for the next time step. The following algorithm illustrates how each generator applies the control update by computing the power ramp to be executed in the current time step:
-
-\begin{algorithm}
-\caption{Online Setpoint Update using ADMM}
-\begin{algorithmic}
-    \For{each generator $k$}
-        \State Apply control ramp: $u_k(t) = P^{\text{gen}_k}_{t+1} - P^{\text{gen}_k}_t$.
-        \State Send updated setpoint $P^{\text{gen}_k}_{t+1}$ to the generator's governor.
-    \EndFor
-\end{algorithmic}
-\end{algorithm}
 
 \newpage
 \section{MPC Role Definition}
@@ -625,7 +502,146 @@ The results from the simulations validate that deploying frequency control using
 
 The next steps in the development of the COLMENA framework will focus on scaling the system to handle larger and more complex grid structures. This will involve conducting tests in grids with additional areas to assess the scalability of the Distributed MPC controller. Additionally, we will evaluate the framework's performance by validating COLMENA's capabilities in terms of speed and accuracy, ensuring that it can handle the increased computational demands of larger grids while maintaining the desired control precision. These tests will help to refine the system's robustness and efficiency in real-world applications.
 
+\appendix
 \newpage
+\section{Distributed MPC via ADMM}
+
+In order to enforce consistency across areas while allowing decentralized computation, we adopt the Alternating Direction Method of Multipliers (ADMM) to solve the distributed MPC problem. At each iteration, each agent $i$ solves a local optimal control problem over its prediction horizon. This problem incorporates local dynamics and objectives, along with augmented terms that enforce consensus on shared variables (e.g., voltage angles) with neighboring agents.
+
+The augmented Lagrangian $\mathcal{L}_i$ for agent $i$ combines the local objective with terms enforcing agreement on shared voltage angle variables $\delta_{i,t}$ with its neighbors. Here $\hat{\delta}_{i,j,t}$ is the copy of the variable $\delta{j,t}$ seen from the agent in area $i$. The dual variables $\lambda_{i,j,t}$ and $\lambda_{j,i,t}$ enforce the consensus constraints between agent $i$ and neighbor $j$. The penalty term weighted by $\rho$ further encourages agreement across shared variables through a quadratic penalty.
+ 
+\begin{align}
+    \mathcal{L}_i = \sum_{t=0}^{T} (f_{i,t} - f_0)^2 &+ \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ \lambda_{i,j,t} (\delta_{i,t} - \hat{\delta}_{j,i,t}) + \lambda_{j,i,t} (\delta_{j,t} - \hat{\delta}_{i,j,t}) \right] \nonumber \\
+    &+ \frac{\rho}{2} \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ (\delta_{i,t} - \hat{\delta}_{j,i,t})^2 + (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \right]
+\end{align}
+
+With this we can define a local subproblem for agent $i$. At each iteration of the ADMM algorithm agent i will solve minimizes the augmented Lagrangian with respect to its own local decision variable $\{u_{i,t}\}$ over the prediction horizon. The subproblem has the following expression:
+
+\begin{align}
+    \min_{\{u_{i,t}\}} \quad & \sum_{t=0}^{T} (f_{i,t} - f_0)^2 \nonumber \\
+    &+ \sum_{j \in \mathcal{N}_i} \left[ \lambda_{j,i,t}(\delta_{j,t} - \hat{\delta}_{i,j,t})  + \lambda_{j,i,t}(\hat{\delta_{j,t}} - \hat{\delta}_{i, j, t}) \cdot  \right] \nonumber \\
+    &+ \frac{\rho}{2} \sum_{j \in \mathcal{N}_i} \sum_{t=0}^T \left[ (\delta_{i,t} - \hat{\delta}_{j,i,t})^2 + (\delta_{j,t} - \hat{\delta}_{i,j,t})^2 \right]
+\end{align}
+
+\textbf{Subject to the following local constraints:}
+\begin{align}
+    u^{\min}_k \leq P^{\text{gen}_k}_{t+1} - P^{\text{gen}_k}_t \leq u^{\max}_k \quad &\forall k \in \mathcal{G}_i,\ \forall t \\
+    P^{\text{gen}_k}_{\min} \leq P^{\text{gen}_k}_t \leq P^{\text{gen}_k}_{\max} \quad &\forall k \in \mathcal{G}_i,\ \forall t
+\end{align}
+
+\textbf{Interpretation:}
+\begin{itemize}
+    \item The first term penalizes local frequency deviation over the prediction horizon.
+    \item The second term introduces dual variables $\lambda_{i,j,t}$ and $\lambda_{j,i,t}$ that enforce agreement between shared voltage angle variables $\delta_{i,t}$ and $\delta_{j,t}$ across neighboring agents.
+    \item $\hat{\delta}_{j,i,t}$ is the angle value received from neighbor $j$ during the previous iteration.
+    \item The last term is a quadratic penalty that reinforces consensus via the parameter $\rho$.
+\end{itemize}
+
+\subsection{Local Problem Modifications}
+
+\paragraph{A. Damping Term} 
+We add an additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. The use of this term is heavily influenced by \cite{ADMM:edu}.
+\[
+ \frac{\beta}{2} \|\delta_{i,t} - \delta_{i,t}^{k-1}\|^2 \quad \forall i,t
+\]
+where $\delta_{i,t}$ is the area's decision variable for the angle and  $\delta_{i,t}^{k-1}$ is its value in the previous iteration, and \( \beta > 0 \) is a damping coefficient. This modification biases the optimizer towards solutions close to the prior iteration, it stabilizes convergence and avoids oscillations in the horizon state.
+
+\paragraph{B. Adaptable \(\rho\)} 
+
+
+Instead of using a fixed penalty parameter \( \rho \), we adjust it based on the ratio of primal and dual residuals. This helps balance the convergence of both residuals and improves performance across different problem scales\cite{ADMM:boyd}. The update rule is:
+\[
+\rho^{k+1} := 
+\begin{cases}
+\tau \rho^k & \text{if } \|r^k\| > \mu \|s^k\| \\
+\rho^k / \tau & \text{if } \|s^k\| > \mu \|r^k\| \\
+\rho^k & \text{otherwise}
+\end{cases}
+\]
+Here, \( r^k \) and \( s^k \) are the primal and dual residuals respectively, and \( \tau > 1 \), \( \mu > 5 \) are tuning parameters. The residuals in iteration $k$ are defined as follows:
+
+\[
+r_{j,i}^k := \delta{j,i}^k - \delta_j^k
+\]
+
+\[
+s_{j,i}^k := \rho \left( \delta_j^k - \delta_j^{k-1} \right)
+\]
+
+\paragraph{C. Cost Function Scaling} 
+In practice, the magnitudes of the objective terms across agents can differ significantly. Specially, when dealing with the frequency in per unit the cost function can be of the order of $10^{-6}$. This means that if the cost function is not properly scaled the penalty and lagrangian term override the capcity of the solver to converge. This results on reaching consensus easier but with suboptimal horizons. Thats we redefine the frequency cost as follows. In the simulation we use $\gamma = 10^9$.
+
+\begin{equation}
+    \gamma ||f_{i,t} - f_{nom}||_2^2
+\end{equation}
+
+This subproblem defines the core of the distributed MPC framework under ADMM. Each agent optimizes locally, exchanges information with its neighbors, and updates its variables based on the augmented Lagrangian terms, gradually driving the overall system toward a consensus-based optimal trajectory.
+
+\paragraph{D.Smoothing and Terminal cost} 
+
+Additionally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
+
+\begin{equation}
+    \alpha_1 \sum_{0 \leq t < T}(f_{i,t+1} - f_{i,t})^2 
+\end{equation}
+
+And a Terminal cost term that we define as follows:
+
+\begin{equation}
+    \alpha_2 (f_{i,T} - f_{nom})^2 
+\end{equation}
+
+Overall, these additions help us find a more suitable solution of the frequency's trajectory rather than just minimizing for the cost.
+
+\paragraph{E.Redundant coupled constraints} 
+
+Finally, we add additional coupled constraint to the local MPC formulation. This new constraint do not change the model mathematically but significantly improve convergence speed. The existing formulation can pose problems since it achieves consensus in the states that are further in the horizon and can lock the problem into a suboptimal path. The new coupled constraint intent to achieve consensus between the agents also in the dynamics. They are the following in 
+
+\begin{align}
+    P_{\text{seen from area i}}^{\text{exchanged from i to j}} + P_{\text{seen from area j}}^{\text{exchanged from j to i}} &= 0 \\
+    \omega_{i,i,t} &= \omega_{j,i,t}
+\end{align}
+
+We can also write this equations in terms of $\delta_{j,i,t}$. With this addition we also need to modify the local MPC with new terms. 
+
+\subsection{ADMM Algorithm}
+
+\begin{algorithm}[H]
+\caption{Distributed MPC via ADMM}
+\begin{algorithmic}[1]
+    \State Initialize states $x \gets x_0$ by getting the grid's actual state.
+    \While{consensus error $> \epsilon$}
+        \For{each agent $i$}
+            \State Receive $\hat{\delta}_{j,i,t}$ from neighbors $j \in \mathcal{N}_i$ the copies of the shared values in the neighboring agents.
+            \State Solve local MPC with updated dual and penalty terms.
+            \State Send $\delta^*_{i,j,t}$ to agent's $i$ neighbors. 
+        \EndFor
+        \For{each pair $(i,j)$}
+            \State Update dual variables:
+            \[
+                \lambda_{i,j,t} \gets \lambda_{i,j,t} + \rho (\delta_{j,j,t} - \hat{\delta}_{i,j,t})
+            \]
+        \EndFor
+    \EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+This distributed MPC approach converges to the centralized solution while allowing each agent to optimize its control strategy independently and in parallel. The dual variables ensure consensus across shared variables, and ADMM iterations enforce global coordination. 
+
+In the prototype we aim to implement an online implementation of this ADMM by solving the ADMM algorithm iteratively. In practice this means that each area solves its local optimization problem over a finite horizon and exchanges boundary variables  with neighboring areas. Once there is convergence, only the first control action of the optimal sequence is applied to the physical system. This includes updating the setpoints of generators for the next time step. The following algorithm illustrates how each generator applies the control update by computing the power ramp to be executed in the current time step:
+
+\begin{algorithm}
+\caption{Online Setpoint Update using ADMM}
+\begin{algorithmic}
+    \For{each generator $k$}
+        \State Apply control ramp: $u_k(t) = P^{\text{gen}_k}_{t+1} - P^{\text{gen}_k}_t$.
+        \State Send updated setpoint $P^{\text{gen}_k}_{t+1}$ to the generator's governor.
+    \EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+\clearpage
 \nocite{*}  
 \printbibliography
 \end{document}
