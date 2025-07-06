@@ -18,6 +18,7 @@
 \usepackage{tikz}
 \usepackage{comment}
 \usepackage{float}
+\usepackage{circuitikz}
 % \usetikzlibrary{shapes, arrows, positioning}
 % \lstset{ 
 %     language=Python,                 % the language of the code
@@ -92,9 +93,84 @@ In power systems, contingencies refer to unexpected events or disturbances that 
 
 The impact of contingencies on power system dynamics can be characterized by their severity, duration, and propagation characteristics. Severe contingencies can lead to frequency excursions that exceed normal operating limits, potentially triggering automatic load shedding or generator tripping to prevent system collapse \cite{contingency:stability}.
 
-In the context of distributed control systems like COLMENA, contingencies create the need for coordinated responses across multiple areas. The distributed MPC framework must be able to detect the impact of these events in the electrical magnitudes under measurement, assess their influence on local and neighboring areas, and coordinate appropriate control actions to restore system stability while respecting operational constraints.
+In the context of distributed control systems like COLMENA, contingencies create the need for coordinated responses across multiple areas. The distributed MPC framework must be able to detect the impact of these events in the electrical magnitudes under measurement, assess their influence on local and neighboring areas, and coordinate appropriate control actions to restore system stability while respecting operational constraints. Figure \ref{fig:contingencies} shows a schematic representation of the contingencies under study.
+
+\begin{figure}[ht]
+    \centering
+    \begin{circuitikz}[scale=1.2]
+        % Define coordinates
+        \coordinate (A) at (0,0);
+        \coordinate (B) at (4,0);
+        \coordinate (C) at (8,0);
+        \coordinate (D) at (4,2);
+        \coordinate (E) at (4,-2);
+        
+        % Area 1 - Left side
+        \draw[thick, blue] (-1,1) rectangle (3,-1);
+        \node[blue] at (1,1.6) {\textbf{Area 1}};
+        
+        % Area 2 - Right side  
+        \draw[thick, red] (5,1) rectangle (9,-1);
+        \node[red] at (7,1.6) {\textbf{Area 2}};
+        
+        % Generators
+        \node[above] at (1,0.25) {$G_1$};
+        \node[above] at (7,0.25) {$G_2$};
+        
+        % Loads
+        \node at (1,-0.5) {$L_1$};
+        \node at (7,-0.5) {$L_2$};
+        
+        % Transmission line
+        \draw[thick] (3,0.5) -- (5,0.5);
+        % \draw[thick] (4,1) -- (4,0.5);
+        
+        % Line label
+        \node[above] at (4,0.5) {$L_{12}$};
+        
+        % Contingency scenarios
+        % 1. Generator disconnection (G1)
+        \draw[red, thick, dashed] (1,0.5) circle (0.4);
+        \node[red, above] at (1,-0.29) {\textbf{Gen. Outage}};
+        
+        % 2. Load disconnection (L2)
+        \draw[orange, thick, dashed] (7,-0.5) circle (0.4);
+        \node[orange, above] at (7,-0.18) {\textbf{Load Increase}};
+        
+        % 3. Line opening (L12)
+        \draw[purple, thick, dashed] (4.0,0.7) circle (0.4);
+        \node[purple, above] at (4,1.2) {\textbf{Line Outage}};
+        
+        % Frequency indicators
+        \node[blue] at (1,1.2) {$f_1(t)$};
+        \node[red] at (7,1.2) {$f_2(t)$};
+        
+        % Power flow arrows
+        \draw[->, thick, blue] (2.5,0.5) -- (2.8,0.5);
+        \draw[->, thick, red] (5.2,0.5) -- (5.5,0.5);
+        
+        % Legend
+        \node[align=left] at (4,3.0) {
+            \textbf{Contingency Types:} \\
+            \textcolor{red}{\textbf{---}} Generation Outage \\
+            \textcolor{orange}{\textbf{---}} Load Shedding \\
+            \textcolor{purple}{\textbf{---}} Line Opening
+        };
+        
+    \end{circuitikz}
+    \caption{Schematic representation of the power system contingencies under analysis showing generation outage, load shedding, and line opening events in a two-area system.}
+    \label{fig:contingencies}
+\end{figure}
+
 
 \subsection{Connection/disconnection definition}
+In modern power systems, it is increasingly common to integrate new entities, such as solar parks or other renewable energy sources. The connection of a new component means that both the new entity and the rest of the system must detect the change and adapt, ensuring that the added installation does not negatively impact, and ideally improves, the operation of the electrical grid.
+
+From a modeling and control perspective, the connection or disconnection of system elements, whether they are generators, loads, or other devices, can be treated as a particular case of contingency. The system must respond to these events in much the same way as it does to faults or sudden disturbances: by rebalancing power flows, adjusting control actions, and maintaining stability.
+
+For this reason, in our framework, the connection or disconnection of components is not fundamentally different from other contingencies. Both require the system to adapt dynamically, leveraging distributed control and coordination among agents to ensure continued secure and efficient operation.
+
+To test the system's adaptability, we consider scenarios involving the connection and disconnection of power injection sources, both generators and loads, to observe how the agents adjust their behavior. In both cases, the distributed control architecture must detect the change, coordinate the necessary adjustments, and maintain the desired performance of the grid.
 
 \subsection{Grid dynamics}
 In the proposed framework, each electrical area is represented using two states values:
@@ -409,7 +485,7 @@ With this context although the distributed MPC involves system-wide coordination
 
 If instead of minimizing frequency deviation, the agent optimized for economic dispatch over a longer time scale (e.g., 10 minutes), the same underlying MPC engine would constitute a completely different role, such as a \texttt{CostOptimizationRole}. This highlights that roles are defined by their specific objectives, context, and triggers and not merely by the algorithm they run.
 
-Within COLMENA’s architecture, the distributed MPC can straddle the line between coordination mechanism and agent behavior, depending on how it is contextualized and activated. By bounding its scope through KPIs and objectives, it becomes operationally meaningful as a discrete role.
+Within COLMENA's architecture, the distributed MPC can straddle the line between coordination mechanism and agent behavior, depending on how it is contextualized and activated. By bounding its scope through KPIs and objectives, it becomes operationally meaningful as a discrete role.
 
 \begin{table}[h!]
 \centering
@@ -547,7 +623,7 @@ The prototype has been successfully deployed on an eRoots machine, following a c
 
 The results from the simulations validate that deploying frequency control using the COLMENA framework is an effective approach for maintaining grid stability. The system successfully managed frequency deviations, responding to disturbances in a timely manner and restoring the frequency to its nominal value. This demonstrates the robustness and effectiveness of COLMENA's decentralized control strategy, confirming its potential as a reliable solution for frequency regulation in power grids.
 
-The next steps in the development of the COLMENA framework will focus on scaling the system to handle larger and more complex grid structures. This will involve conducting tests in grids with additional areas to assess the scalability of the Distributed MPC controller. Additionally, we will evaluate the framework’s performance by validating COLMENA's capabilities in terms of speed and accuracy, ensuring that it can handle the increased computational demands of larger grids while maintaining the desired control precision. These tests will help to refine the system's robustness and efficiency in real-world applications.
+The next steps in the development of the COLMENA framework will focus on scaling the system to handle larger and more complex grid structures. This will involve conducting tests in grids with additional areas to assess the scalability of the Distributed MPC controller. Additionally, we will evaluate the framework's performance by validating COLMENA's capabilities in terms of speed and accuracy, ensuring that it can handle the increased computational demands of larger grids while maintaining the desired control precision. These tests will help to refine the system's robustness and efficiency in real-world applications.
 
 \newpage
 \nocite{*}  

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 11:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 11:36
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -482,64 +482,111 @@ File: pgfmodulematrix.code.tex 2023-01-15 v3.1.10 (3.1.10)
 File: tikzlibrarytopaths.code.tex 2023-01-15 v3.1.10 (3.1.10)
 ))) (/usr/local/texlive/2024basic/texmf-dist/tex/latex/comment/comment.sty
 \CommentStream=\write5
- Excluding comment 'comment')
-\c@remark=\count350
-\c@definition=\count351
-\c@property=\count352
+ Excluding comment 'comment') (/usr/local/texlive/2024basic/texmf-dist/tex/latex/circuitikz/circuitikz.sty
+Package: circuitikz 2024/08/03{} The CircuiTikz circuit drawing package version 1.7.0
+ (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarycalc.code.tex
+File: tikzlibrarycalc.code.tex 2023-01-15 v3.1.10 (3.1.10)
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.meta.code.tex
+File: pgflibraryarrows.meta.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfarrowinset=\dimen275
+\pgfarrowlength=\dimen276
+\pgfarrowwidth=\dimen277
+\pgfarrowlinewidth=\dimen278
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarybending.code.tex
+File: tikzlibrarybending.code.tex 2023-01-15 v3.1.10 (3.1.10)
+ (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/modules/pgfmodulebending.code.tex
+File: pgfmodulebending.code.tex 2023-01-15 v3.1.10 (3.1.10)
+ (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/modules/pgfmodulenonlineartransformations.code.tex
+File: pgfmodulenonlineartransformations.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgftransformnonlinearflatness=\dimen279
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/libraries/pgflibrarycurvilinear.code.tex
+File: pgflibrarycurvilinear.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@curvilinear@time@a=\dimen280
+\pgf@curvilinear@length@a=\dimen281
+\pgf@curvilinear@length@b=\dimen282
+\pgf@curvilinear@length@c=\dimen283
+\pgf@curvilinear@length@d=\dimen284
+)
+\pgf@arrows@the@rigidity=\dimen285
+)) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibraryfpu.code.tex (/usr/local/texlive/2024basic/texmf-dist/tex/generic/pgf/libraries/pgflibraryfpu.code.tex)) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcirc.defines.tex
+\pgf@circ@count@a=\count350
+\pgf@circ@count@b=\count351
+\pgf@circ@count@c=\count352
+\pgf@circ@res@up=\dimen286
+\pgf@circ@res@down=\dimen287
+\pgf@circ@res@zero=\dimen288
+\pgf@circ@res@left=\dimen289
+\pgf@circ@res@right=\dimen290
+\pgf@circ@res@other=\dimen291
+\pgf@circ@res@step=\dimen292
+\pgf@circ@res@temp=\dimen293
+\pgf@circ@Rlen=\dimen294
+\pgf@circ@scaled@Rlen=\dimen295
+\pgfstartlinewidth=\dimen296
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircutils.tex
+\ctikz@scratchbox=\box75
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircpath.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircshapes.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircmonopoles.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircbipoles.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcirctripoles.tex
+\pgf@circ@res@count=\count353
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircquadpoles.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircmultipoles.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcirclabel.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircvoltage.tex
+\pgfcirc@labelshift=\dimen297
+) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcirccurrent.tex) (/usr/local/texlive/2024basic/texmf-dist/tex/generic/circuitikz/pgfcircflow.tex))
+\c@remark=\count354
+\c@definition=\count355
+\c@property=\count356
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/biblatex/biblatex.sty
 Package: biblatex 2024/03/21 v3.20 programmable bibliographies (PK/MW)
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/logreq/logreq.sty
 Package: logreq 2010/08/04 v1.0 xml request logger
-\lrq@indent=\count353
+\lrq@indent=\count357
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/logreq/logreq.def
 File: logreq.def 2010/08/04 v1.0 logreq spec v1.0
 )) (/usr/local/texlive/2024basic/texmf-dist/tex/latex/url/url.sty
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
-\c@tabx@nest=\count354
-\c@listtotal=\count355
-\c@listcount=\count356
-\c@liststart=\count357
-\c@liststop=\count358
-\c@citecount=\count359
-\c@citetotal=\count360
-\c@multicitecount=\count361
-\c@multicitetotal=\count362
-\c@instcount=\count363
-\c@maxnames=\count364
-\c@minnames=\count365
-\c@maxitems=\count366
-\c@minitems=\count367
-\c@citecounter=\count368
-\c@maxcitecounter=\count369
-\c@savedcitecounter=\count370
-\c@uniquelist=\count371
-\c@uniquename=\count372
-\c@refsection=\count373
-\c@refsegment=\count374
-\c@maxextratitle=\count375
-\c@maxextratitleyear=\count376
-\c@maxextraname=\count377
-\c@maxextradate=\count378
-\c@maxextraalpha=\count379
-\c@abbrvpenalty=\count380
-\c@highnamepenalty=\count381
-\c@lownamepenalty=\count382
-\c@maxparens=\count383
-\c@parenlevel=\count384
-\blx@tempcnta=\count385
-\blx@tempcntb=\count386
-\blx@tempcntc=\count387
-\c@blx@maxsection=\count388
-\blx@maxsegment@0=\count389
-\blx@notetype=\count390
-\blx@parenlevel@text=\count391
-\blx@parenlevel@foot=\count392
-\blx@sectionciteorder@0=\count393
-\blx@sectionciteorderinternal@0=\count394
-\blx@entrysetcounter=\count395
-\blx@biblioinstance=\count396
+\c@tabx@nest=\count358
+\c@listtotal=\count359
+\c@listcount=\count360
+\c@liststart=\count361
+\c@liststop=\count362
+\c@citecount=\count363
+\c@citetotal=\count364
+\c@multicitecount=\count365
+\c@multicitetotal=\count366
+\c@instcount=\count367
+\c@maxnames=\count368
+\c@minnames=\count369
+\c@maxitems=\count370
+\c@minitems=\count371
+\c@citecounter=\count372
+\c@maxcitecounter=\count373
+\c@savedcitecounter=\count374
+\c@uniquelist=\count375
+\c@uniquename=\count376
+\c@refsection=\count377
+\c@refsegment=\count378
+\c@maxextratitle=\count379
+\c@maxextratitleyear=\count380
+\c@maxextraname=\count381
+\c@maxextradate=\count382
+\c@maxextraalpha=\count383
+\c@abbrvpenalty=\count384
+\c@highnamepenalty=\count385
+\c@lownamepenalty=\count386
+\c@maxparens=\count387
+\c@parenlevel=\count388
+\blx@tempcnta=\count389
+\blx@tempcntb=\count390
+\blx@tempcntc=\count391
+\c@blx@maxsection=\count392
+\blx@maxsegment@0=\count393
+\blx@notetype=\count394
+\blx@parenlevel@text=\count395
+\blx@parenlevel@foot=\count396
+\blx@sectionciteorder@0=\count397
+\blx@sectionciteorderinternal@0=\count398
+\blx@entrysetcounter=\count399
+\blx@biblioinstance=\count400
 \labelnumberwidth=\skip58
 \labelalphawidth=\skip59
 \biblabelsep=\skip60
@@ -551,9 +598,9 @@ Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 \blx@bcfin=\read5
 \blx@bcfout=\write6
 \blx@langwohyphens=\language91
-\c@mincomprange=\count397
-\c@maxcomprange=\count398
-\c@mincompwidth=\count399
+\c@mincomprange=\count401
+\c@maxcomprange=\count402
+\c@mincompwidth=\count403
 Package biblatex Info: Trying to load biblatex default data model...
 Package biblatex Info: ... file 'blx-dm.def' found.
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/biblatex/blx-dm.def
@@ -563,74 +610,74 @@ Package biblatex Info: Trying to load biblatex style data model...
 Package biblatex Info: ... file 'ieee.dbx' not found.
 Package biblatex Info: Trying to load biblatex custom data model...
 Package biblatex Info: ... file 'biblatex-dm.cfg' not found.
-\c@afterword=\count400
-\c@savedafterword=\count401
-\c@annotator=\count402
-\c@savedannotator=\count403
-\c@author=\count404
-\c@savedauthor=\count405
-\c@bookauthor=\count406
-\c@savedbookauthor=\count407
-\c@commentator=\count408
-\c@savedcommentator=\count409
-\c@editor=\count410
-\c@savededitor=\count411
-\c@editora=\count412
-\c@savededitora=\count413
-\c@editorb=\count414
-\c@savededitorb=\count415
-\c@editorc=\count416
-\c@savededitorc=\count417
-\c@foreword=\count418
-\c@savedforeword=\count419
-\c@holder=\count420
-\c@savedholder=\count421
-\c@introduction=\count422
-\c@savedintroduction=\count423
-\c@namea=\count424
-\c@savednamea=\count425
-\c@nameb=\count426
-\c@savednameb=\count427
-\c@namec=\count428
-\c@savednamec=\count429
-\c@translator=\count430
-\c@savedtranslator=\count431
-\c@shortauthor=\count432
-\c@savedshortauthor=\count433
-\c@shorteditor=\count434
-\c@savedshorteditor=\count435
-\c@labelname=\count436
-\c@savedlabelname=\count437
-\c@institution=\count438
-\c@savedinstitution=\count439
-\c@lista=\count440
-\c@savedlista=\count441
-\c@listb=\count442
-\c@savedlistb=\count443
-\c@listc=\count444
-\c@savedlistc=\count445
-\c@listd=\count446
-\c@savedlistd=\count447
-\c@liste=\count448
-\c@savedliste=\count449
-\c@listf=\count450
-\c@savedlistf=\count451
-\c@location=\count452
-\c@savedlocation=\count453
-\c@organization=\count454
-\c@savedorganization=\count455
-\c@origlocation=\count456
-\c@savedoriglocation=\count457
-\c@origpublisher=\count458
-\c@savedorigpublisher=\count459
-\c@publisher=\count460
-\c@savedpublisher=\count461
-\c@language=\count462
-\c@savedlanguage=\count463
-\c@origlanguage=\count464
-\c@savedoriglanguage=\count465
-\c@pageref=\count466
-\c@savedpageref=\count467
+\c@afterword=\count404
+\c@savedafterword=\count405
+\c@annotator=\count406
+\c@savedannotator=\count407
+\c@author=\count408
+\c@savedauthor=\count409
+\c@bookauthor=\count410
+\c@savedbookauthor=\count411
+\c@commentator=\count412
+\c@savedcommentator=\count413
+\c@editor=\count414
+\c@savededitor=\count415
+\c@editora=\count416
+\c@savededitora=\count417
+\c@editorb=\count418
+\c@savededitorb=\count419
+\c@editorc=\count420
+\c@savededitorc=\count421
+\c@foreword=\count422
+\c@savedforeword=\count423
+\c@holder=\count424
+\c@savedholder=\count425
+\c@introduction=\count426
+\c@savedintroduction=\count427
+\c@namea=\count428
+\c@savednamea=\count429
+\c@nameb=\count430
+\c@savednameb=\count431
+\c@namec=\count432
+\c@savednamec=\count433
+\c@translator=\count434
+\c@savedtranslator=\count435
+\c@shortauthor=\count436
+\c@savedshortauthor=\count437
+\c@shorteditor=\count438
+\c@savedshorteditor=\count439
+\c@labelname=\count440
+\c@savedlabelname=\count441
+\c@institution=\count442
+\c@savedinstitution=\count443
+\c@lista=\count444
+\c@savedlista=\count445
+\c@listb=\count446
+\c@savedlistb=\count447
+\c@listc=\count448
+\c@savedlistc=\count449
+\c@listd=\count450
+\c@savedlistd=\count451
+\c@liste=\count452
+\c@savedliste=\count453
+\c@listf=\count454
+\c@savedlistf=\count455
+\c@location=\count456
+\c@savedlocation=\count457
+\c@organization=\count458
+\c@savedorganization=\count459
+\c@origlocation=\count460
+\c@savedoriglocation=\count461
+\c@origpublisher=\count462
+\c@savedorigpublisher=\count463
+\c@publisher=\count464
+\c@savedpublisher=\count465
+\c@language=\count466
+\c@savedlanguage=\count467
+\c@origlanguage=\count468
+\c@savedoriglanguage=\count469
+\c@pageref=\count470
+\c@savedpageref=\count471
 \shorthandwidth=\skip66
 \shortjournalwidth=\skip67
 \shortserieswidth=\skip68
@@ -654,19 +701,19 @@ Package biblatex Info: Trying to load generic definitions...
 Package biblatex Info: ... file 'biblatex.def' found.
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/biblatex/biblatex.def
 File: biblatex.def 2024/03/21 v3.20 biblatex compatibility (PK/MW)
-\c@textcitecount=\count468
-\c@textcitetotal=\count469
-\c@textcitemaxnames=\count470
-\c@biburlbigbreakpenalty=\count471
-\c@biburlbreakpenalty=\count472
-\c@biburlnumpenalty=\count473
-\c@biburlucpenalty=\count474
-\c@biburllcpenalty=\count475
+\c@textcitecount=\count472
+\c@textcitetotal=\count473
+\c@textcitemaxnames=\count474
+\c@biburlbigbreakpenalty=\count475
+\c@biburlbreakpenalty=\count476
+\c@biburlnumpenalty=\count477
+\c@biburlucpenalty=\count478
+\c@biburllcpenalty=\count479
 \biburlbigskip=\muskip19
 \biburlnumskip=\muskip20
 \biburlucskip=\muskip21
 \biburllcskip=\muskip22
-\c@smartand=\count476
+\c@smartand=\count480
 )
 Package biblatex Info: Trying to load bibliography style 'ieee'...
 Package biblatex Info: ... file 'ieee.bbx' found.
@@ -684,8 +731,8 @@ Package biblatex Info: Trying to load bibliography style 'standard'...
 Package biblatex Info: ... file 'standard.bbx' found.
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/biblatex/bbx/standard.bbx
 File: standard.bbx 2024/03/21 v3.20 biblatex bibliography style (PK/MW)
-\c@bbx:relatedcount=\count477
-\c@bbx:relatedtotal=\count478
+\c@bbx:relatedcount=\count481
+\c@bbx:relatedtotal=\count482
 ))))
 Package biblatex Info: Trying to load citation style 'ieee'...
 Package biblatex Info: ... file 'ieee.cbx' found.
@@ -717,8 +764,8 @@ Package biblatex Info: Document encoding is UTF8 ....
 Package: expl3 2024-12-09 L3 programming layer (loader) 
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count479
-\l__pdf_internal_box=\box75
+\l__color_backend_stack_int=\count483
+\l__pdf_internal_box=\box76
 ))
 Package biblatex Info: ... and expl3
 (biblatex)             2024-12-09 L3 programming layer (loader) 
@@ -733,41 +780,41 @@ Package: blx-case-expl3 2024/03/21 v3.20 expl3 case changing code for biblatex
 Package biblatex Warning: 'babel/polyglossia' detected but 'csquotes' missing.
 (biblatex)                Loading 'csquotes' recommended.
 
-\@quotelevel=\count480
-\@quotereset=\count481
+\@quotelevel=\count484
+\@quotereset=\count485
 (./main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 63.
-LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 64.
+LaTeX Font Info:    ... okay on input line 64.
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/base/textcomp.sty
 Package: textcomp 2024/04/24 v2.1b Standard LaTeX package
 )
-\c@lstlisting=\count482
+\c@lstlisting=\count486
  (/usr/local/texlive/2024basic/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count483
-\scratchdimen=\dimen275
-\scratchbox=\box76
-\nofMPsegments=\count484
-\nofMParguments=\count485
+\scratchcounter=\count487
+\scratchdimen=\dimen298
+\scratchbox=\box77
+\nofMPsegments=\count488
+\nofMParguments=\count489
 \everyMPshowfont=\toks45
-\MPscratchCnt=\count486
-\MPscratchDim=\dimen276
-\MPnumerator=\count487
-\makeMPintoPDFobject=\count488
+\MPscratchCnt=\count490
+\MPscratchDim=\dimen299
+\MPnumerator=\count491
+\makeMPintoPDFobject=\count492
 \everyMPtoPDFconversion=\toks46
 ) (/usr/local/texlive/2024basic/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -788,17 +835,17 @@ Package biblatex Info: Automatic encoding selection.
 Package biblatex Info: Trying to load bibliographic data...
 Package biblatex Info: ... file 'main.bbl' found.
  (./main.bbl)
-Package biblatex Info: Reference section=0 on input line 63.
-Package biblatex Info: Reference segment=0 on input line 63.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 64.
+Package biblatex Info: Reference section=0 on input line 64.
+Package biblatex Info: Reference segment=0 on input line 64.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 65.
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 64.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 65.
  (/usr/local/texlive/2024basic/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (0.72609pt too wide) in paragraph at lines 64--64
+Overfull \hbox (0.72609pt too wide) in paragraph at lines 65--65
  [][] 
  []
 
@@ -809,7 +856,7 @@ Overfull \hbox (0.72609pt too wide) in paragraph at lines 64--64
 {/usr/local/texlive/2024basic/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 
 [2{/usr/local/texlive/2024basic/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
-Overfull \hbox (4.59108pt too wide) in paragraph at lines 87--88
+Overfull \hbox (4.59108pt too wide) in paragraph at lines 88--89
 []\OT1/cmr/bx/n/10 Weather-related con-tin-gen-cies: \OT1/cmr/m/n/10 ex-treme weather events such as storms,
  []
 
@@ -821,78 +868,80 @@ Overfull \hbox (4.59108pt too wide) in paragraph at lines 87--88
 
 [5]
 
-[6] Excluding 'comment' comment.
-Overfull \hbox (9.92093pt too wide) detected at line 208
+[6]
+
+[7] Excluding 'comment' comment.
+Overfull \hbox (9.92093pt too wide) detected at line 284
 []
  []
 
 
 
-[7]
-
 [8]
 
 [9]
 
-LaTeX Warning: Citation 'ADMM:edu' on page 10 undefined on input line 290.
-
-
-
 [10]
+
+LaTeX Warning: Citation 'ADMM:edu' on page 11 undefined on input line 366.
+
+
 
 [11]
 
 [12]
 
 [13]
-Overfull \hbox (22.38838pt too wide) in paragraph at lines 410--411
+
+[14]
+Overfull \hbox (22.38838pt too wide) in paragraph at lines 486--487
 \OT1/cmr/m/n/10 en-gine would con-sti-tute a com-pletely dif-fer-ent role, such as a \OT1/cmtt/m/n/10 CostOptimizationRole\OT1/cmr/m/n/10 .
  []
 
 
 
-[14]
-Overfull \hbox (77.33858pt too wide) in paragraph at lines 416--435
+[15]
+Overfull \hbox (77.33858pt too wide) in paragraph at lines 492--511
  [][] 
  []
 
 
 
-[15]
-
 [16]
 
 [17]
-<figures/ieee2areas.png, id=78, 675.52374pt x 578.16pt>
+
+[18]
+<figures/ieee2areas.png, id=81, 675.52374pt x 578.16pt>
 File: figures/ieee2areas.png Graphic file (type png)
 <use figures/ieee2areas.png>
-Package pdftex.def Info: figures/ieee2areas.png  used on input line 497.
+Package pdftex.def Info: figures/ieee2areas.png  used on input line 573.
 (pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
 
 
-[18 <./figures/ieee2areas.png>]
-<figures/mpc_load.png, id=84, 951.555pt x 593.21625pt>
+[19 <./figures/ieee2areas.png>]
+<figures/mpc_load.png, id=88, 951.555pt x 593.21625pt>
 File: figures/mpc_load.png Graphic file (type png)
 <use figures/mpc_load.png>
-Package pdftex.def Info: figures/mpc_load.png  used on input line 519.
+Package pdftex.def Info: figures/mpc_load.png  used on input line 595.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
-<figures/non_mpc_load.png, id=85, 951.555pt x 593.21625pt>
+<figures/non_mpc_load.png, id=89, 951.555pt x 593.21625pt>
 File: figures/non_mpc_load.png Graphic file (type png)
 <use figures/non_mpc_load.png>
-Package pdftex.def Info: figures/non_mpc_load.png  used on input line 526.
+Package pdftex.def Info: figures/non_mpc_load.png  used on input line 602.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
 
 
-[19 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
-
-[20]
+[20 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
 
 [21]
 
 [22]
 
 [23]
-runsystem(latexminted cleantemp  --timestamp 20250706110025 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
+
+[24]
+runsystem(latexminted cleantemp  --timestamp 20250706113626 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
 
  (./main.aux)
  ***********
@@ -913,18 +962,18 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 28279 strings out of 473243
- 590128 string characters out of 5714659
- 1495924 words of memory out of 5000000
- 51079 multiletter control sequences out of 15000+600000
+ 45900 strings out of 473243
+ 1120365 string characters out of 5714659
+ 2265349 words of memory out of 5000000
+ 68631 multiletter control sequences out of 15000+600000
  568326 words of font info for 76 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  85i,15n,93p,969b,1760s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on main.pdf (23 pages, 498380 bytes).
+Output written on main.pdf (24 pages, 502147 bytes).
 PDF statistics:
- 185 PDF objects out of 1000 (max. 8388607)
- 114 compressed objects within 2 object streams
+ 188 PDF objects out of 1000 (max. 8388607)
+ 116 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  28 words of extra memory for PDF output out of 10000 (max. 10000000)
 
