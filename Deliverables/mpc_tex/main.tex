@@ -19,6 +19,15 @@
 \usepackage{comment}
 \usepackage{float}
 \usepackage{circuitikz}
+\usepackage{import}
+\usepackage{xifthen}
+\usepackage{pdfpages}
+\usepackage{transparent}
+
+\newcommand{\incfig}[1]{%
+    \def\svgwidth{\columnwidth}
+    \import{./figures/}{#1.pdf_tex}
+}
 % \usetikzlibrary{shapes, arrows, positioning}
 % \lstset{ 
 %     language=Python,                 % the language of the code
@@ -76,7 +85,7 @@ This report first explains the physical models and equations used to build the M
 
 \newpage
 \section{Modeling}
-Accurate modeling of the contingencies that are likely to take place in the grid, as well as the frequency and angle dynamics of each area, are fundamental to the design and implementation of distributed control strategies in power systems. It is central to capture how each area responds to generation-demand imbalances and how it interacts electrically with neighboring regions through phase angle differences whenever a contingency takes place. By understanding these behaviors, the proposed MPC can anticipate future states and choose the appropriate controls actions.
+Accurate modeling of the contingencies that are likely to take place in the grid, as well as the frequency and angle dynamics of each area, are fundamental to the design and implementation of distributed control strategies in power systems. Otherwise, the distributed control may be built on top of erroneous physical models, which can later lead to suboptimal control actions. Hence, it is central to capture how each area responds to generation-demand imbalances and how it interacts electrically with neighboring regions through phase angle differences whenever a contingency takes place. By understanding these behaviors, the proposed MPC can anticipate future states and control systems can react accordingly.
 
 \subsection{Contingency definition}
 In power systems, contingencies refer to unexpected events or disturbances that can significantly impact the system's stability and operation. These events can range from equipment failures to sudden changes in load or generation, and they require immediate response from control systems to maintain grid stability and prevent cascading failures \cite{contingency:analysis}. Not surprisingly, the recent Spanish blackout that took place last April was a clear example of such cascading events. Contingencies can be caused by multiple, being the most common types of contingencies the following:
@@ -155,7 +164,7 @@ In the context of distributed control systems like COLMENA, contingencies create
         
         % Legend
         \node[align=left] at (4,3.0) {
-            \textbf{Contingency Types:} \\
+            \textbf{Contingency types:} \\
             \textcolor{red}{\textbf{---}} Generation outage \\
             \textcolor{orange}{\textbf{---}} Demand increase \\
             \textcolor{purple}{\textbf{---}} Line outage
@@ -184,7 +193,7 @@ In the proposed framework, each electrical area is represented using two states 
 \end{itemize}
 This abstraction treats each area as a coherent group of generators and loads that tend to oscillate together in response to disturbances. It enables scalable distributed control by reducing the system's dimensionality.
 
-The frequency evolution in each area is governed by a version of the swing equation:
+The frequency evolution in each area is governed by the so-called swing equation, which relates powers, inertia and damping with the frequency \cite{qiu2020swing}:
 \begin{align}
     f_{i,t+1} =\ & f_{i,t} + \frac{\Delta t}{M_i} \Big[ -D_i(f_{i,t} - f_0) 
     + \sum_{k \in \mathcal{G}_i} P^{\text{gen}_k}_t 
@@ -223,12 +232,19 @@ where $B_{i,j}$ represents the total susceptance between the two areas. This is 
 \begin{equation}
     B_{i,j} = \sum_{\text{line i connects area i to area j}} b_{\text{line i}}
 \end{equation}
-This aggregation allows us to ignore the specific topologies of the areas during inter-area coordination, while still capturing the essential physics of power exchange via angle differences. It also reduces computational complexity, which is critical for scalable distributed optimisation.
+This aggregation allows us to ignore the specific topologies of the areas during inter-area coordination, while still capturing the essential physics of power exchange via angle differences. It also reduces computational complexity, which is critical for scalable distributed optimization. Figure \ref{fig:two_area} shows the topology of a two-area power system. Given the three connections between the two system sections, the resulting admittance is $b_1 + b_2 + b_3$.
+
+\begin{figure}[h]
+    \centering
+    % \def\svgwidth{0.8\textwidth}
+    % \input{figures/twoareas.pdf_tex}
+    \incfig{twoareas}
+    \caption{Topology of a simplified two-area power grid.}
+    \label{fig:two_area}
+\end{figure}
 
 \subsection{Grid controls}
-We build a multi-agent system where each agent is responsible for the control of a defined electrical area. Each area comprises several buses, generators, and loads, and interacts with other areas through lines. The objective of the agent is to maintain frequency stability by coordinating with neighboring agents through the sharing of information. 
-
-Each agent is equipped with the capability to perform multiple control functions within its domain, depending on the system design and available actuators. These actions may include:
+We build a multi-agent system where each agent is responsible for the control of a defined electrical area. Each area comprises several buses, generators, and loads, and interacts with other areas through lines. The objective of the agent is to maintain frequency stability by coordinating with neighboring agents through the sharing of information such as power flows as they influence the area frequency. Each agent is equipped with the capability to perform multiple control functions within its domain, depending on the system design and available actuators. These actions may include:
 \begin{itemize}
     \item \textbf{Power generation control}: adjusting generator outputs to balance load and maintain frequency.
     \item \textbf{Load shedding strategies}: curtailing controllable loads during contingencies to stabilize frequency.
@@ -236,19 +252,15 @@ Each agent is equipped with the capability to perform multiple control functions
     \item \textbf{Reactive power or voltage support}: engaging voltage control mechanisms to assist in voltage regulation, if needed.
 \end{itemize}
 
-In the broader COLMENA framework, agents could also be capable of activating other local roles, provided that the dynamics and interactions of those roles are explicitly defined and known by the agent.
-
-In this first implementation, we focus on a simplified setting where each agent directly controls the ramp of generator power outputs within its area. Specifically, the control vector \( u_i \) for agent \( i \) is defined as the difference in power output between two consecutive time steps:
+In the broader COLMENA framework, agents could also be capable of activating other local roles, provided that the dynamics and interactions of those roles are explicitly defined and known by the agent. In this first implementation, we focus on a simplified setting where each agent controls the ramp of generator power outputs within its area. Specifically, the control vector \( u_i \) for agent \( i \) is defined as the difference in power output between two consecutive time steps:
 \begin{equation}
     u_i(t) = P^{\text{gen}}_i(t+1) - P^{\text{gen}}_i(t) \in \mathbb{R}^{n_{g,i}}
 \end{equation}
-where \( P^{\text{gen}}_i(t) \) is the vector of generator power outputs at time \( t \), and \( n_{g,i} \) is the number of controllable generators in area \( i \).
-
-The control inputs are subject to ramp-rate constraints that limit how fast the generators can increase or decrease their output:
+where \( P^{\text{gen}}_i(t) \) is the vector of generator power outputs at time \( t \), and \( n_{g,i} \) is the number of controllable generators in area \( i \). Also, the control inputs are subject to ramp-rate constraints that limit how fast the generators can increase or decrease their output:
 \begin{equation}
     u^{\min}_{k} \leq u_{i,k}(t)  \Delta  t \leq u^{\max}_{k} \quad \forall k \in \{1, \dots, n_{g,i}\}, \forall t
 \end{equation}
-where \( u^{\min}_{k} \) and \( u^{\max}_{k} \) are the ramp-down and ramp-up limits (in pu/s) for generator \( k \). 
+where \( u^{\min}_{k} \) and \( u^{\max}_{k} \) are ramp-down and ramp-up limits for generator \( k \). 
 
 \newpage
 \section{Mathematical Formulation}
@@ -347,7 +359,7 @@ This structure enables the use of distributed optimization techniques, such as t
 \newpage
 \section{MPC Role Definition}
 
-In multi agent architectures and in the context of COLMENA a role is usually tied to a local behavior with a narrow task that is activated when a specific value or KPI is not respected. In this context, the distributed MPC can be seen as a policy coordinating multiple roles as much a role. For this we propose two different solutions that limit the MPC to specific circumstances making it more akin to a proper role than a policy.
+In multi-agent architectures and in the context of COLMENA a role is usually tied to a local behavior with a narrow task that is activated when a specific value or KPI is not respected. In this context, the distributed MPC can be seen as a policy coordinating multiple roles as much a role, given that various devices controlled through MPC within each specific area can offer different reactions to a grid disturbance. For this we propose two different solutions that limit the MPC to specific circumstances making it more akin to a proper role than a policy.
 
 \subsection{Frequency area response}
 
@@ -417,13 +429,17 @@ The following pseudocode describes the online control loop executed by each loca
 
 In this section we discuss how the different tools provided by COLMENA are used to set up the grid. Specifically, how the data and contexts decorators are used by the Distributed MPC role to be implemented in parallel. The parallel implementation is key to the distributed nature of the MPC.
 
-\subsubsection*{Contexts Decorators}
+\subsubsection*{Contexts decorators}
 
 The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific contexts when they are part of an area. For example, we could have contexts defined by the agents ID beforehand, or if we consider the initial prototype, if an agent is paired to an electrical device, then the agent would belong to that area's context.
 
 We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For instance, instead of the MPC including the dynamics of certain roles, the MPC can set objectives that then other roles inside the area can react to. For this case we define \textit{Grid Areas} a context where a set of COLMENA agents are interlinked.
 
-\subsubsection*{Data Decorators}
+\textcolor{red}{Further expand the paragraph above giving more information and some example on how we use these contexts.}
+
+\textcolor{red}{Copy and paste some code showing the decorators being used.}
+
+\subsubsection*{Data decorators}
 
 We define three different types of data channels to share information between the different agents running the ADMM:
 
@@ -439,7 +455,7 @@ The different agents read the state horizon channel to get the values for the pr
 
 \subsubsection*{Activation}
 
-The distributed frequency control role is activated when two KPIs are broken. The role first communicates with ANDES and learns the initial conditions for the problem. It then solves a single iteration of the local problem. In the prototype, the other iterations are also executed by the same agent. The goal however is to potentially use COLMENA's resource control to run the solver, for example, in the most computationally powerful agent available. This could be possible thanks to the different communications channels already storing the necessary data independently of the agents.
+The distributed frequency control role is activated when two KPIs are broken, that is, when at least two frequency values are outside the allowed range. The role first communicates with ANDES and learns the initial conditions for the problem. It then solves a single iteration of the local problem. In the prototype, the other iterations are also executed by the same agent. The goal however is to potentially use COLMENA's resource control to run the solver, for example, in the most computationally powerful agent available. This could be possible thanks to the different communications channels already storing the necessary data independently of the agents.
 
 \subsection{Testing environment}
 
@@ -576,38 +592,39 @@ With this we can define a local subproblem for agent $i$. At each iteration of t
     \item The last term is a quadratic penalty that reinforces consensus via the parameter $\rho$.
 \end{itemize}
 
-\subsection{Local Problem Modifications}
+\subsection{Local problem modifications}
 
-\paragraph{A. Damping Term} 
+\textbf{A. Damping term} 
+
 We add an additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. The use of this term is heavily influenced by \cite{ADMM:edu}.
-\[
+\begin{equation}
  \frac{\beta}{2} \|\delta_{i,t} - \delta_{i,t}^{k-1}\|^2 \quad \forall i,t
-\]
+\end{equation}
 where $\delta_{i,t}$ is the area's decision variable for the angle and  $\delta_{i,t}^{k-1}$ is its value in the previous iteration, and \( \beta > 0 \) is a damping coefficient. This modification biases the optimizer towards solutions close to the prior iteration, it stabilizes convergence and avoids oscillations in the horizon state.
 
-\paragraph{B. Adaptable \(\rho\)} 
-
+\textbf{B. Adaptable \(\rho\)} 
 
 Instead of using a fixed penalty parameter \( \rho \), we adjust it based on the ratio of primal and dual residuals. This helps balance the convergence of both residuals and improves performance across different problem scales\cite{ADMM:boyd}. The update rule is:
-\[
+\begin{equation}
 \rho^{k+1} := 
 \begin{cases}
 \tau \rho^k & \text{if } \|r^k\| > \mu \|s^k\| \\
 \rho^k / \tau & \text{if } \|s^k\| > \mu \|r^k\| \\
 \rho^k & \text{otherwise}
 \end{cases}
-\]
+\end{equation}
 Here, \( r^k \) and \( s^k \) are the primal and dual residuals respectively, and \( \tau > 1 \), \( \mu > 5 \) are tuning parameters. The residuals in iteration $k$ are defined as follows:
 
-\[
+\begin{equation}
 r_{j,i}^k := \delta{j,i}^k - \delta_j^k
-\]
+\end{equation}
 
-\[
+\begin{equation}
 s_{j,i}^k := \rho \left( \delta_j^k - \delta_j^{k-1} \right)
-\]
+\end{equation}
 
-\paragraph{C. Cost Function Scaling} 
+\textbf{C. Cost function scaling} 
+
 In practice, the magnitudes of the objective terms across agents can differ significantly. Specially, when dealing with the frequency in per unit the cost function can be of the order of $10^{-6}$. This means that if the cost function is not properly scaled the penalty and lagrangian term override the capcity of the solver to converge. This results on reaching consensus easier but with suboptimal horizons. Thats we redefine the frequency cost as follows. In the simulation we use $\gamma = 10^9$.
 
 \begin{equation}
@@ -616,7 +633,7 @@ In practice, the magnitudes of the objective terms across agents can differ sign
 
 This subproblem defines the core of the distributed MPC framework under ADMM. Each agent optimizes locally, exchanges information with its neighbors, and updates its variables based on the augmented Lagrangian terms, gradually driving the overall system toward a consensus-based optimal trajectory.
 
-\paragraph{D. Smoothing and Terminal cost} 
+\textbf{D. Smoothing and terminal cost} 
 
 Additionally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
 
@@ -632,7 +649,7 @@ And a Terminal cost term that we define as follows:
 
 Overall, these additions help us find a more suitable solution of the frequency's trajectory rather than just minimizing for the cost.
 
-\paragraph{E. Redundant coupled constraints} 
+\textbf{E. Redundant coupled constraints} 
 
 Finally, we add additional coupled constraint to the local MPC formulation. This new constraint do not change the model mathematically but significantly improve convergence speed. The existing formulation can pose problems since it achieves consensus in the states that are further in the horizon and can lock the problem into a suboptimal path. The new coupled constraint intent to achieve consensus between the agents also in the dynamics. They are the following in 
 

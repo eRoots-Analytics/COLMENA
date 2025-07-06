@@ -65,44 +65,6 @@
       \field{pages}{1192\bibrangedash 1206}
       \range{pages}{15}
     \endentry
-    \entry{grids:ieee39}{article}{}{}
-      \name{author}{3}{}{%
-        {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
-           family={Athay},
-           familyi={A\bibinitperiod},
-           given={Thomas},
-           giveni={T\bibinitperiod}}}%
-        {{hash=06144b0a243aed86518ed65c6c1e8439}{%
-           family={Podmore},
-           familyi={P\bibinitperiod},
-           given={Roger},
-           giveni={R\bibinitperiod}}}%
-        {{hash=12147c3a32ea087e5568b6b6eef97ae8}{%
-           family={Virmani},
-           familyi={V\bibinitperiod},
-           given={Stephen},
-           giveni={S\bibinitperiod}}}%
-      }
-      \list{publisher}{1}{%
-        {IEEE}%
-      }
-      \strng{namehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
-      \strng{fullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \strng{fullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \strng{bibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \strng{authorbibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \strng{authornamehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
-      \strng{authorfullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \strng{authorfullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
-      \field{sortinit}{2}
-      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
-      \field{title}{A practical method for the direct analysis of transient stability}
-      \field{volume}{PAS-98}
-      \field{year}{1979}
-    \endentry
     \entry{contingency:analysis}{thesis}{}{}
       \name{author}{2}{}{%
         {{hash=2cf4ab82a10ca960d5d6856c94b6848a}{%
@@ -124,8 +86,8 @@
       \strng{authornamehash}{5d27cf8d29d611361cbbe77674e69c3c}
       \strng{authorfullhash}{5d27cf8d29d611361cbbe77674e69c3c}
       \strng{authorfullhashraw}{5d27cf8d29d611361cbbe77674e69c3c}
-      \field{sortinit}{3}
-      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Contingency analysis in power system}
@@ -166,8 +128,8 @@
       \strng{authornamehash}{c74a4341658a77cabcd5e2dbb43969ae}
       \strng{authorfullhash}{f9b48d476931761759afd4f1fb3a6d59}
       \strng{authorfullhashraw}{f9b48d476931761759afd4f1fb3a6d59}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Electric Power Systems Research}
@@ -206,8 +168,8 @@
       \strng{authornamehash}{82d85051b6259e47d1d5fdb0ffa1742b}
       \strng{authorfullhash}{961d65f00b317556f2697cdbca6bf9df}
       \strng{authorfullhashraw}{961d65f00b317556f2697cdbca6bf9df}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Archives of Electrical Engineering}
@@ -260,8 +222,8 @@
       \strng{authornamehash}{f18ef2b7e3bb11ec0b22bbedb590da15}
       \strng{authorfullhash}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
       \strng{authorfullhashraw}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Power Systems}
@@ -296,8 +258,8 @@
       \strng{authornamehash}{bbc6cf0822a4be68595be58f8ab01d65}
       \strng{authorfullhash}{bbc6cf0822a4be68595be58f8ab01d65}
       \strng{authorfullhashraw}{bbc6cf0822a4be68595be58f8ab01d65}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Weather-related power outages and electric system resiliency}
@@ -332,8 +294,8 @@
       \strng{authornamehash}{7c4389d133edda253b070b7bd1eebb72}
       \strng{authorfullhash}{1290a76819d8fc99bdb0d10bbe0ffa54}
       \strng{authorfullhashraw}{1290a76819d8fc99bdb0d10bbe0ffa54}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Power and Energy Magazine}
@@ -360,8 +322,8 @@
       \strng{authornamehash}{39882366f85507fce005c512ac3b2240}
       \strng{authorfullhash}{39882366f85507fce005c512ac3b2240}
       \strng{authorfullhashraw}{39882366f85507fce005c512ac3b2240}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Power system stability and control}
@@ -371,6 +333,50 @@
       \field{year}{2007}
       \field{pages}{7\bibrangedash 1}
       \range{pages}{-5}
+    \endentry
+    \entry{qiu2020swing}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=0ef0591c917455e30bed79b1d5e3a5c0}{%
+           family={Qiu},
+           familyi={Q\bibinitperiod},
+           given={Qi},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=a92297e6d0aa8a8a8de4577bac57b151}{%
+           family={Ma},
+           familyi={M\bibinitperiod},
+           given={Rui},
+           giveni={R\bibinitperiod}}}%
+        {{hash=54ad0f42e0fdea1667c540aa1a7bf967}{%
+           family={Kurths},
+           familyi={K\bibinitperiod},
+           given={Jurgen},
+           giveni={J\bibinitperiod}}}%
+        {{hash=0f7bd499ff89eea850ffbeb4f5582ef5}{%
+           family={Zhan},
+           familyi={Z\bibinitperiod},
+           given={Meng},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {AIP Publishing}%
+      }
+      \strng{namehash}{2840704e052413ebca14f245a88eae9e}
+      \strng{fullhash}{3ca80023a6b3d8bb5fe15fe0489bda50}
+      \strng{fullhashraw}{3ca80023a6b3d8bb5fe15fe0489bda50}
+      \strng{bibnamehash}{3ca80023a6b3d8bb5fe15fe0489bda50}
+      \strng{authorbibnamehash}{3ca80023a6b3d8bb5fe15fe0489bda50}
+      \strng{authornamehash}{2840704e052413ebca14f245a88eae9e}
+      \strng{authorfullhash}{3ca80023a6b3d8bb5fe15fe0489bda50}
+      \strng{authorfullhashraw}{3ca80023a6b3d8bb5fe15fe0489bda50}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chaos: An Interdisciplinary Journal of Nonlinear Science}
+      \field{number}{1}
+      \field{title}{Swing equation in power systems: Approximate analytical solution and bifurcation curve estimate}
+      \field{volume}{30}
+      \field{year}{2020}
     \endentry
     \entry{ADMM:boyd}{article}{}{}
       \name{author}{5}{}{%
@@ -495,6 +501,44 @@
       \field{labeltitlesource}{title}
       \field{title}{Distributed Nonlinear Model Predictive Control for District Heating Networks}
       \field{year}{2021}
+    \endentry
+    \entry{grids:ieee39}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
+           family={Athay},
+           familyi={A\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=06144b0a243aed86518ed65c6c1e8439}{%
+           family={Podmore},
+           familyi={P\bibinitperiod},
+           given={Roger},
+           giveni={R\bibinitperiod}}}%
+        {{hash=12147c3a32ea087e5568b6b6eef97ae8}{%
+           family={Virmani},
+           familyi={V\bibinitperiod},
+           given={Stephen},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
+      \strng{fullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{fullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{bibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authorbibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authornamehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
+      \strng{authorfullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authorfullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
+      \field{title}{A practical method for the direct analysis of transient stability}
+      \field{volume}{PAS-98}
+      \field{year}{1979}
     \endentry
     \entry{grids:models}{article}{}{}
       \name{author}{1}{}{%
