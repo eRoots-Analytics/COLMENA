@@ -22,7 +22,7 @@
 \abx@aux@segm{0}{0}{li2006power}
 \abx@aux@cite{0}{contingency:stability}
 \abx@aux@segm{0}{0}{contingency:stability}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Schematic representation of the power system contingencies under analysis showing generation outage, load shedding, and line opening events in a two-area system.}}{4}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Schematic representation of the power system contingencies under analysis showing generation outage, load/demand increase, and line opening events in a two-area system.}}{4}{}\protected@file@percent }
 \newlabel{fig:contingencies}{{1}{4}{}{figure.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Connection/disconnection definition}{4}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Grid dynamics}{5}{}\protected@file@percent }
@@ -38,41 +38,44 @@
 \newlabel{eq:decentralized_obj}{{18}{9}{}{equation.18}{}}
 \newlabel{eq:coupling_constraint}{{19}{9}{}{equation.19}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4}MPC Role Definition}{11}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Frequency Area Response}{11}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Summary of the \texttt  {FrequencyAreaResponseRole}}}{12}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Frequency area response}{11}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Summary of the \texttt  {FrequencyAreaResponseRole}.}}{12}{}\protected@file@percent }
+\newlabel{tab:frequency_area_response_role}{{1}{12}{}{table.1}{}}
 \@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Local Agent $i$ — Online Distributed MPC}}{12}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Specific implementation}{12}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Testing Setup}{14}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Specific implementation}{13}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Testing environment}{14}{}\protected@file@percent }
 \abx@aux@cite{0}{grids:ieee39}
 \abx@aux@segm{0}{0}{grids:ieee39}
 \abx@aux@cite{0}{grids:models}
 \abx@aux@segm{0}{0}{grids:models}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Case Study and Results}{15}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces IEEE39 2 area diagram.}}{15}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Case Studies}{15}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Diagram of the IEEE 39-bus grid with two area.}}{15}{}\protected@file@percent }
 \newlabel{fig:ieee39_2areas}{{2}{15}{}{figure.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Results}{16}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Frequency Time Series - Distributed MPC}}{16}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Case study 1 - Load increase}{16}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Frequency evolution for study case 1 with MPC}}{16}{}\protected@file@percent }
 \newlabel{fig:frequency_response_1}{{3}{16}{}{figure.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Frequency Time Series - Default}}{16}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Frequency evolution for study case 1 without MPC}}{16}{}\protected@file@percent }
 \newlabel{fig:frequency_response_2}{{4}{16}{}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}\textcolor {red}{Case study 2 - Generator outage}}{16}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}\textcolor {red}{Case study 3 - Line outage}}{17}{}\protected@file@percent }
 \abx@aux@cite{0}{repo:colmenaeroots}
 \abx@aux@segm{0}{0}{repo:colmenaeroots}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Milestone Analysis}{17}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7}Future Work}{18}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {A}Distributed MPC via ADMM}{19}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Milestones}{18}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Future Work}{19}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Distributed MPC via ADMM}{20}{}\protected@file@percent }
 \abx@aux@cite{0}{ADMM:edu}
 \abx@aux@segm{0}{0}{ADMM:edu}
 \abx@aux@cite{0}{ADMM:boyd}
 \abx@aux@segm{0}{0}{ADMM:boyd}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Local Problem Modifications}{20}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{A. Damping Term}{20}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{B. Adaptable \(\rho \)}{20}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{C. Cost Function Scaling}{21}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{D.Smoothing and Terminal cost}{21}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{E.Redundant coupled constraints}{21}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}ADMM Algorithm}{22}{}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Distributed MPC via ADMM}}{22}{}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Online Setpoint Update using ADMM}}{23}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Local Problem Modifications}{21}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{A. Damping Term}{21}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{B. Adaptable \(\rho \)}{21}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{C. Cost Function Scaling}{22}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{D. Smoothing and Terminal cost}{22}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{E. Redundant coupled constraints}{22}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}ADMM Algorithm}{23}{}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Distributed MPC via ADMM}}{23}{}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Online Setpoint Update using ADMM}}{24}{}\protected@file@percent }
 \abx@aux@nociteall
 \xdef \mintedoldcachechecksum{\detokenize{\minted@cachechecksum }}
 \abx@aux@read@bbl@mdfivesum{F61CE15E24FFB2D410785DFA1E06D6DF}
@@ -99,4 +102,4 @@
 \abx@aux@defaultrefcontext{0}{contingency:generation}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{contingency:transmission}{none/global//global/global/global}
 \abx@aux@defaultrefcontext{0}{contingency:equipment}{none/global//global/global/global}
-\gdef \@abspage@last{25}
+\gdef \@abspage@last{26}

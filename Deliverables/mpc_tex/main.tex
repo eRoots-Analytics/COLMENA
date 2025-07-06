@@ -118,8 +118,8 @@ In the context of distributed control systems like COLMENA, contingencies create
         \node[above] at (7,0.25) {$G_2$};
         
         % Loads
-        \node at (1,-0.5) {$L_1$};
-        \node at (7,-0.5) {$L_2$};
+        \node at (1,-0.5) {$D_1$};
+        \node at (7,-0.5) {$D_2$};
         
         % Transmission line
         \draw[thick] (3,0.5) -- (5,0.5);
@@ -131,15 +131,15 @@ In the context of distributed control systems like COLMENA, contingencies create
         % Contingency scenarios
         % 1. Generator disconnection (G1)
         \draw[red, thick, dashed] (1,0.5) circle (0.4);
-        \node[red, above] at (1,-0.29) {\textbf{Gen. Outage}};
+        \node[red, above] at (1,-0.29) {\textbf{Gen. outage}};
         
         % 2. Load disconnection (L2)
         \draw[orange, thick, dashed] (7,-0.5) circle (0.4);
-        \node[orange, above] at (7,-0.18) {\textbf{Load Increase}};
+        \node[orange, above] at (7,-0.18) {\textbf{Demand increase}};
         
         % 3. Line opening (L12)
         \draw[purple, thick, dashed] (4.0,0.7) circle (0.4);
-        \node[purple, above] at (4,1.2) {\textbf{Line Outage}};
+        \node[purple, above] at (4,1.2) {\textbf{Line outage}};
         
         % Frequency indicators
         \node[blue] at (1,1.2) {$f_1(t)$};
@@ -152,13 +152,13 @@ In the context of distributed control systems like COLMENA, contingencies create
         % Legend
         \node[align=left] at (4,3.0) {
             \textbf{Contingency Types:} \\
-            \textcolor{red}{\textbf{---}} Generation Outage \\
-            \textcolor{orange}{\textbf{---}} Load Shedding \\
-            \textcolor{purple}{\textbf{---}} Line Opening
+            \textcolor{red}{\textbf{---}} Generation outage \\
+            \textcolor{orange}{\textbf{---}} Demand increase \\
+            \textcolor{purple}{\textbf{---}} Line outage
         };
         
     \end{circuitikz}
-    \caption{Schematic representation of the power system contingencies under analysis showing generation outage, load shedding, and line opening events in a two-area system.}
+    \caption{Schematic representation of the power system contingencies under analysis showing generation outage, load/demand increase, and line opening events in a two-area system.}
     \label{fig:contingencies}
 \end{figure}
 
@@ -343,30 +343,30 @@ This structure enables the use of distributed optimization techniques, such as t
 \newpage
 \section{MPC Role Definition}
 
-In multi agent architectures and in the context of COLMENA a role is usually tied to a local behavior with a narrow task that is activated when a specific value or KPI is not respected. In this context, the Distributed MPC can be seen as a policy coordinating multiple roles as much a role. For this we propose two different solutions that limit the MPC to specific circumstances making it more akin to a proper role than a policy.
+In multi agent architectures and in the context of COLMENA a role is usually tied to a local behavior with a narrow task that is activated when a specific value or KPI is not respected. In this context, the distributed MPC can be seen as a policy coordinating multiple roles as much a role. For this we propose two different solutions that limit the MPC to specific circumstances making it more akin to a proper role than a policy.
 
-\subsection{Frequency Area Response}
+\subsection{Frequency area response}
 
-In this configuration, the Distributed MPC is deployed as a reactive role rather than a permanent coordination policy. When frequency stability is unusual, indicated by the associated KPI being broken, COLMENA activates this role tasked with coordinating corrective actions within that area.
+In this configuration, the distributed MPC is deployed as a reactive role rather than a permanent coordination policy. When frequency takes abnormal values, which could potentially signal instability, as detected by the associated KPI being surpassed, COLMENA activates this role tasked with coordinating corrective actions within that area.
 
 The COLMENA framework can select the most computationally capable agent within the affected area to execute the distributed MPC coordination logic. This agent acts as the local coordinator, solving the area-wide optimal control problem while communicating with neighboring agents to respect tie-line interactions and boundary constraints. This structure means that a single agent by area is executing the frequency area response role.
 
-The role's objective is to minimize frequency deviations in the local area by adjusting controllable resources (e.g., generation controllable loads) over a prediction horizon. The optimization prioritizes frequency recovery while incorporating ramp limits and operational constraints.
+The role's objective is to minimize frequency deviations in the local area by adjusting controllable resources (e.g., generation and controllable loads) over a prediction horizon. The optimization prioritizes frequency recovery while incorporating ramp limits and operational constraints.
  
-With this context although the distributed MPC involves system-wide coordination and may interact with multiple roles, it behaves as a role in this context because:
+Within this context, although the distributed MPC involves system-wide coordination and may interact with multiple roles, it behaves as a role in this context because:
 \begin{itemize}
     \item It is activated only in response to a specific condition (frequency instability).
     \item It has a well-defined and limited objective: frequency stability.
     \item Changing the objective function (e.g., minimizing cost instead of deviation) or time scale (e.g., minutes vs seconds) would create a role with a different objective, not simply a parameter change within a generic policy.
 \end{itemize}
 
-If instead of minimizing frequency deviation, the agent optimized for economic dispatch over a longer time scale (e.g., 10 minutes), the same underlying MPC engine would constitute a completely different role, such as a \texttt{CostOptimizationRole}. This highlights that roles are defined by their specific objectives, context, and triggers and not merely by the algorithm they run.
+If instead of minimizing the frequency deviation, the agent optimized for economic dispatch over a longer time scale such as 10 minutes, the same underlying MPC engine would constitute a completely different role, for instance, a \texttt{CostOptimizationRole}. This highlights that roles are defined by their specific objectives, context, and triggers, and not merely by the algorithm they run.
 
-Within COLMENA's architecture, the distributed MPC can straddle the line between coordination mechanism and agent behavior, depending on how it is contextualized and activated. By bounding its scope through KPIs and objectives, it becomes operationally meaningful as a discrete role.
+Within COLMENA's architecture, the distributed MPC can straddle the line between coordination mechanism and agent behavior, depending on how it is contextualized and activated. By bounding its scope through KPIs and objectives, it becomes operationally meaningful as a discrete role. Table \ref{tab:frequency_area_response_role} summarizes the characteristics of the described role. 
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{|p{4cm}|p{10cm}|}
+\begin{tabular}{|p{3cm}|p{8cm}|}
 \hline
 \textbf{Aspect} & \textbf{Description} \\
 \hline
@@ -378,14 +378,15 @@ Within COLMENA's architecture, the distributed MPC can straddle the line between
 \hline
 \textbf{Scope} & Local to an area, with coordination across neighboring agents. \\
 \hline
-\textbf{Agent Requirement} & Computational Power, Specific Solver\\
+\textbf{Agent Requirement} & Computational power and specific solver\\
 \hline
 \textbf{Time Scale} & Fast-acting (typically sub-minute) response to stabilize frequency\\
 \hline
-\textbf{Key Dependencies} & Access to local state measurements (frequency, generation), ramp-rate limits, and communication with neighboring agents. \\
+\textbf{Key Dependencies} & Access to local state measurements (frequency, power injection), ramp-rate limits, and communication with neighboring agents. \\
 \hline
 \end{tabular}
-\caption{Summary of the \texttt{FrequencyAreaResponseRole}}
+\caption{Summary of the \texttt{FrequencyAreaResponseRole}.}
+\label{tab:frequency_area_response_role}
 \end{table}
 
 The following pseudocode describes the online control loop executed by each local agent in area $i$ when the distributed MPC role is activated.
@@ -410,90 +411,98 @@ The following pseudocode describes the online control loop executed by each loca
 
 \subsection{Specific implementation}
 
-In this section we discuss how the different tools provided by COLMENA are used to set up the grid. Specifically, how the data and contexts decorators are used by the Distributed MPC role to be implemented in parallel. The parallel implementation is key to 
+In this section we discuss how the different tools provided by COLMENA are used to set up the grid. Specifically, how the data and contexts decorators are used by the Distributed MPC role to be implemented in parallel. The parallel implementation is key to the distributed nature of the MPC.
 
 \subsubsection*{Contexts Decorators}
 
-The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific contexts when they belong to an area. For example, we could have contexts defined by the agents ID beforehand or, if we consider the initial prototype, if an agent is paired to an electrical device then the agent would belong to that area's context.
+The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific contexts when they are part of an area. For example, we could have contexts defined by the agents ID beforehand, or if we consider the initial prototype, if an agent is paired to an electrical device, then the agent would belong to that area's context.
 
-We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For example, instead of the MPC including the dynamics of certain roles the MPC can set objectives that then other roles inside the area can react to. For this case we define \textit{Grid Areas} a context where each colmena agent is associated with their 
+We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For instance, instead of the MPC including the dynamics of certain roles, the MPC can set objectives that then other roles inside the area can react to. For this case we define \textit{Grid Areas} a context where a set of COLMENA agents are interlinked.
 
 \subsubsection*{Data Decorators}
 
-We define 3 different types of data channels to share information between the different agents running the ADMM:
+We define three different types of data channels to share information between the different agents running the ADMM:
 
 \begin{itemize}
-    \item State Horizon  Data: Channel where the copies of all the coupled primal variables are sent between agents, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
-    \item Dual Variables Data: Channel where the dual variables are stored, this specific channel is scoped with respect to the context \textit{Grid Areas}. This makes it so that each area stores their own copy of the dual variables. This can be leveraged so that different agents in the same area could run different iterations of the online control.
-    \item Error Data: Channel where the agents update the dual error of the ADMM algorithm. When the error goes below a specific tolerance we consider the ADMM has reached convergence. Then the agents send the control actions to the ANDES simulation and wait until the next step.
+    \item \textbf{State horizon zata:} channel where the copies of all the coupled primal variables are sent between agents, that is the $\hat{\delta}_{i,j,t} \quad \forall i,j,t$.
+    \item \textbf{Dual variables data:} channel where the dual variables are stored, this specific channel is scoped with respect to the context \textit{Grid Areas}. This makes it so that each area stores their own copy of the dual variables. Such an approach can be leveraged so that different agents in the same area could run different iterations of the online control.
+    \item \textbf{Error data:} channel where the agents update the dual error of the ADMM algorithm. When the error goes below a specific tolerance we consider the ADMM has converged. Then the agents send the control actions to the ANDES simulation and wait until the next step.
 \end{itemize}
 
 \subsubsection*{Coordination}
 
-The different agents read the state horizon channel to get the values for the primal variables of other agents and then post their updated primal values. To avoid agents overwriting the changes of other agents we also add a coordination feature. This consists in the different agents having to update different data channels depending on the context. We also considered defining a new coordinating agent to perform this task that receives the different agents messages but decided against it.
+The different agents read the state horizon channel to get the values for the primal variables of other agents and then post their updated primal values. To avoid agents overwriting the changes of other agents, we also add a coordination feature. This consists in different agents having to update various data channels depending on the context. We also consider defining a new coordinating agent to perform this task, which could be implemented in later phases, although it was deemed unnecessary at this stage.
 
 \subsubsection*{Activation}
 
-The distributed Frequency control role is activated when two KPIs are broken. The role first communicates with ANDES and learns the initial conditions for the problem. It then solves a single iteration of the local problem. In the prototype the other iterations are also run by the same agent. The goal however is to potentially use COLMENA's resource control to run the solver in, for example,  the most computationally powerful agent available. This could be possible thanks to the different communications channels already storing the necessary data independently of the agents.
+The distributed frequency control role is activated when two KPIs are broken. The role first communicates with ANDES and learns the initial conditions for the problem. It then solves a single iteration of the local problem. In the prototype, the other iterations are also executed by the same agent. The goal however is to potentially use COLMENA's resource control to run the solver, for example, in the most computationally powerful agent available. This could be possible thanks to the different communications channels already storing the necessary data independently of the agents.
 
-\subsection{Testing Setup}
+\subsection{Testing environment}
 
-The testing was carried out on a local machine, where the agents in the COLMENA framework run in Docker containers, maintaining the decentralized nature of the system. These agents communicate locally with the ANDES simulation, which is also hosted on the same machine. The use of Docker containers for the agents ensures that the system remains modular and scalable, allowing for independent operation and coordination between agents while still adhering to decentralized principles. 
+The testing was carried out on a local machine, where the agents in the COLMENA framework run in Docker containers, maintaining the decentralized nature of the system. These agents communicate locally with the ANDES simulator, which is also hosted on the same machine. The use of Docker containers for the agents ensures that the system remains modular and scalable, allowing for independent operation and coordination between agents while still adhering to decentralized principles. 
 
 \newpage
-\section{Case Study and Results}
+\section{Case Studies}
 
-We consider the IEEE39 \cite{grids:ieee39} grid to perform multiple case studies and see how the COLMENA frameworks performs in controlling the frequency. The grid consists of 39 buses, 10 generators, 14 lines and others electrical devices responsible for the electrical control. The line is simulated in python using the open source package ANDES \cite{grids:models}. This grid is divided in two different areas of similar size, where each bus belongs to one area or the other. The setup is identical to the one explained in the previous deliverable: ANDES is set up as an app that simulates the grid in real time. This app is also set up to receive queries to from COLMENA on the state on the grid, akin to making measurement of specific metrics on the grid. And it can also change the parameters of the simulation similar to a role acting on the grid.
+We consider the IEEE 39-bus grid, whose data can be found in \cite{grids:ieee39}, to perform multiple case studies and analyze how the COLMENA framework performs in controlling the frequency. The grid consists of 39 buses, 10 generators, 14 lines, among others. The calculations are performed in Python using the open-source package ANDES \cite{grids:models}. This grid is divided in two different areas of similar size, where each bus belongs to one specific area. The setup is identical to the one explained in the previous deliverable: ANDES is set up as an app that simulates the grid in real time. This app is also prepared to receive queries to from COLMENA regarding the state on the grid, akin to taking measurements of specific metrics on the grid. Additionally, it is also possible to modify the parameters of the simulation similar to a role acting on the grid. Figure \ref{fig:ieee39_2areas} shows the diagram of the IEEE 39-bus grid with two areas.
 
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/ieee2areas.png}
-    \caption{IEEE39 2 area diagram.}
+    \caption{Diagram of the IEEE 39-bus grid with two area.}
     \label{fig:ieee39_2areas}
 \end{figure}
 
-From the COLMENA side, we deploy multiple agents as docker containers deployed in a single computer. We deploy at two agents per area, where these agents can run both the Distributed MPC role and the roles presented in the previous deliverables (if they respect the requirements). In each area we deploy:
+From the COLMENA side, we employ multiple agents as Docker containers deployed in a single computer. We deploy two agents per area, where these agents can run both the Distributed MPC role and the roles presented in the previous deliverables (if they respect the requirements). In each area we deploy:
 
 \begin{itemize}
     \item Agent 1: Agent with requirement ('generator', 'solver') 
     \item Agent 2: Agent with requirement ('converter') 
 \end{itemize}
 
-On the simulation side, we start the simulation with a grid in steady state conditions. We set up multiple scenarios with the objective of seeing how the different roles act in the grid to counteract this perturbation. We set up the Distributed MPC with a horizon of 3 seconds and a time step of 0.1 seconds.
+On the simulation side, we start the simulation with a grid in steady-state conditions. We set up multiple scenarios with the objective of studying how the different roles act in the grid to counteract this perturbation. The distributed MPC is configured with a horizon of 3 seconds and a time step of 100 ms.
 
-\subsection{Results}
+\subsection{Case study 1 - Load increase}
 
-We define a perturbation at $t=3s$ that consists in a load suddenly doubling. This perturbation provokes a drop in frequency. The Distributed frequency optimizer role activates 10 seconds after the KPI is broken since it needs time to set up. Once the role is activated the frequency is brought back closer to the nominal frequency. The grid does not come back perfectly to the nominal frequency because of the assumptions made in the modelling of the grid. The final oscillations can then be cancelled by the Automatic Response Control.
+We define a perturbation at $t=3s$ that consists in a load suddenly doubling. This perturbation provokes a drop in frequency. The distributed frequency optimizer role activates 10 seconds after the KPI is broken given the required time to set up. Once the role is activated, the frequency is brought back closer to the nominal value. The grid does not come back to exactly the nominal frequency because of the assumptions made in the modelling of the grid (mainly, modelling the system as linear when it is inherently non-linear). The final oscillations could then be cancelled by the Automatic Response Control. The comparison of the frequency evolution with and without the distributed MPC is shown in Figure \ref{fig:frequency_response_1} and \ref{fig:frequency_response_2}.
 
 \begin{figure}[ht]
     \centering
     \begin{minipage}{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/mpc_load.png}
-        \caption{Frequency Time Series - Distributed MPC}
+        \caption{Frequency evolution for study case 1 with MPC}
         \label{fig:frequency_response_1}
     \end{minipage}%
     \hspace{0.1cm}  % Adds horizontal space between the figures
     \begin{minipage}{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{figures/non_mpc_load.png}
-        \caption{Frequency Time Series - Default}
+        \caption{Frequency evolution for study case 1 without MPC}
         \label{fig:frequency_response_2}
     \end{minipage}
 \end{figure}
 
-Other scenarios available in the prototype's repository are also capable of restoring the grid's frequency. 
+\textcolor{red}{Describe in which bus is the load varied and what new value in MW and Mvar does it take.}
+
+
+\subsection{\textcolor{red}{Case study 2 - Generator outage}}
+\textcolor{red}{Fill this case study with a figure showing the results and explaining the perturbation that was caused.}
+
+\subsection{\textcolor{red}{Case study 3 - Line outage}}
+\textcolor{red}{Fill this case study with a figure showing the results and explaining the perturbation that was caused.}
 
 \newpage
-\section{Milestone Analysis}
+\section{Milestones}
+This brief chapter summarizes the milestones of the project associated with this deliverable corresponding to Activity 3.
 
-\subsection*{Milestone 1}
+\subsection*{Milestone 1 - Prototype code delivery}
 
-The final version of the prototype is now fully functional and has been successfully deployed. This version leverages the tools provided by Colmena to enable scalable, modular deployment of decentralized control algorithms. It has been extensively tested using multiple contingency scenarios, including generator outages, line outages and loads increases to validate the robustness of power converter responses under possible stress conditions. The response of the COLMENA control in these scenarios validates the capacity of the roles to respond to perturbations and restore the original frequency. The different testcases along with the prototype are available in the following online repository \cite{repo:colmenaeroots}.
+The final version of the prototype is now fully functional and has been successfully deployed. This version leverages the tools provided by COLMENA to enable scalable, modular deployment of decentralized control algorithms. It has been extensively tested using multiple contingency scenarios, including generator outages, line outages and loads increases to validate the robustness of power converter responses under possible stress conditions. The response of the COLMENA control in these scenarios validates the capacity of the roles to respond to perturbations and restore the original frequency. The different testcases along with the prototype are available in the following online repository \cite{repo:colmenaeroots}.
 
-\subsection*{Milestone 2}
+\subsection*{Milestone 2 - Prototype deployment}
 
-The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations. The specific andes app tasked with running the simulation is also available as a docker container in case it is needed further testing is needed. 
+The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations. The specific ANDES app tasked with running the simulation is also available as a Docker container in case it is needed further testing is needed. 
 
 \newpage
 \section{Future Work}
@@ -577,7 +586,7 @@ In practice, the magnitudes of the objective terms across agents can differ sign
 
 This subproblem defines the core of the distributed MPC framework under ADMM. Each agent optimizes locally, exchanges information with its neighbors, and updates its variables based on the augmented Lagrangian terms, gradually driving the overall system toward a consensus-based optimal trajectory.
 
-\paragraph{D.Smoothing and Terminal cost} 
+\paragraph{D. Smoothing and Terminal cost} 
 
 Additionally, we add two new terms to the cost function in order to get better results out of the distributed MPC. These new cost terms consists of a smoothing term that smooths the trajectory of the frequency:
 
@@ -593,7 +602,7 @@ And a Terminal cost term that we define as follows:
 
 Overall, these additions help us find a more suitable solution of the frequency's trajectory rather than just minimizing for the cost.
 
-\paragraph{E.Redundant coupled constraints} 
+\paragraph{E. Redundant coupled constraints} 
 
 Finally, we add additional coupled constraint to the local MPC formulation. This new constraint do not change the model mathematically but significantly improve convergence speed. The existing formulation can pose problems since it achieves consensus in the states that are further in the horizon and can lock the problem into a suboptimal path. The new coupled constraint intent to achieve consensus between the agents also in the dynamics. They are the following in 
 
@@ -628,7 +637,9 @@ We can also write this equations in terms of $\delta_{j,i,t}$. With this additio
 
 This distributed MPC approach converges to the centralized solution while allowing each agent to optimize its control strategy independently and in parallel. The dual variables ensure consensus across shared variables, and ADMM iterations enforce global coordination. 
 
-In the prototype we aim to implement an online implementation of this ADMM by solving the ADMM algorithm iteratively. In practice this means that each area solves its local optimization problem over a finite horizon and exchanges boundary variables  with neighboring areas. Once there is convergence, only the first control action of the optimal sequence is applied to the physical system. This includes updating the setpoints of generators for the next time step. The following algorithm illustrates how each generator applies the control update by computing the power ramp to be executed in the current time step:
+In the prototype we aim to implement an online implementation of this ADMM by solving the ADMM algorithm iteratively. In practice this means that each area solves its local optimization problem over a finite horizon and exchanges boundary variables  with neighboring areas. Once there is convergence, only the first control action of the optimal sequence is applied to the physical system. This includes updating the setpoints of generators for the next time step. 
+
+The following algorithm illustrates how each generator applies the control update by computing the power ramp to be executed in the current time step:
 
 \begin{algorithm}
 \caption{Online Setpoint Update using ADMM}
@@ -639,6 +650,7 @@ In the prototype we aim to implement an online implementation of this ADMM by so
     \EndFor
 \end{algorithmic}
 \end{algorithm}
+This way, the agents are able to solve the local problem and send the control actions to the ANDES simulator, which would then provide the system operating conditions for the next time step.
 
 \newpage
 \clearpage

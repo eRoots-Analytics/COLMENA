@@ -1,0 +1,905 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{grids:ieee39}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
+           family={Athay},
+           familyi={A\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=06144b0a243aed86518ed65c6c1e8439}{%
+           family={Podmore},
+           familyi={P\bibinitperiod},
+           given={Roger},
+           giveni={R\bibinitperiod}}}%
+        {{hash=12147c3a32ea087e5568b6b6eef97ae8}{%
+           family={Virmani},
+           familyi={V\bibinitperiod},
+           given={Stephen},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
+      \strng{fullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{fullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{bibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authorbibnamehash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authornamehash}{bcf9f0c1c8100fc5c9a6a6eac18181b6}
+      \strng{authorfullhash}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \strng{authorfullhashraw}{3fdf7d12ce3581759558ba4cacbfbd2f}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
+      \field{title}{A practical method for the direct analysis of transient stability}
+      \field{volume}{PAS-98}
+      \field{year}{1979}
+    \endentry
+    \entry{contingency:analysis}{thesis}{}{}
+      \name{author}{2}{}{%
+        {{hash=2cf4ab82a10ca960d5d6856c94b6848a}{%
+           family={Roy},
+           familyi={R\bibinitperiod},
+           given={Amit\bibnamedelima Kumar},
+           giveni={A\bibinitperiod\bibinitdelim K\bibinitperiod}}}%
+        {{hash=ca5d1908d0dd52ebb79a6972748ed0fc}{%
+           family={Jain},
+           familyi={J\bibinitperiod},
+           given={Sanjay\bibnamedelimb Kumar\bibnamedelima Guide},
+           giveni={S\bibinitperiod\bibinitdelim K\bibinitperiod\bibinitdelim G\bibinitperiod}}}%
+      }
+      \strng{namehash}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{fullhash}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{fullhashraw}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{bibnamehash}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{authorbibnamehash}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{authornamehash}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{authorfullhash}{5d27cf8d29d611361cbbe77674e69c3c}
+      \strng{authorfullhashraw}{5d27cf8d29d611361cbbe77674e69c3c}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Contingency analysis in power system}
+      \field{type}{phdthesis}
+      \field{year}{2011}
+    \endentry
+    \entry{marzband2016adaptive}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=492daca069f1729a961a24ea68fae8d6}{%
+           family={Marzband},
+           familyi={M\bibinitperiod},
+           given={Mousa},
+           giveni={M\bibinitperiod}}}%
+        {{hash=4317e28922230bcd74a703074a9f364e}{%
+           family={Moghaddam},
+           familyi={M\bibinitperiod},
+           given={Maziar\bibnamedelima Mirhosseini},
+           giveni={M\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=2fd9511078160bef3dfd8997549d1889}{%
+           family={Akorede},
+           familyi={A\bibinitperiod},
+           given={Mudathir\bibnamedelima Funsho},
+           giveni={M\bibinitperiod\bibinitdelim F\bibinitperiod}}}%
+        {{hash=b027e9756a32f496c6335fd83c869885}{%
+           family={Khomeyrani},
+           familyi={K\bibinitperiod},
+           given={Ghazal},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier}%
+      }
+      \strng{namehash}{c74a4341658a77cabcd5e2dbb43969ae}
+      \strng{fullhash}{f9b48d476931761759afd4f1fb3a6d59}
+      \strng{fullhashraw}{f9b48d476931761759afd4f1fb3a6d59}
+      \strng{bibnamehash}{f9b48d476931761759afd4f1fb3a6d59}
+      \strng{authorbibnamehash}{f9b48d476931761759afd4f1fb3a6d59}
+      \strng{authornamehash}{c74a4341658a77cabcd5e2dbb43969ae}
+      \strng{authorfullhash}{f9b48d476931761759afd4f1fb3a6d59}
+      \strng{authorfullhashraw}{f9b48d476931761759afd4f1fb3a6d59}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Electric Power Systems Research}
+      \field{title}{Adaptive load shedding scheme for frequency stability enhancement in microgrids}
+      \field{volume}{140}
+      \field{year}{2016}
+      \field{pages}{78\bibrangedash 86}
+      \range{pages}{9}
+    \endentry
+    \entry{aeggegn2020load}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=442898632179b4e0af6901ce407223a5}{%
+           family={Aeggegn},
+           familyi={A\bibinitperiod},
+           given={Dessalegn\bibnamedelima Bitew},
+           giveni={D\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=51774912356cf845ae42794f4ee5baed}{%
+           family={Salau},
+           familyi={S\bibinitperiod},
+           given={Ayodeji\bibnamedelima Olalekan},
+           giveni={A\bibinitperiod\bibinitdelim O\bibinitperiod}}}%
+        {{hash=69ceb0a0705aa50333c160df7bfc6427}{%
+           family={Gebru},
+           familyi={G\bibinitperiod},
+           given={Yalew},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Polish Academy of Sciences}%
+      }
+      \strng{namehash}{82d85051b6259e47d1d5fdb0ffa1742b}
+      \strng{fullhash}{961d65f00b317556f2697cdbca6bf9df}
+      \strng{fullhashraw}{961d65f00b317556f2697cdbca6bf9df}
+      \strng{bibnamehash}{961d65f00b317556f2697cdbca6bf9df}
+      \strng{authorbibnamehash}{961d65f00b317556f2697cdbca6bf9df}
+      \strng{authornamehash}{82d85051b6259e47d1d5fdb0ffa1742b}
+      \strng{authorfullhash}{961d65f00b317556f2697cdbca6bf9df}
+      \strng{authorfullhashraw}{961d65f00b317556f2697cdbca6bf9df}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Archives of Electrical Engineering}
+      \field{title}{Load flow and contingency analysis for transmission line outage}
+      \field{year}{2020}
+      \field{pages}{581\bibrangedash 594}
+      \range{pages}{14}
+    \endentry
+    \entry{contingency:load}{article}{}{}
+      \name{author}{6}{}{%
+        {{hash=0c2f6d3a3e9e56d41d18d41b6cf1a51f}{%
+           family={Price},
+           familyi={P\bibinitperiod},
+           given={William\bibnamedelima W},
+           giveni={W\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+        {{hash=402a8f6900e76ebe8b9198c997032bc3}{%
+           family={Wirgau},
+           familyi={W\bibinitperiod},
+           given={Kim\bibnamedelima A},
+           giveni={K\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=605fdae57c67d9068cf760562f821161}{%
+           family={Murdoch},
+           familyi={M\bibinitperiod},
+           given={Alexander},
+           giveni={A\bibinitperiod}}}%
+        {{hash=b2c3599a8dce0030dfda84b5398a2eb9}{%
+           family={Mitsche},
+           familyi={M\bibinitperiod},
+           given={James\bibnamedelima V},
+           giveni={J\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+        {{hash=84294ecb27b3cc97f3636467aebed481}{%
+           family={Vaahedi},
+           familyi={V\bibinitperiod},
+           given={Ebrahim},
+           giveni={E\bibinitperiod}}}%
+        {{hash=cf06b816fb28a5c98be8ab9e4c356542}{%
+           family={El-Kady},
+           familyi={E\bibinithyphendelim K\bibinitperiod},
+           given={Moe},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{f18ef2b7e3bb11ec0b22bbedb590da15}
+      \strng{fullhash}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
+      \strng{fullhashraw}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
+      \strng{bibnamehash}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
+      \strng{authorbibnamehash}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
+      \strng{authornamehash}{f18ef2b7e3bb11ec0b22bbedb590da15}
+      \strng{authorfullhash}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
+      \strng{authorfullhashraw}{cf0a4ab36de1c82e7768a4e2bea7f0c7}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Systems}
+      \field{number}{1}
+      \field{title}{Load modeling for power flow and transient stability computer studies}
+      \field{volume}{3}
+      \field{year}{2002}
+      \field{pages}{180\bibrangedash 187}
+      \range{pages}{8}
+    \endentry
+    \entry{contingency:weather}{inproceedings}{}{}
+      \name{author}{2}{}{%
+        {{hash=710d4f549e4af9908a144bd4e0fb1d9b}{%
+           family={Campbell},
+           familyi={C\bibinitperiod},
+           given={Richard\bibnamedelima J},
+           giveni={R\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=00997cf3c68d28829436100fd90e4c5c}{%
+           family={Lowry},
+           familyi={L\bibinitperiod},
+           given={Sean},
+           giveni={S\bibinitperiod}}}%
+      }
+      \list{organization}{1}{%
+        {Congressional Research Service, Library of Congress Washington, DC}%
+      }
+      \strng{namehash}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{fullhash}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{fullhashraw}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{bibnamehash}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{authorbibnamehash}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{authornamehash}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{authorfullhash}{bbc6cf0822a4be68595be58f8ab01d65}
+      \strng{authorfullhashraw}{bbc6cf0822a4be68595be58f8ab01d65}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Weather-related power outages and electric system resiliency}
+      \field{year}{2012}
+    \endentry
+    \entry{li2006power}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=cfc6a71125cbf08595e175d1ebbd327d}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Wenyuan},
+           giveni={W\bibinitperiod}}}%
+        {{hash=84294ecb27b3cc97f3636467aebed481}{%
+           family={Vaahedi},
+           familyi={V\bibinitperiod},
+           given={Ebrahim},
+           giveni={E\bibinitperiod}}}%
+        {{hash=9278588327b1ad06ab45b3d249edbccf}{%
+           family={Choudhury},
+           familyi={C\bibinitperiod},
+           given={Paul},
+           giveni={P\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{7c4389d133edda253b070b7bd1eebb72}
+      \strng{fullhash}{1290a76819d8fc99bdb0d10bbe0ffa54}
+      \strng{fullhashraw}{1290a76819d8fc99bdb0d10bbe0ffa54}
+      \strng{bibnamehash}{1290a76819d8fc99bdb0d10bbe0ffa54}
+      \strng{authorbibnamehash}{1290a76819d8fc99bdb0d10bbe0ffa54}
+      \strng{authornamehash}{7c4389d133edda253b070b7bd1eebb72}
+      \strng{authorfullhash}{1290a76819d8fc99bdb0d10bbe0ffa54}
+      \strng{authorfullhashraw}{1290a76819d8fc99bdb0d10bbe0ffa54}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Power and Energy Magazine}
+      \field{number}{3}
+      \field{title}{Power system equipment aging}
+      \field{volume}{4}
+      \field{year}{2006}
+      \field{pages}{52\bibrangedash 58}
+      \range{pages}{7}
+    \endentry
+    \entry{contingency:stability}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=39882366f85507fce005c512ac3b2240}{%
+           family={Kundur},
+           familyi={K\bibinitperiod},
+           given={Prabha},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{39882366f85507fce005c512ac3b2240}
+      \strng{fullhash}{39882366f85507fce005c512ac3b2240}
+      \strng{fullhashraw}{39882366f85507fce005c512ac3b2240}
+      \strng{bibnamehash}{39882366f85507fce005c512ac3b2240}
+      \strng{authorbibnamehash}{39882366f85507fce005c512ac3b2240}
+      \strng{authornamehash}{39882366f85507fce005c512ac3b2240}
+      \strng{authorfullhash}{39882366f85507fce005c512ac3b2240}
+      \strng{authorfullhashraw}{39882366f85507fce005c512ac3b2240}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Power system stability and control}
+      \field{number}{1}
+      \field{title}{Power system stability}
+      \field{volume}{10}
+      \field{year}{2007}
+      \field{pages}{7\bibrangedash 1}
+      \range{pages}{-5}
+    \endentry
+    \entry{ADMM:boyd}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=ec94d94cc487dd71939a90cbeaaf47d0}{%
+           family={Boyd},
+           familyi={B\bibinitperiod},
+           given={Stephen},
+           giveni={S\bibinitperiod}}}%
+        {{hash=2e1b520f90d2b5de02de6cf5f9896399}{%
+           family={Parikh},
+           familyi={P\bibinitperiod},
+           given={Neal},
+           giveni={N\bibinitperiod}}}%
+        {{hash=a9b44e6e637f2b45f96e1c9c60803c93}{%
+           family={Chu},
+           familyi={C\bibinitperiod},
+           given={Eric},
+           giveni={E\bibinitperiod}}}%
+        {{hash=bc21df4b6c3255996b02e140a1419ecf}{%
+           family={Peleato},
+           familyi={P\bibinitperiod},
+           given={Borja},
+           giveni={B\bibinitperiod}}}%
+        {{hash=f98eab9d67187905cc9b153a02f0b3f4}{%
+           family={Eckstein},
+           familyi={E\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Now Publishers Inc.}%
+      }
+      \strng{namehash}{60ec9bf707fa51b002fec03e755dd98d}
+      \strng{fullhash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{fullhashraw}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{bibnamehash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{authorbibnamehash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{authornamehash}{60ec9bf707fa51b002fec03e755dd98d}
+      \strng{authorfullhash}{0ed62155139f29aa99cdd8d945a2291b}
+      \strng{authorfullhashraw}{0ed62155139f29aa99cdd8d945a2291b}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Foundations and Trends in Machine Learning}
+      \field{number}{1}
+      \field{title}{Distributed optimization and statistical learning via the alternating direction method of multipliers}
+      \field{volume}{3}
+      \field{year}{2011}
+      \field{pages}{1\bibrangedash 122}
+      \range{pages}{122}
+      \verb{urlraw}
+      \verb https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf
+      \endverb
+      \verb{url}
+      \verb https://web.stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf
+      \endverb
+    \endentry
+    \entry{paper:DMPC}{thesis}{}{}
+      \name{author}{1}{}{%
+        {{hash=c5c37d0e922d0b289bb4d0b76cb7d5e8}{%
+           family={Negenborn},
+           familyi={N\bibinitperiod},
+           given={R.\bibnamedelimi R.},
+           giveni={R\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Delft University of Technology}%
+      }
+      \strng{namehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{fullhash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{fullhashraw}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{bibnamehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authorbibnamehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authornamehash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authorfullhash}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \strng{authorfullhashraw}{c5c37d0e922d0b289bb4d0b76cb7d5e8}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Accessed: 2025-06-25}
+      \field{title}{Model Predictive Control for the Management of Large-Scale Power Systems}
+      \field{type}{phdthesis}
+      \field{year}{2007}
+      \verb{urlraw}
+      \verb https://www.dcsc.tudelft.nl/~bdeschutter/research/phd_theses/phd_negenborn_2007.pdf
+      \endverb
+      \verb{url}
+      \verb https://www.dcsc.tudelft.nl/~bdeschutter/research/phd_theses/phd_negenborn_2007.pdf
+      \endverb
+    \endentry
+    \entry{paper:marco}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=c562f6e916080c7a57d20ac75b6fe8af}{%
+           family={Bettoni},
+           familyi={B\bibinitperiod},
+           given={Alessandro},
+           giveni={A\bibinitperiod}}}%
+        {{hash=625b49df415678e73522e1fe12c1f474}{%
+           family={Mastroddi},
+           familyi={M\bibinitperiod},
+           given={Giacomo},
+           giveni={G\bibinitperiod}}}%
+        {{hash=3df9a14c247225d6b5866931b1b1b20f}{%
+           family={Muttoni},
+           familyi={M\bibinitperiod},
+           given={Marco},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{a47118822db0b63a9f9eb9edfa09671d}
+      \strng{fullhash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{fullhashraw}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{bibnamehash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{authorbibnamehash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{authornamehash}{a47118822db0b63a9f9eb9edfa09671d}
+      \strng{authorfullhash}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \strng{authorfullhashraw}{f9c4e3e990ffb3c9a5d2ee921bde0fa4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Distributed Nonlinear Model Predictive Control for District Heating Networks}
+      \field{year}{2021}
+    \endentry
+    \entry{grids:models}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=ecec65b415b19b3621e8d452315cd17f}{%
+           family={Cui},
+           familyi={C\bibinitperiod},
+           given={Hantao},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{fullhash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{fullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{bibnamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorbibnamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authornamehash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorfullhash}{ecec65b415b19b3621e8d452315cd17f}
+      \strng{authorfullhashraw}{ecec65b415b19b3621e8d452315cd17f}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://docs.andes.app/en/latest/modelref.html}}
+      \field{title}{Andes, Model References}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://docs.andes.app/en/latest/modelref.html
+      \endverb
+      \verb{url}
+      \verb https://docs.andes.app/en/latest/modelref.html
+      \endverb
+    \endentry
+    \entry{repo:colmenaeroots}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=74a7cbe732a920845d1f4a25588b490b}{%
+           family={Analytics},
+           familyi={A\bibinitperiod},
+           prefix={eRoots},
+           prefixi={e\bibinitperiod}}}%
+      }
+      \strng{namehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{fullhash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{fullhashraw}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{bibnamehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authorbibnamehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authornamehash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authorfullhash}{74a7cbe732a920845d1f4a25588b490b}
+      \strng{authorfullhashraw}{74a7cbe732a920845d1f4a25588b490b}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/eRoots-Analytics/COLMENA}}
+      \field{note}{Accessed: 2025-06-03}
+      \field{title}{COLMENA: Decentralized Control Framework for Power Grids}
+      \field{year}{2024}
+    \endentry
+    \entry{ADMM:edu}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=124ddd1cc7f716c826ff83f180e929cf}{%
+           family={Olivella-Rosell},
+           familyi={O\bibinithyphendelim R\bibinitperiod},
+           given={Pol},
+           giveni={P\bibinitperiod}}}%
+        {{hash=080acd36ffe1e81fe04d5561799b103f}{%
+           family={Rullan},
+           familyi={R\bibinitperiod},
+           given={Francesc},
+           giveni={F\bibinitperiod}}}%
+        {{hash=644feda73856b712535a04dee4fb0e5b}{%
+           family={Lloret-Gallego},
+           familyi={L\bibinithyphendelim G\bibinitperiod},
+           given={Pau},
+           giveni={P\bibinitperiod}}}%
+        {{hash=dd60251b6213da382edf3daf634a0ce9}{%
+           family={Prieto-Araujo},
+           familyi={P\bibinithyphendelim A\bibinitperiod},
+           given={Eduardo},
+           giveni={E\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{b03e432d6578a529bc9a2f4dd37be4c2}
+      \strng{fullhash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{fullhashraw}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{bibnamehash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{authorbibnamehash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{authornamehash}{b03e432d6578a529bc9a2f4dd37be4c2}
+      \strng{authorfullhash}{095a0c11911ed7f28bf33dac694012c6}
+      \strng{authorfullhashraw}{095a0c11911ed7f28bf33dac694012c6}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Smart Grid}
+      \field{number}{4}
+      \field{title}{Centralised and Distributed Optimization for Aggregated Flexibility Services Provision}
+      \field{volume}{10}
+      \field{year}{2019}
+      \field{pages}{3551\bibrangedash 3565}
+      \range{pages}{15}
+      \verb{doi}
+      \verb 10.1109/TSG.2018.2827684
+      \endverb
+      \verb{urlraw}
+      \verb https://ieeexplore.ieee.org/document/8359283
+      \endverb
+      \verb{url}
+      \verb https://ieeexplore.ieee.org/document/8359283
+      \endverb
+    \endentry
+    \entry{grids:kundur}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Qiuhua},
+           giveni={Q\bibinitperiod}}}%
+      }
+      \strng{namehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{bibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorbibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \field{extraname}{1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
+      \field{title}{RLGC repository}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+      \verb{url}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+    \endentry
+    \entry{grids:ieee14}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/
+      \endverb
+    \endentry
+    \entry{grids:ieee118}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{2}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+    \endentry
+    \entry{test2}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=d43d9fed92150b8ef8718bad07048018}{%
+           family={Washington},
+           familyi={W\bibinitperiod},
+           given={University},
+           giveni={U\bibinitperiod},
+           prefix={of},
+           prefixi={o\bibinitperiod}}}%
+      }
+      \strng{namehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{fullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \strng{bibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorbibnamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authornamehash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhash}{d43d9fed92150b8ef8718bad07048018}
+      \strng{authorfullhashraw}{d43d9fed92150b8ef8718bad07048018}
+      \field{extraname}{3}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm}}
+      \field{title}{Power Systems Test Case Archive}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+      \verb{url}
+      \verb https://labs.ece.uw.edu/pstca/pf118/pg_tca118bus.htm
+      \endverb
+    \endentry
+    \entry{grids:kundur2}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=3c2212375b9c1cb5cade4ffc044b9b21}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Qiuhua},
+           giveni={Q\bibinitperiod}}}%
+      }
+      \strng{namehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{fullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{bibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorbibnamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authornamehash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhash}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \strng{authorfullhashraw}{3c2212375b9c1cb5cade4ffc044b9b21}
+      \field{extraname}{2}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/RLGC-Project/RLGC}}
+      \field{title}{RLGC repository}
+      \field{urlday}{13}
+      \field{urlmonth}{8}
+      \field{urlyear}{2024}
+      \field{year}{2022}
+      \field{urldateera}{ce}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+      \verb{url}
+      \verb https://github.com/RLGC-Project/RLGC
+      \endverb
+    \endentry
+    \entry{tool:andes}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=f9791becca66cbf7603e9fefb5c525b3}{%
+           family={Qi},
+           familyi={Q\bibinitperiod},
+           given={Shuang},
+           giveni={S\bibinitperiod}}}%
+        {{hash=a6a624e10979d64f225ea3eecae2f258}{%
+           family={Milano},
+           familyi={M\bibinitperiod},
+           given={Federico},
+           giveni={F\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier}%
+      }
+      \strng{namehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{fullhash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{fullhashraw}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{bibnamehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authorbibnamehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authornamehash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authorfullhash}{53ff3a0b2c2c9fc175480f6254340c61}
+      \strng{authorfullhashraw}{53ff3a0b2c2c9fc175480f6254340c61}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{SoftwareX}
+      \field{title}{ANDES: A Python tool for power system modeling and analysis}
+      \field{volume}{11}
+      \field{year}{2020}
+      \true{nocite}
+      \field{pages}{100453}
+      \range{pages}{1}
+    \endentry
+    \entry{contingency:generation}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=afa8f4eee610619aa28fe43036d8ade7}{%
+           family={Ejebe},
+           familyi={E\bibinitperiod},
+           given={Gabriel\bibnamedelima C},
+           giveni={G\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+        {{hash=4e9c719ce44351cc081b24c12a7db641}{%
+           family={Wollenberg},
+           familyi={W\bibinitperiod},
+           given={Bruce\bibnamedelima F},
+           giveni={B\bibinitperiod\bibinitdelim F\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{fullhash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{fullhashraw}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{bibnamehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authorbibnamehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authornamehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authorfullhash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authorfullhashraw}{77989b51375b3a4c9fe6490c21cf6a52}
+      \field{extraname}{1}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
+      \field{number}{2}
+      \field{title}{Generation contingency analysis for power system security assessment}
+      \field{volume}{98}
+      \field{year}{1979}
+      \true{nocite}
+      \field{pages}{606\bibrangedash 617}
+      \range{pages}{12}
+    \endentry
+    \entry{contingency:transmission}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=afa8f4eee610619aa28fe43036d8ade7}{%
+           family={Ejebe},
+           familyi={E\bibinitperiod},
+           given={Gabriel\bibnamedelima C},
+           giveni={G\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+        {{hash=4e9c719ce44351cc081b24c12a7db641}{%
+           family={Wollenberg},
+           familyi={W\bibinitperiod},
+           given={Bruce\bibnamedelima F},
+           giveni={B\bibinitperiod\bibinitdelim F\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{fullhash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{fullhashraw}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{bibnamehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authorbibnamehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authornamehash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authorfullhash}{77989b51375b3a4c9fe6490c21cf6a52}
+      \strng{authorfullhashraw}{77989b51375b3a4c9fe6490c21cf6a52}
+      \field{extraname}{2}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Apparatus and Systems}
+      \field{number}{2}
+      \field{title}{Transmission contingency analysis for power system security assessment}
+      \field{volume}{98}
+      \field{year}{1979}
+      \true{nocite}
+      \field{pages}{618\bibrangedash 627}
+      \range{pages}{10}
+    \endentry
+    \entry{contingency:equipment}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=271a24f5639214eaf38d29e66d2b81bb}{%
+           family={Billinton},
+           familyi={B\bibinitperiod},
+           given={Roy},
+           giveni={R\bibinitperiod}}}%
+        {{hash=14bb05567353d423efd95197d3d6e26a}{%
+           family={Allan},
+           familyi={A\bibinitperiod},
+           given={Ronald\bibnamedelima N},
+           giveni={R\bibinitperiod\bibinitdelim N\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{fullhash}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{fullhashraw}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{bibnamehash}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{authorbibnamehash}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{authornamehash}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{authorfullhash}{e6af43a171ac246ea0c715aaa55786a4}
+      \strng{authorfullhashraw}{e6af43a171ac246ea0c715aaa55786a4}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Power Systems}
+      \field{number}{2}
+      \field{title}{Equipment failures and their impact on power system reliability}
+      \field{volume}{3}
+      \field{year}{1988}
+      \true{nocite}
+      \field{pages}{672\bibrangedash 680}
+      \range{pages}{9}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

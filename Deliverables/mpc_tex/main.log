@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 11:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 13:33
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -877,15 +877,25 @@ Overfull \hbox (4.59108pt too wide) in paragraph at lines 88--89
 [9]
 
 [10]
-Overfull \hbox (22.38838pt too wide) in paragraph at lines 363--364
-\OT1/cmr/m/n/10 en-gine would con-sti-tute a com-pletely dif-fer-ent role, such as a \OT1/cmtt/m/n/10 CostOptimizationRole\OT1/cmr/m/n/10 .
+
+[11]
+Underfull \hbox (badness 1715) in paragraph at lines 377--377
+[]\OT1/cmr/bx/n/10 Activation Con-
  []
 
 
+Underfull \hbox (badness 6927) in paragraph at lines 381--381
+[]\OT1/cmr/bx/n/10 Agent Re-quire-
+ []
 
-[11]
-Overfull \hbox (77.33858pt too wide) in paragraph at lines 369--388
- [][] 
+
+Underfull \hbox (badness 4518) in paragraph at lines 385--385
+[]\OT1/cmr/bx/n/10 Key De-pen-den-
+ []
+
+
+Underfull \hbox (badness 1983) in paragraph at lines 385--386
+[]\OT1/cmr/m/n/10 Access to lo-cal state mea-sure-ments (fre-quency,
  []
 
 
@@ -898,7 +908,7 @@ Overfull \hbox (77.33858pt too wide) in paragraph at lines 369--388
 <figures/ieee2areas.png, id=69, 675.52374pt x 578.16pt>
 File: figures/ieee2areas.png Graphic file (type png)
 <use figures/ieee2areas.png>
-Package pdftex.def Info: figures/ieee2areas.png  used on input line 450.
+Package pdftex.def Info: figures/ieee2areas.png  used on input line 451.
 (pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
 
 
@@ -906,12 +916,12 @@ Package pdftex.def Info: figures/ieee2areas.png  used on input line 450.
 <figures/mpc_load.png, id=75, 951.555pt x 593.21625pt>
 File: figures/mpc_load.png Graphic file (type png)
 <use figures/mpc_load.png>
-Package pdftex.def Info: figures/mpc_load.png  used on input line 472.
+Package pdftex.def Info: figures/mpc_load.png  used on input line 473.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
 <figures/non_mpc_load.png, id=76, 951.555pt x 593.21625pt>
 File: figures/non_mpc_load.png Graphic file (type png)
 <use figures/non_mpc_load.png>
-Package pdftex.def Info: figures/non_mpc_load.png  used on input line 479.
+Package pdftex.def Info: figures/non_mpc_load.png  used on input line 480.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
 
 
@@ -930,18 +940,20 @@ Package pdftex.def Info: figures/non_mpc_load.png  used on input line 479.
 [22]
 
 [23]
-Overfull \hbox (5.23892pt too wide) in paragraph at lines 647--647
+
+[24]
+Overfull \hbox (5.23892pt too wide) in paragraph at lines 659--659
 \OT1/cmr/m/n/10 vices pro-vi-sion,'' \OT1/cmr/m/it/10 IEEE Trans-ac-tions on Smart Grid\OT1/cmr/m/n/10 , vol. 10, no. 4, pp. 3551{
  []
 
 
 
-[24
+[25
 
 ]
 
-[25]
-runsystem(latexminted cleantemp  --timestamp 20250706115050 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
+[26]
+runsystem(latexminted cleantemp  --timestamp 20250706133351 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
 
  (./main.aux)
  ***********
@@ -953,18 +965,18 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 45906 strings out of 473243
- 1120526 string characters out of 5714659
- 2266384 words of memory out of 5000000
- 68636 multiletter control sequences out of 15000+600000
+ 45907 strings out of 473243
+ 1120560 string characters out of 5714659
+ 2266406 words of memory out of 5000000
+ 68637 multiletter control sequences out of 15000+600000
  568627 words of font info for 77 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,15n,93p,969b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 85i,15n,93p,1076b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on main.pdf (25 pages, 511721 bytes).
+Output written on main.pdf (26 pages, 513144 bytes).
 PDF statistics:
- 197 PDF objects out of 1000 (max. 8388607)
- 122 compressed objects within 2 object streams
+ 200 PDF objects out of 1000 (max. 8388607)
+ 124 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  28 words of extra memory for PDF output out of 10000 (max. 10000000)
 
