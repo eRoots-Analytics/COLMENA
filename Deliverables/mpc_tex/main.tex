@@ -47,6 +47,8 @@
 \newtheorem{definition}{Definition}
 \newtheorem{property}{Property}
 
+\setlength\parindent{0pt}
+
 \newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}
 
 \title{Decentralized Grid Control in COLMENA \\ Activity 3}
@@ -72,6 +74,25 @@ This report will first explain the physical models and equations used to build t
 Accurate modeling of the contingencies that are likely to take place in the grid, as well as the frequency and angle dynamics of each area, are fundamental to the design and implementation of distributed control strategies in power systems. It is central to capture how each area responds to generation-demand imbalances and how it interacts electrically with neighboring regions through phase angle differences whenever a contingency takes place. By understanding these behaviors, the proposed MPC can anticipate future states and choose the appropriate controls actions.
 
 \subsection{Contingency definition}
+In power systems, contingencies refer to unexpected events or disturbances that can significantly impact the system's stability and operation. These events can range from equipment failures to sudden changes in load or generation, and they require immediate response from control systems to maintain grid stability and prevent cascading failures \cite{contingency:analysis}. Not surprisingly, the recent Spanish blackout that took place last April was a clear example of such cascading events. Contingencies can be caused by multiple, being the most common types of contingencies the following:
+
+\begin{itemize}
+
+\item \textbf{Generation contingencies:} these involve the sudden loss of generating units due to mechanical failures, protection system trips, or fuel supply issues. Generator outages can cause immediate power imbalances, leading to frequency deviations and potential voltage problems. The severity depends on the size of the lost generation relative to the system's total capacity and available reserves. Most often, loss of generation causes the frequency to drop, which has to be counteracted by the control actions of other generation units, or also the reduction or even disconnection of loads \cite{marzband2016adaptive}. 
+
+\item \textbf{Transmission line contingencies:} these occur when transmission lines are disconnected due to faults, protection system operation, or physical damage (also linked weather events or equipment failure). Line outages can cause power flow redistributions, potentially leading to overloaded remaining lines and voltage violations, which can further exacerbate the frequency deviations and result in a complete blackout of the system. Restorative actions can involve the quick re-connection of the line, the re-routing of the power flow by adjusting the setpoints of nearby elements, or running an optimal transmission switching algorithm to find the best positions of the switches and disconnectors. However, a strong power grid must also be properly planned and dedicate a budget for transmission expansion planning \cite{aeggegn2020load}. 
+
+\item \textbf{Load contingencies:} sudden changes in load demand, such as the disconnection of large industrial loads or the connection of significant new loads, can create power imbalances. While load increases typically cause frequency drops, load decreases can cause frequency rises \cite{contingency:load}. On the other hand, loads are also employed to provide flexibility to the system, by adjusting the associated consumption to meet the requirements imposed by the transmission system operator, which are eventually monetarily compensated. Even though loads are constantly changing in the system, we define load contingencies as sudden and large spikes in demand, akin to the connection or disconnection of massive consumption points.
+
+\item \textbf{Weather-related contingencies:} extreme weather events such as storms, lightning strikes, or high winds can cause multiple simultaneous contingencies, including line outages, equipment damage, and load changes. These events often require coordinated responses across multiple control areas \cite{contingency:weather}. It is often the case that a weather-related event can simultaneously cause a generation contingency and a transmission line contingency. Hence, power grids are sometimes designed to meet not only the N-1 criterion, but also the N-2 criterion, which is the ability to withstand two contingencies at the same time.
+
+\item \textbf{Equipment failures (others):} other contingencies can be due to failures in critical equipment such as transformers, circuit breakers, or protection systems that can further lead to cascading effects throughout the system. These failures can be caused by aging, improper maintenance, or external factors \cite{li2006power}. In practical terms, and when seen from a modelling perspective, these equipment failures are not different from the aforementioned contingency types, as they can cause a sudden frequency variation and also a power flow redistribution. 
+
+\end{itemize}
+
+The impact of contingencies on power system dynamics can be characterized by their severity, duration, and propagation characteristics. Severe contingencies can lead to frequency excursions that exceed normal operating limits, potentially triggering automatic load shedding or generator tripping to prevent system collapse \cite{contingency:stability}.
+
+In the context of distributed control systems like COLMENA, contingencies create the need for coordinated responses across multiple areas. The distributed MPC framework must be able to detect the impact of these events in the electrical magnitudes under measurement, assess their influence on local and neighboring areas, and coordinate appropriate control actions to restore system stability while respecting operational constraints.
 
 \subsection{Connection/disconnection definition}
 
