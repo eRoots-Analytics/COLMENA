@@ -441,6 +441,13 @@ The distributed frequency control role is activated when two KPIs are broken. Th
 
 The testing was carried out on a local machine, where the agents in the COLMENA framework run in Docker containers, maintaining the decentralized nature of the system. These agents communicate locally with the ANDES simulator, which is also hosted on the same machine. The use of Docker containers for the agents ensures that the system remains modular and scalable, allowing for independent operation and coordination between agents while still adhering to decentralized principles. 
 
+\textcolor{red}{Add an image or schematic of the Docker containers, and also an illustrative figure of a block of code. Further describe the testing environment and the interaction between ANDES and COLMENA.}
+
+\subsection{COLMENA justification}
+The COLMENA framework is a good fit for frequency optimization mainly because it gets around the delays of a central controller. Frequency problems start locally, but a central system has to wait for data from all over the grid before it can react. By the time it sends commands back, precious time is lost. COLMENA lets local agents act immediately based on their own measurements, which is much faster. They still coordinate with their neighbors, so their quick fixes work together to stabilize the whole grid instead of just creating new problems elsewhere.
+
+A decentralized control system is generally speaking a much more practical way to handle modern grids. As the grid is full of different devices renewables, HVDC links, switches, among others, trying to update one giant, central control system for every new piece of equipment is deemed impractical. With COLMENA, a new agent with the right role can be deployed for that equipment. This makes the system more flexible and robust. If one agent fails, the others can still operate and pick up the slack, so there is no single point of failure that can take the whole system experience a blackout. 
+
 \newpage
 \section{Case Studies}
 
@@ -505,12 +512,31 @@ The final version of the prototype is now fully functional and has been successf
 The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations. The specific ANDES app tasked with running the simulation is also available as a Docker container in case it is needed further testing is needed. 
 
 \newpage
-\section{Future Work}
+\section{Conclusions and Future Work}
 
 The results from the simulations validate that deploying frequency control using the COLMENA framework is an effective approach for maintaining grid stability. The system successfully managed frequency deviations, responding to disturbances in a timely manner and restoring the frequency to its nominal value. This demonstrates the robustness and effectiveness of COLMENA's decentralized control strategy, confirming its potential as a reliable solution for frequency regulation in power grids.
 
-The next steps in the development of the COLMENA framework will focus on scaling the system to handle larger and more complex grid structures. This will involve conducting tests in grids with additional areas to assess the scalability of the Distributed MPC controller. Additionally, we will evaluate the framework's performance by validating COLMENA's capabilities in terms of speed and accuracy, ensuring that it can handle the increased computational demands of larger grids while maintaining the desired control precision. These tests will help to refine the system's robustness and efficiency in real-world applications.
+While the current study on the IEEE 39-bus system demonstrates the fundamental viability of the distributed MPC, the most critical next step is to rigorously evaluate its performance at scale. Therefore, the future work will be centered on scaling the system to handle larger and more complex grid structures to ensure its readiness for real-world applications. This will involve the following key activities:
 
+The primary objective is to test the limits of the distributed MPC controller by applying it to significantly larger power systems. This transition is not merely about increasing the number of buses but also about introducing greater topological complexity.
+    
+\begin{itemize}
+    \item \textbf{Progressive system scaling:} we will systematically move from the current 39-bus system to well-established, larger benchmarks, such as the IEEE 118-bus system, or potentially reaching up to the PEGASE 1000+ bus grids. 
+
+    \item \textbf{Handling increased complexity:} these larger grids introduce challenges that are not present in smaller systems, such as higher mesh-like interconnectivity, the presence of multiple, weakly connected control areas, and more complex power flow patterns. We will assess how the distributed control framework adapts to these more realistic and challenging structures.
+
+    \item \textbf{Expanding the number of control areas:} scaling will involve partitioning these larger grids into a greater number of control areas, with more numerous agents. This will directly test the scalability of the coordination mechanism (ADMM), as the number of interacting agents and required communication channels will increase substantially.
+\end{itemize}
+
+As the system size grows, it is crucial to quantify the impact on performance to ensure the framework remains practical for real-time operation. We will evaluate performance along several key dimensions:
+
+\begin{itemize}
+    \item \textbf{Computational speed and efficiency:} we will measure the number of iterations required for the distributed agents to reach a consensus. A key research question is whether the convergence rate scales linearly or sub-linearly with the number of agents, which is critical for maintaining performance. We will also track the time required to solve the optimization problem at each time step. This time should remain well below the control interval (e.g., a few seconds) to be viable for online control.
+
+    \item \textbf{Control accuracy and precision:} for systems of a manageable size (like the IEEE 118-bus), we will compare the results of the distributed MPC against the performance of the non-MPC case. This will allow us to quantify any loss of optimality and ensure the control actions remain precise and effective. We will analyze the controller's ability to maintain grid stability (frequency, voltage profiles, line flows) in these larger, more inertial systems, to make sure no adverse dynamics are introduced by the distributed decision-making process.
+
+    \item \textbf{Communication overhead:} we will analyze the data exchange requirements between agents. As the number of areas and interconnections grows, the communication network's load increases. We will measure the volume of data that needs to be exchanged per iteration to identify potential bottlenecks and inform the design of efficient communication protocols.
+\end{itemize}
 \appendix
 \newpage
 \section{Distributed MPC via ADMM}

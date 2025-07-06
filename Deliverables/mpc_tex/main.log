@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 13:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.1.30)  6 JUL 2025 13:53
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -905,29 +905,29 @@ Underfull \hbox (badness 1983) in paragraph at lines 385--386
 [13]
 
 [14]
-<figures/ieee2areas.png, id=69, 675.52374pt x 578.16pt>
+
+[15]
+<figures/ieee2areas.png, id=72, 675.52374pt x 578.16pt>
 File: figures/ieee2areas.png Graphic file (type png)
 <use figures/ieee2areas.png>
-Package pdftex.def Info: figures/ieee2areas.png  used on input line 451.
+Package pdftex.def Info: figures/ieee2areas.png  used on input line 458.
 (pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
 
 
-[15 <./figures/ieee2areas.png>]
-<figures/mpc_load.png, id=75, 951.555pt x 593.21625pt>
+[16 <./figures/ieee2areas.png>]
+<figures/mpc_load.png, id=78, 951.555pt x 593.21625pt>
 File: figures/mpc_load.png Graphic file (type png)
 <use figures/mpc_load.png>
-Package pdftex.def Info: figures/mpc_load.png  used on input line 473.
+Package pdftex.def Info: figures/mpc_load.png  used on input line 480.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
-<figures/non_mpc_load.png, id=76, 951.555pt x 593.21625pt>
+<figures/non_mpc_load.png, id=79, 951.555pt x 593.21625pt>
 File: figures/non_mpc_load.png Graphic file (type png)
 <use figures/non_mpc_load.png>
-Package pdftex.def Info: figures/non_mpc_load.png  used on input line 480.
+Package pdftex.def Info: figures/non_mpc_load.png  used on input line 487.
 (pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
 
 
-[16 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
-
-[17]
+[17 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
 
 [18]
 
@@ -942,18 +942,22 @@ Package pdftex.def Info: figures/non_mpc_load.png  used on input line 480.
 [23]
 
 [24]
-Overfull \hbox (5.23892pt too wide) in paragraph at lines 659--659
+
+[25]
+
+[26]
+Overfull \hbox (5.23892pt too wide) in paragraph at lines 685--685
 \OT1/cmr/m/n/10 vices pro-vi-sion,'' \OT1/cmr/m/it/10 IEEE Trans-ac-tions on Smart Grid\OT1/cmr/m/n/10 , vol. 10, no. 4, pp. 3551{
  []
 
 
 
-[25
+[27
 
 ]
 
-[26]
-runsystem(latexminted cleantemp  --timestamp 20250706133351 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
+[28]
+runsystem(latexminted cleantemp  --timestamp 20250706135345 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
 
  (./main.aux)
  ***********
@@ -973,10 +977,10 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  85i,15n,93p,1076b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024basic/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on main.pdf (26 pages, 513144 bytes).
+Output written on main.pdf (28 pages, 518616 bytes).
 PDF statistics:
- 200 PDF objects out of 1000 (max. 8388607)
- 124 compressed objects within 2 object streams
+ 206 PDF objects out of 1000 (max. 8388607)
+ 128 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
  28 words of extra memory for PDF output out of 10000 (max. 10000000)
 
