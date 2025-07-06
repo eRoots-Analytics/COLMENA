@@ -49,9 +49,9 @@
 
 \newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}
 
-\title{Decentralized Grid Control in the COLMENA framework}
-\author{Pablo de Juan Vela $^{1}$ \\
-        \small $^{1}$eRoots, Barcelona, Spain \\
+\title{Decentralized Grid Control in COLMENA \\ Activity 3}
+\author{Pablo de Juan Vela $^{1}$, Marco Muttoni $^{1}$, Josep Fanals i Batllori $^{1}$ \\
+        \small $^{1}$eRoots Analytics, Barcelona, Spain \\
 }
 \date{\today}
 
@@ -61,34 +61,32 @@
 \begin{document}
 \maketitle
 \section{Introduction}
-
-COLMENA aims to enable decentralized decision-making by coordinating autonomous agents that perform specific roles. Each agent can execute specific roles to change the system and operate based on local measurements and predictions. This project uses COLMENA to deploy a multi agent control system in where each agent is responsible for the control of a specific area. The different agents use the tools available through COLMENA to ensure proper coordination for completing the goal of controlling the frequency throughout the grid.
+COLMENA aims to enable decentralized decision-making by coordinating autonomous agents that perform specific roles. Each agent can execute certain roles to impact the system and operate based on local measurements and predictions. This project uses COLMENA to deploy a multi agent control system in where each agent is responsible for the control of a specific area. The different agents use the tools available through COLMENA to ensure proper coordination for completing the goal of controlling the frequency throughout the grid.
 
 Distributed Model Predictive Control (MPC) is a particularly well-suited control strategy in this context. MPC anticipates future states and disturbances, optimizes control actions over a prediction horizon, and incorporates constraints in a clear manner. When implemented in a distributed fashion through COLMENA, each agent can locally solve an MPC problem to manage its area, while coordinating with neighboring agents to respect power flow constraints and system-wide objectives.
 
-This report will first explain the physical models and equations used to build the MPC, we will then explain the optimisation background used for to implement the Distributed MPC, and finally we will use the MPC control in the grid \cite{grids:ieee39} in ANDES to showcase its capability for frequency control.
+This report will first explain the physical models and equations used to build the MPC, we will then explain the optimisation background used for to implement the Distributed MPC, and finally we will use the MPC control in the IEEE 39-bus grid, as found in \cite{grids:ieee39}, through ANDES to showcase its capability for frequency control.
 
+\newpage
 \section{Modeling}
+Accurate modeling of the contingencies that are likely to take place in the grid, as well as the frequency and angle dynamics of each area, are fundamental to the design and implementation of distributed control strategies in power systems. It is central to capture how each area responds to generation-demand imbalances and how it interacts electrically with neighboring regions through phase angle differences whenever a contingency takes place. By understanding these behaviors, the proposed MPC can anticipate future states and choose the appropriate controls actions.
 
-Accurate modeling of the frequency and angle dynamics of each area is fundamental to the design and implementation of distributed control strategies in power systems. These dynamic variables capture how each area responds to generation-demand imbalances and how it interacts electrically with neighboring regions through phase angle differences. By understanding these behaviors, the proposed MPC can anticipate future states and choose the appropriate controls actions.
+\subsection{Contingency definition}
 
-\subsection*{Grid dynamics}
+\subsection{Connection/disconnection definition}
 
+\subsection{Grid dynamics}
 In the proposed framework, each electrical area is represented using two states values:
-
 \begin{itemize}
     \item \textbf{Frequency} $f_i(t)$: the local frequency of area $i$, which reflects the balance between generation and consumption.
     \item \textbf{Phase Angle} $\delta_i(t)$: the relative voltage phase angle of area $i$ with respect to the reference area, governing power exchanges with neighboring areas.
 \end{itemize}
-
 This abstraction treats each area as a coherent group of generators and loads that tend to oscillate together in response to disturbances. It enables scalable distributed control by reducing the system's dimensionality.
 
 The frequency evolution in each area is governed by a version of the swing equation:
-
 \begin{equation}
     M_i \frac{df_i(t)}{dt} = -D_i(f_i(t) - f_0) + \sum_{k \in \text{Area}_i} P^{\text{gen}_k}_{t} - \sum_{j \in \mathcal{N}_i} P^{i,j}_t - P^{\text{demand}}_i(t)
 \end{equation}
-
 where:
 \begin{itemize}
     \item $M_i$ is the aggregated inertia of area $i$,
@@ -102,32 +100,26 @@ The relative angle $\delta_i(t)$ accumulates the frequency deviation with the re
 \begin{equation}
     \frac{d\delta_i(t)}{dt} = 2\pi(f_i(t) - f_0)
 \end{equation}
-
 This relation ensures that the angle reflects the integral of frequency deviation, which is crucial for tracking system phase shifts over time. 
 
 
 In this formulation, we use the DC power flow approximation to model the active power exchange between areas. This approach is widely accepted in high-voltage transmission system analysis due to its simplicity and relatively high accuracy under typical operating conditions. The approximation is based on the following assumptions:
-
 \begin{itemize}
     \item Voltage magnitudes are close to their nominal values and are considered constant.
     \item Angle differences between buses are small enough that $\sin(\delta_i - \delta_j) \approx \delta_i - \delta_j$.
     \item Line resistance is negligible compared to reactance, so power losses are ignored.
 \end{itemize}
-
 Under these assumptions, the active power flow from area $i$ to area $j$ can be approximated by, this shows that active power flows are driven by angle differences and line susceptance $B_{i,j}$.:
 \begin{equation}
     P^{i,j}_t = B_{i,j}(\delta_i(t) - \delta_j(t))
 \end{equation}
 where $B_{i,j}$ represents the total susceptance between the two areas. This is calculated as the sum of the susceptances of all transmission lines directly connecting buses in area $i$ to buses in area $j$:
-
 \begin{equation}
     B_{i,j} = \sum_{\text{line i connects area i to area j}} b_{\text{line i}}
 \end{equation}
-
 This aggregation allows us to ignore the specific topologies of the areas during inter-area coordination, while still capturing the essential physics of power exchange via angle differences. It also reduces computational complexity, which is critical for scalable distributed optimisation.
 
-\subsection*{Grid Controls}
-
+\subsection{Grid Controls}
 We build a multi-agent system where each agent is responsible for the control of a defined electrical area. Each area comprises several buses, generators, and loads, and interacts with other areas through lines. The objective of the agent is to maintain frequency stability by coordinating with neighboring agents through the sharing of information. 
 
 Each agent is equipped with the capability to perform multiple control functions within its domain, depending on the system design and available actuators. These actions may include:
@@ -141,23 +133,19 @@ Each agent is equipped with the capability to perform multiple control functions
 In the broader COLMENA framework, agents could also be capable of activating other roles local roles, provided that the dynamics and interactions of those roles are explicitly defined and known by the agent.
 
 In this first implementation, we focus on a simplified setting where each agent directly controls the ramp of generator power outputs within its area. Specifically, the control vector \( u_i \) for agent \( i \) is defined as the difference in power output between two consecutive time steps:
-
 \begin{equation}
     u_i(t) = P^{\text{gen}}_i(t+1) - P^{\text{gen}}_i(t) \in \mathbb{R}^{n_{g,i}}
 \end{equation}
-
 where \( P^{\text{gen}}_i(t) \) is the vector of generator power outputs at time \( t \), and \( n_{g,i} \) is the number of controllable generators in area \( i \).
 
 The control inputs are subject to ramp-rate constraints that limit how fast the generators can increase or decrease their output:
-
 \begin{equation}
     u^{\min}_{k} \leq u_{i,k}(t)  \Delta  t \leq u^{\max}_{k} \quad \forall k \in \{1, \dots, n_{g,i}\}, \forall t
 \end{equation}
-
 where \( u^{\min}_{k} \) and \( u^{\max}_{k} \) are the ramp-down and ramp-up limits (in pu/s) for generator \( k \). 
 
+\newpage
 \section{Mathematical Formulation}
-
 A Model Predictive Control (MPC) is a control strategy that solves an optimisation problem at each time step to determine the best sequence of control actions over a finite future time horizon. The fundamental idea is to use a dynamic model of the system to predict its future behavior and to compute the control inputs that minimize a given cost function while satisfying physical and operational constraints.
 
 \begin{comment}
@@ -275,7 +263,7 @@ With this we can define a local subproblem for agent $i$. At each iteration of t
     \item The last term is a quadratic penalty that reinforces consensus via the parameter $\rho$.
 \end{itemize}
 
-\subsection*{Local Problem Modifications}
+\subsection{Local Problem Modifications}
 
 \paragraph{A. Damping Term} 
 We add an additional term damping term to the cost function when solving the local MPC. It penalizes deviations from the previous iteration $k-1$ of the primal variables. The use of this term is heavily influenced by \cite{ADMM:edu}.
@@ -378,6 +366,7 @@ In the prototype we aim to implement an online implementation of this ADMM by so
 \end{algorithmic}
 \end{algorithm}
 
+\newpage
 \section{MPC Role Definition}
 
 In multi agent architectures and in the context of COLMENA a role is usually tied to a local behavior with a narrow task that is activated when a specific value or KPI is not respected. In this context, the Distributed MPC can be seen as a policy coordinating multiple roles as much a role. For this we propose two different solutions that limit the MPC to specific circumstances making it more akin to a proper role than a policy.
@@ -445,7 +434,7 @@ The following pseudocode describes the online control loop executed by each loca
 \end{algorithmic}
 \end{algorithm}
 
-\subsection*{Specific implementation}
+\subsection{Specific implementation}
 
 In this section we discuss how the different tools provided by COLMENA are used to set up the grid. Specifically, how the data and contexts decorators are used by the Distributed MPC role to be implemented in parallel. The parallel implementation is key to 
 
@@ -473,10 +462,11 @@ The different agents read the state horizon channel to get the values for the pr
 
 The distributed Frequency control role is activated when two KPIs are broken. The role first communicates with ANDES and learns the initial conditions for the problem. It then solves a single iteration of the local problem. In the prototype the other iterations are also run by the same agent. The goal however is to potentially use COLMENA's resource control to run the solver in, for example,  the most computationally powerful agent available. This could be possible thanks to the different communications channels already storing the necessary data independently of the agents.
 
-\subsection*{Testing Setup}
+\subsection{Testing Setup}
 
 The testing was carried out on a local machine, where the agents in the COLMENA framework run in Docker containers, maintaining the decentralized nature of the system. These agents communicate locally with the ANDES simulation, which is also hosted on the same machine. The use of Docker containers for the agents ensures that the system remains modular and scalable, allowing for independent operation and coordination between agents while still adhering to decentralized principles. 
 
+\newpage
 \section{Case Study and Results}
 
 We consider the IEEE39 \cite{grids:ieee39} grid to perform multiple case studies and see how the COLMENA frameworks performs in controlling the frequency. The grid consists of 39 buses, 10 generators, 14 lines and others electrical devices responsible for the electrical control. The line is simulated in python using the open source package ANDES \cite{grids:models}. This grid is divided in two different areas of similar size, where each bus belongs to one area or the other. The setup is identical to the one explained in the previous deliverable: ANDES is set up as an app that simulates the grid in real time. This app is also set up to receive queries to from COLMENA on the state on the grid, akin to making measurement of specific metrics on the grid. And it can also change the parameters of the simulation similar to a role acting on the grid.
@@ -520,6 +510,7 @@ We define a perturbation at $t=3s$ that consists in a load suddenly doubling. Th
 
 Other scenarios available in the prototype's repository are also capable of restoring the grid's frequency. 
 
+\newpage
 \section{Milestone Analysis}
 
 \subsection*{Milestone 1}
@@ -530,12 +521,14 @@ The final version of the prototype is now fully functional and has been successf
 
 The prototype has been successfully deployed on an eRoots machine, following a collaborative effort between eRoots engineers and BSC staff working to overcome possible difficulties during the development. We ensured compatibility with the required software stack and performance expectations. The specific andes app tasked with running the simulation is also available as a docker container in case it is needed further testing is needed. 
 
+\newpage
 \section{Future Work}
 
 The results from the simulations validate that deploying frequency control using the COLMENA framework is an effective approach for maintaining grid stability. The system successfully managed frequency deviations, responding to disturbances in a timely manner and restoring the frequency to its nominal value. This demonstrates the robustness and effectiveness of COLMENA's decentralized control strategy, confirming its potential as a reliable solution for frequency regulation in power grids.
 
 The next steps in the development of the COLMENA framework will focus on scaling the system to handle larger and more complex grid structures. This will involve conducting tests in grids with additional areas to assess the scalability of the Distributed MPC controller. Additionally, we will evaluate the framework’s performance by validating COLMENA's capabilities in terms of speed and accuracy, ensuring that it can handle the increased computational demands of larger grids while maintaining the desired control precision. These tests will help to refine the system's robustness and efficiency in real-world applications.
 
+\newpage
 \nocite{*}  
 \printbibliography
 \end{document}
