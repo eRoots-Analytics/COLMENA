@@ -12,7 +12,7 @@ class AndesWrapper:
         self.andes_url = Config.andes_url
         #self.case_path = get_case(Config.case_path)
         self.case_path = 'andes/cases/npcc/npcc_modified.xlsx'
-
+        self.initialised = False
         if self.case_path is not None:
             
             self.load_simulation(self.case_path)
@@ -20,6 +20,10 @@ class AndesWrapper:
     def load_simulation(self, case_path, redual=False):
         payload = {'case_file': case_path, 'redual': redual}
         try:
+            if self.initialised:
+                raise Exception("The object is already initialised.")
+            else:
+                self.initialised = True
             response = requests.post(
                 f'{self.andes_url}/load_simulation', 
                 json=payload

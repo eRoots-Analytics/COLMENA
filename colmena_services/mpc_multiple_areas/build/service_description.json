@@ -8,8 +8,8 @@
             "imageId": "grid_areas:latest"
         },
         {
-            "id": "all",
-            "imageId": "all:latest"
+            "id": "all_global",
+            "imageId": "all_global:latest"
         }
     ],
     "kpis": [],

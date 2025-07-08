@@ -8,11 +8,11 @@ import pyomo.environ as pyo
 import logging
 import sys
 sys.path.append('/home/pablo/Desktop/eroots/COLMENA')
-from src.controller.mpc_agent import MPCAgent
-from src.controller.coordinator import Coordinator
-from src.controller.admm import ADMM
-from src.simulator.andes_wrapper import AndesWrapper
-from src.config.config import Config
+from colmenasrc.controller.mpc_agent import MPCAgent
+from colmenasrc.controller.coordinator import Coordinator
+from colmenasrc.controller.admm import ADMM
+from colmenasrc.simulator.andes_wrapper import AndesWrapper
+from colmenasrc.config.config import Config
 
 from copy import deepcopy
 from colmena import (
@@ -42,7 +42,7 @@ class GridAreas(Context):
         id = {'id':agent_id}
         print(json.dumps(id))
 
-class Global(Context):
+class GlobalError(Context):
     @Dependencies(*["pyomo", "requests"])
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -54,15 +54,15 @@ class Global(Context):
 
 class AgentControl(Service):
     @Context(class_ref = GridAreas, name='grid_areas')
-    @Context(class_ref = Global, name='all')
+    @Context(class_ref = GlobalError, name='all_global')
     @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
-    @Data(name = 'Data_1', scope = 'all/id = .')
-    @Data(name = 'Data_2', scope = 'all/id = .')
-    @Data(name = 'Data_3', scope = 'all/id = .')
-    @Data(name = 'Data_4', scope = 'all/id = .')
-    @Data(name = 'Data_5', scope = 'all/id = .')
-    @Data(name = 'Data_6', scope = 'all/id = .')
-    @Data(name = 'global_error', scope = 'all/id = .')
+    @Data(name = 'Data_1', scope = 'all_global/id = .')
+    @Data(name = 'Data_2', scope = 'all_global/id = .')
+    @Data(name = 'Data_3', scope = 'all_global/id = .')
+    @Data(name = 'Data_4', scope = 'all_global/id = .')
+    @Data(name = 'Data_5', scope = 'all_global/id = .')
+    @Data(name = 'Data_6', scope = 'all_global/id = .')
+    @Data(name = 'global_error', scope = 'all_global/id = .')
     @Metric('frequency')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -70,58 +70,58 @@ class AgentControl(Service):
     class Distributed_MPC(Role):
         @Requirements('AREA')
         @Metric('frequency')
-        #@KPI('MPCControl/frequency[10s] < 0')
-        @Context(class_ref = Global, name='all')
-        @Context(class_ref = GridAreas, name='grid_areas')
         @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
+        #@KPI('MPCControl/frequency[10s] < 0')
+        @Context(class_ref = GlobalError, name='all_global')
+        @Context(class_ref = GridAreas, name='grid_areas')
         @Dependencies(*["pyomo", "requests"])
-        @Data(name = 'Data_1', scope = 'all/id = .')
-        @Data(name = 'Data_2', scope = 'all/id = .')
-        @Data(name = 'Data_3', scope = 'all/id = .')
-        @Data(name = 'Data_4', scope = 'all/id = .')
-        @Data(name = 'Data_5', scope = 'all/id = .')
-        @Data(name = 'Data_6', scope = 'all/id = .')
-        @Data(name = 'global_error', scope = 'all/id = .')
+        @Data(name = 'Data_1', scope = 'all_global/id = .')
+        @Data(name = 'Data_2', scope = 'all_global/id = .')
+        @Data(name = 'Data_3', scope = 'all_global/id = .')
+        @Data(name = 'Data_4', scope = 'all_global/id = .')
+        @Data(name = 'Data_5', scope = 'all_global/id = .')
+        @Data(name = 'Data_6', scope = 'all_global/id = .')
+        @Data(name = 'global_error', scope = 'all_global/id = .')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            requests.post(self.andes_url + '/start_simulation')
-            self.n_areas = 6
+            self.andes = AndesWrapper()
+            self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = 150
+            self.max_iter = 400
             self.data_read = getattr(self, 'Data_' + str(self.area))
             self.data_write = getattr(self, 'Data_' + str(self.area+1 if self.area < self.n_areas else 1))
 
-            andes = AndesWrapper()
-            self.agent = MPCAgent(self.area, andes)
-            self.coordinator = Coordinator(andes)
-            self.admm = ADMM(self.coordinator)
+            Config.agent = True
+            self.agent = MPCAgent(self.area, self.andes)
+            self.coordinator = Coordinator(self.andes)
+            self.admm = self.coordinator.admm
             self.model = self.agent.setup_dmpc(self.coordinator)
+            self.agent.setup = False
             self.initialized_decorators = False
             self.online_step = 0
 
         @Persistent()
         def behavior(self):
             print('running')
-            responseAndes = requests.get(self.andes_url + '/stop_simulation')
             self.error = 100
             self.iter = 0
             self.agent.initialize_variables_values()
             self.agent.first_warm_start()
-
             self.global_error.publish({'agent':1, 'error':self.error})
 
             if not self.initialized_decorators:
-                self.state_horizon_jsonlike = {f"{i}_{j}_{t}": val for (i, j, t), val in self.coordinator.variables_horizon_values.items()}
+                self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.state_horizon_jsonlike)
                 self.initialized_decorators = True
+                time.sleep(1)
 
             # Stop Flask logs
             time_start = time.time()
-            while self.error > self.admm.tol and self.iter < self.max_iter:
+            while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)(self.max_iter):
                 print(f'Iteration {self.iter}')
                 initial_state_horizon_jsonlike = self.data_read.get()
                 if self.agent.generators: 
@@ -136,7 +136,7 @@ class AgentControl(Service):
                     print(f"Iteration {self.iter}, Primal Residual: is undefinided")
 
                 self.admm._update_duals()
-                self.admm._update_pyomo_params() 
+                self.admm._update_pyomo_params(self.agent) 
 
                 self.variables_horizon_values_json = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.variables_horizon_values_json)
@@ -159,12 +159,19 @@ class AgentControl(Service):
                 self.iter += 1
                         
             self.frequency.publish(1)
-            self.coordinator.collect_role_changes(specific_agent = self.agent)
+            role_change_list = self.coordinator.collect_role_changes(specific_agent = self.agent)
+            for role_change in role_change_list:
+                if not role_change: 
+                    print("[Warning] Empty role change detected.")
+                print(f'Role change is {role_change}')
+                self.andes.set_value(role_change)
             time_spent = time.time() - time_start
             self.online_step += 1
             time.sleep(max(0,self.agent.dt - time_spent))
 
             if self.agent.area == self.n_areas:
-                success, new_time = self.andes.run_step()
-
+                time.sleep(0.4)
+                for i in range(int(self.coordinator.tdmpc/self.coordinator.dt)):
+                    success, new_time = self.andes.run_step()
+                    print(f"Step was {success} and time is {new_time}")
             return 1

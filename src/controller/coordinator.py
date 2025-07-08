@@ -93,7 +93,7 @@ class Coordinator:
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
-        self.colmena = True
+        self.colmena = False
         print("[Main] Coordinator initialized.")
 
         # Start simulation
@@ -169,7 +169,7 @@ class Coordinator:
                     #                       'value': 0})
 
                     self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_0',
+                                          'idx': 'PQ_1',
                                           'src': 'Ppf',
                                           'attr': 'v',
                                           'value': 5.0})

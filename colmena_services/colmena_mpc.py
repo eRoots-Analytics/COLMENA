@@ -3,7 +3,7 @@ import subprocess
 import time
 
 pre_command = 'source /home/pablo/myenv/bin/activate'
-script_name = "mpc_multiple_areas"
+script_name = "mpc_consensus"
 folder_name = 'colmena_services'
 
 colmena_command = f"""
@@ -43,19 +43,22 @@ agents = [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_a'},
 
 mpc_agents = True
 n_area = 6
+n_generators = 5
 if mpc_agents:
     agents = [{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_1'},{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_2'}] 
 
 agents = []
 if n_area >= 2:
     for i in range(1, n_area+1):
-        agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}]
-        
-commands =  [zenoh_command] + [agent_command]*n_area + [deploy_command]  
+        agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}] 
+if n_generators >= 2:
+    for i in range(1, n_generators+1):
+        agents +=  [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':f'genrou_{20+3*i}'}]
+
+commands =  [zenoh_command] + [agent_command]*(n_area+n_generators) + [deploy_command]  
 #commands = [build_command]
 #commands = [deploy_command]
 processes = []
-agent_i = 0
 
 cmd = zenoh_command['cmd']
 cwd = zenoh_command['cwd']
@@ -66,7 +69,8 @@ build_cmd = f"gnome-terminal -- bash -c './{folder_name}/activate_env.sh {build_
 subprocess.Popen(terminal_cmd,shell=True)
 #subprocess.Popen(build_cmd,shell=True)
 
-time.sleep(6)
+time.sleep(2)
+agent_i = 0
 for cmd in commands:
     if cmd.get('is_agent', False):  # Check if it's the agent command
         agent_data = agents[agent_i]

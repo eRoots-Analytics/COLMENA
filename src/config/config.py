@@ -9,10 +9,10 @@ class Config:
 
     # Simulator 
     tstep = 0.1
-    tf = 25.0
+    tf = 15.0
 
     # Disturbance 
-    td = 5.0
+    td = 3.0
 
     # DMPC
     # Status 
@@ -21,7 +21,7 @@ class Config:
     dt = tstep * 5
     K = 20
     # Execution
-    tdmpc = 2.5
+    tdmpc = 5.0
 
     ramp_up = 0.1
     ramp_down = 0.1
@@ -45,4 +45,4 @@ class Config:
 
     fn = 60
     colmena = False
-    agent = True
+    agent = False

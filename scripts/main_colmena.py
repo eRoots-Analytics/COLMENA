@@ -11,10 +11,10 @@ from collections import defaultdict
 # Move to one level up, i.e. project root folder (COLMENA). 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from src.config.config import Config
-from src.simulator.andes_api import app
-from src.controller.coordinator import Coordinator  
-from src.simulator.andes_wrapper import AndesWrapper  
+from colmenasrc.config.config import Config
+from colmenasrc.simulator.andes_api import app
+from colmenasrc.controller.coordinator import Coordinator  
+from colmenasrc.simulator.andes_wrapper import AndesWrapper  
 
 def run_flask_app():
     # Stop Flask logs
@@ -52,8 +52,7 @@ def main():
 
     # 3. Create Coordinator
     print("[Main] Initializing Coordinator...")
-    coordinator = Coordinator(andes) #TODO: to automitize 
-    print(f"[Main] Coordinator run loop finished at t = {coordinator.t}")
+    coordinator = Coordinator(andes) #TODO: to automize 
     
     return coordinator
 
@@ -69,6 +68,7 @@ if __name__ == '__main__':
     import matplotlib
     matplotlib.use("TkAgg") 
     from utils.plotting import plot_omegas, plot_omega_coi
+    print(sim)
     plot_omegas(sim)
     plot_omega_coi(sim) 
     
