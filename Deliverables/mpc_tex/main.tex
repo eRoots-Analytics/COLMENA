@@ -16,6 +16,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{arrows, positioning}
 \usepackage{comment}
 \usepackage{float}
 \usepackage{circuitikz}
@@ -433,11 +434,44 @@ In this section we discuss how the different tools provided by COLMENA are used 
 
 The use of COLMENA's contexts fits quite well with the concept of areas. In the context of electrical grids, areas are defined  by a set of buses and the electrical devices connected to those buses. Here we consider agents to belong to specific contexts when they are part of an area. For example, we could have contexts defined by the agents ID beforehand, or if we consider the initial prototype, if an agent is paired to an electrical device, then the agent would belong to that area's context.
 
-We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For instance, instead of the MPC including the dynamics of certain roles, the MPC can set objectives that then other roles inside the area can react to. For this case we define \textit{Grid Areas} a context where a set of COLMENA agents are interlinked.
+We can use contexts to send control messages from the agent running the Distributed MPC to other agents. For instance, instead of the MPC including the dynamics of certain roles, the MPC can set objectives that then other roles inside the area can react to. For this case we define \textit{Grid Areas} a context where a set of COLMENA agents are interlinked depending on their Area.
 
-\textcolor{red}{Further expand the paragraph above giving more information and some example on how we use these contexts.}
+In the context of the distributed MPC, we can use this \textit{Grid Areas} to define a Data channel with that scope. This channel makes it possible to store the dual variables of each area independently of the agent that is running the MPC role. With this implementation we could run the MPC in different agents in the same area without problems because the new agent executing the role could read the saved duak variables and keep running the MPC where the previous agent left. This is not available right now since we would need to ensure that one and only agent per area is running the MPC role. However, we expect  this functionality to be available eventually which would make the execution of this role much more dynamic.
 
-\textcolor{red}{Copy and paste some code showing the decorators being used.}
+An example of the code being 
+
+\begin{lstlisting}[language=Python]
+class GridAreas(Context):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def locate(self, device):
+        agent_id = os.getenv('AGENT_ID')
+        #agent_2_area a predefined dictionary
+        agent_area = agent_2_area[agent_id]
+        id = {'id':agent_area}
+        print(json.dumps(id))
+
+class Distributed_MPC(Role):
+    @Requirements('AREA')
+    @Metric('frequency')
+    @Context(class_ref = GridAreas, name='grid_areas')
+    @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        [...]
+
+
+    @Persistent()
+    def behavior(self):
+        self.dual_vars_values = self.dual_vars.get()
+
+        #We solve the local MPC and update the dual vars 
+        [...]
+
+        self.dual_vars.publish(self.dual_vars_values)
+\end{lstlisting}
+
 
 \subsubsection*{Data decorators}
 
@@ -460,6 +494,67 @@ The distributed frequency control role is activated when two KPIs are broken, th
 \subsection{Testing environment}
 
 The testing was carried out on a local machine, where the agents in the COLMENA framework run in Docker containers, maintaining the decentralized nature of the system. These agents communicate locally with the ANDES simulator, which is also hosted on the same machine. The use of Docker containers for the agents ensures that the system remains modular and scalable, allowing for independent operation and coordination between agents while still adhering to decentralized principles. 
+
+\subsubsection{Andes-COLMENA Interaction}
+
+The COLMENA agents and the ANDES simulation run in separate containers and communicate through HTTP requests over the local network. COLMENA agents request the current state of the grid from the ANDES simulator, compute their local control actions, and update their internal states accordingly. Similarly, the agents send the control actions to COLMENA changing the grid simulation dynamically. This communication is handled asynchronously, enabling the agents to operate in parallel and maintaining the system’s decentralized nature.
+
+
+\begin{figure}[h]
+  \centering
+  \begin{tikzpicture}[
+      container/.style={rectangle, draw, rounded corners, minimum width=3cm, minimum height=1cm, align=center, fill=blue!10},
+      arrow/.style={->, thick}
+    ]
+
+    % ANDES container
+    \node[container, fill=red!20] (andes) {ANDES Simulator \\ Container};
+
+    % COLMENA Agents
+    \node[container, right=5cm of andes, yshift=2cm] (agent1) {COLMENA Agent 1 \\ Container};
+    \node[container, right=5cm of andes] (agent2) {COLMENA Agent 2 \\ Container};
+    \node[container, right=5cm of andes, yshift=-2cm] (agent3) {COLMENA Agent 3 \\ Container};
+
+    % Arrows
+    \draw[arrow] (agent1.west) -- ++(-1,0) -- ++(0,-2) -- (andes.east) node[midway, above] {};
+    \draw[arrow] (agent2.west) -- ++(-1,0) -- (andes.east) node[midway, above] {Requests};
+    \draw[arrow] (agent3.west) -- ++(-1,0) -- ++(0,2) -- (andes.east) node[midway, below] {};
+
+  \end{tikzpicture}
+  \caption{Interaction between COLMENA agent containers and the ANDES simulator container via requests.}
+  \label{fig:andes-colmena-diagram}
+\end{figure}
+
+
+\subsubsection*{Andes Simulator deployment}
+
+To run the andes simulation in a separate docker container we run the following code, with \texttt{grid\_run.json} the file that can be modified for different simulation scenarios. 
+
+
+\begin{verbatim}
+docker run -v /grid_run.json:\home\grid_run.json pablodejuan/andes_src
+\end{verbatim}
+
+The json file can have the following aspect. The attribute "failure" describes the type of perturbation that will happen in the simulation, it can have the following values: "line", "generator", "load".
+
+\begin{verbatim}
+{
+  "grid_name": "ieee39",
+  "failure": "line"
+}
+\end{verbatim}
+
+\subsubsection*{COLMENA Agent deployment}
+
+To deploy the COLMENA agents we just need to run the script \texttt{colmena\_mpc.py} specifying the COLMENA service that we want to deploy and the grid we want to deploy it to. In the existing use case we use \texttt{service\_file=mpc\_multiple\_areas.py grid\_name=ieee39}. Therefore we initialise it with the following code
+
+\begin{verbatim}
+service_file=mpc_multiple_areas.py 
+grid_name=ieee39 
+python3 colmena_services.py
+\end{verbatim}
+
+This code deploys the necessary agents and roles but does not build the service since this has been done previously. The agents run on specific docker images \texttt{pablodejuan/agent\_src} that have access to the necessary code for running the MPC as well as the IPOPT solver \cite{coinor-ipopt}. The number of agents deployed as well as their requirement depends on the chosen grid.
 
 \textcolor{red}{Add an image or schematic of the Docker containers, and also an illustrative figure of a block of code. Further describe the testing environment and the interaction between ANDES and COLMENA.}
 
