@@ -1,0 +1,26 @@
+{
+    "id": {
+        "value": "AgentControl"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_areas",
+            "imageId": "grid_areas:latest"
+        },
+        {
+            "id": "all_global",
+            "imageId": "all_global:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "Distributed_MPC",
+            "imageId": "distributed_mpc:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": []
+        }
+    ]
+}

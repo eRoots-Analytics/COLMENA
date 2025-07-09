@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.20)  8 JUL 2025 17:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.11.20)  9 JUL 2025 19:53
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/home/pablo/Desktop/eroots/COLMENA/Deliverables/mpc_tex/main.tex
-(/home/pablo/Desktop/eroots/COLMENA/Deliverables/mpc_tex/main.tex
+**/home/pablo/Desktop/eroots/COLMENA/mpc_tex/main.tex
+(/home/pablo/Desktop/eroots/COLMENA/mpc_tex/main.tex
 LaTeX2e <2024-11-01>
 L3 programming layer <2024-11-02>
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/article.cls
@@ -480,12 +480,13 @@ File: pgfmodulematrix.code.tex 2023-01-15 v3.1.10 (3.1.10)
 \tikz@expandcount=\count349
  (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarytopaths.code.tex
 File: tikzlibrarytopaths.code.tex 2023-01-15 v3.1.10 (3.1.10)
-))) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibraryarrows.code.tex
-File: tikzlibraryarrows.code.tex 2023-01-15 v3.1.10 (3.1.10)
- (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.code.tex
-File: pgflibraryarrows.code.tex 2023-01-15 v3.1.10 (3.1.10)
-\arrowsize=\dimen275
-)) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarypositioning.code.tex
+))) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.meta.code.tex
+File: pgflibraryarrows.meta.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfarrowinset=\dimen275
+\pgfarrowlength=\dimen276
+\pgfarrowwidth=\dimen277
+\pgfarrowlinewidth=\dimen278
+) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarypositioning.code.tex
 File: tikzlibrarypositioning.code.tex 2023-01-15 v3.1.10 (3.1.10)
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/comment/comment.sty
 \CommentStream=\write5
@@ -493,49 +494,43 @@ File: tikzlibrarypositioning.code.tex 2023-01-15 v3.1.10 (3.1.10)
 Package: circuitikz 2024/08/03{} The CircuiTikz circuit drawing package version 1.7.0
  (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarycalc.code.tex
 File: tikzlibrarycalc.code.tex 2023-01-15 v3.1.10 (3.1.10)
-) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.meta.code.tex
-File: pgflibraryarrows.meta.code.tex 2023-01-15 v3.1.10 (3.1.10)
-\pgfarrowinset=\dimen276
-\pgfarrowlength=\dimen277
-\pgfarrowwidth=\dimen278
-\pgfarrowlinewidth=\dimen279
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrarybending.code.tex
 File: tikzlibrarybending.code.tex 2023-01-15 v3.1.10 (3.1.10)
  (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmodulebending.code.tex
 File: pgfmodulebending.code.tex 2023-01-15 v3.1.10 (3.1.10)
  (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmodulenonlineartransformations.code.tex
 File: pgfmodulenonlineartransformations.code.tex 2023-01-15 v3.1.10 (3.1.10)
-\pgftransformnonlinearflatness=\dimen280
+\pgftransformnonlinearflatness=\dimen279
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibrarycurvilinear.code.tex
 File: pgflibrarycurvilinear.code.tex 2023-01-15 v3.1.10 (3.1.10)
-\pgf@curvilinear@time@a=\dimen281
-\pgf@curvilinear@length@a=\dimen282
-\pgf@curvilinear@length@b=\dimen283
-\pgf@curvilinear@length@c=\dimen284
-\pgf@curvilinear@length@d=\dimen285
+\pgf@curvilinear@time@a=\dimen280
+\pgf@curvilinear@length@a=\dimen281
+\pgf@curvilinear@length@b=\dimen282
+\pgf@curvilinear@length@c=\dimen283
+\pgf@curvilinear@length@d=\dimen284
 )
-\pgf@arrows@the@rigidity=\dimen286
+\pgf@arrows@the@rigidity=\dimen285
 )) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibraryfpu.code.tex (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryfpu.code.tex)) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcirc.defines.tex
 \pgf@circ@count@a=\count350
 \pgf@circ@count@b=\count351
 \pgf@circ@count@c=\count352
-\pgf@circ@res@up=\dimen287
-\pgf@circ@res@down=\dimen288
-\pgf@circ@res@zero=\dimen289
-\pgf@circ@res@left=\dimen290
-\pgf@circ@res@right=\dimen291
-\pgf@circ@res@other=\dimen292
-\pgf@circ@res@step=\dimen293
-\pgf@circ@res@temp=\dimen294
-\pgf@circ@Rlen=\dimen295
-\pgf@circ@scaled@Rlen=\dimen296
-\pgfstartlinewidth=\dimen297
+\pgf@circ@res@up=\dimen286
+\pgf@circ@res@down=\dimen287
+\pgf@circ@res@zero=\dimen288
+\pgf@circ@res@left=\dimen289
+\pgf@circ@res@right=\dimen290
+\pgf@circ@res@other=\dimen291
+\pgf@circ@res@step=\dimen292
+\pgf@circ@res@temp=\dimen293
+\pgf@circ@Rlen=\dimen294
+\pgf@circ@scaled@Rlen=\dimen295
+\pgfstartlinewidth=\dimen296
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircutils.tex
 \ctikz@scratchbox=\box75
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircpath.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircshapes.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircmonopoles.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircbipoles.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcirctripoles.tex
 \pgf@circ@res@count=\count353
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircquadpoles.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircmultipoles.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcirclabel.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircvoltage.tex
-\pgfcirc@labelshift=\dimen298
+\pgfcirc@labelshift=\dimen297
 ) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcirccurrent.tex) (/usr/local/texlive/2024/texmf-dist/tex/generic/circuitikz/pgfcircflow.tex)) (/usr/local/texlive/2024/texmf-dist/tex/latex/import/import.sty
 Package: import 2020/04/01  v 6.2
 ) (/usr/local/texlive/2024/texmf-dist/tex/latex/xifthen/xifthen.sty
@@ -544,8 +539,8 @@ Package: xifthen 2015/11/05 v1.4.0 Extended ifthen features
 Package: calc 2023/07/08 v4.3 Infix arithmetic (KKT,FJ)
 \calc@Acount=\count354
 \calc@Bcount=\count355
-\calc@Adimen=\dimen299
-\calc@Bdimen=\dimen300
+\calc@Adimen=\dimen298
+\calc@Bdimen=\dimen299
 \calc@Askip=\skip58
 \calc@Bskip=\skip59
 LaTeX Info: Redefining \setlength on input line 80.
@@ -558,12 +553,12 @@ Package: ifmtarg 2018/04/16 v1.2b check for an empty argument
 Package: pdfpages 2024/10/28 v0.6c Insert pages of external PDF documents (AM)
  (/usr/local/texlive/2024/texmf-dist/tex/latex/eso-pic/eso-pic.sty
 Package: eso-pic 2023/05/03 v3.0c eso-pic (RN)
-\ESO@tempdima=\dimen301
-\ESO@tempdimb=\dimen302
+\ESO@tempdima=\dimen300
+\ESO@tempdimb=\dimen301
 )
-\AM@pagewidth=\dimen303
-\AM@pageheight=\dimen304
-\AM@fboxrule=\dimen305
+\AM@pagewidth=\dimen302
+\AM@pageheight=\dimen303
+\AM@fboxrule=\dimen304
  (/usr/local/texlive/2024/texmf-dist/tex/latex/pdfpages/pppdftex.def
 File: pppdftex.def 2024/10/28 v0.6c Pdfpages driver for pdfTeX (AM)
 )
@@ -861,13 +856,13 @@ Package: textcomp 2024/04/24 v2.1b Standard LaTeX package
  (/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count493
-\scratchdimen=\dimen306
+\scratchdimen=\dimen305
 \scratchbox=\box79
 \nofMPsegments=\count494
 \nofMParguments=\count495
 \everyMPshowfont=\toks48
 \MPscratchCnt=\count496
-\MPscratchDim=\dimen307
+\MPscratchDim=\dimen306
 \MPnumerator=\count497
 \makeMPintoPDFobject=\count498
 \everyMPtoPDFconversion=\toks49
@@ -999,55 +994,87 @@ LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
 [15]
 
 [16]
-Overfull \hbox (22.4968pt too wide) in paragraph at lines 536--536
-[]\OT1/cmtt/m/n/10 docker run -v /grid_run.json:\home\grid_run.json pablodejuan/andes_src[] 
- []
+
+LaTeX Warning: `h' float specifier changed to `ht'.
 
 
 
 [17]
-Overfull \hbox (24.77386pt too wide) in paragraph at lines 549--550
+
+[18]
+Overfull \hbox (24.77386pt too wide) in paragraph at lines 597--598
 \OT1/cmr/m/n/10 to de-ploy it to. In the ex-ist-ing use case we use \OT1/cmtt/m/n/10 service[]file=mpc[]multiple[]areas.py
  []
 
 
+Overfull \hbox (111.74602pt too wide) in paragraph at lines 607--607
+[]\OT1/cmtt/m/n/10 #service_file can be changed for other services (such as mpc_consensus, mpc_kpi_driven)[] 
+ []
 
-[18]
+
 
 [19]
-<figures/ieee2areas.png, id=89, 675.52374pt x 578.16pt>
+
+[20]
+<figures/ieee2areas.png, id=92, 675.52374pt x 578.16pt>
 File: figures/ieee2areas.png Graphic file (type png)
 <use figures/ieee2areas.png>
-Package pdftex.def Info: figures/ieee2areas.png  used on input line 573.
+Package pdftex.def Info: figures/ieee2areas.png  used on input line 624.
 (pdftex.def)             Requested size: 276.00105pt x 236.22668pt.
 
 
-[20 <./figures/ieee2areas.png>]
-<figures/mpc_load.png, id=95, 951.555pt x 593.21625pt>
-File: figures/mpc_load.png Graphic file (type png)
-<use figures/mpc_load.png>
-Package pdftex.def Info: figures/mpc_load.png  used on input line 595.
-(pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
-<figures/non_mpc_load.png, id=96, 951.555pt x 593.21625pt>
-File: figures/non_mpc_load.png Graphic file (type png)
-<use figures/non_mpc_load.png>
-Package pdftex.def Info: figures/non_mpc_load.png  used on input line 602.
-(pdftex.def)             Requested size: 155.24895pt x 96.78119pt.
+[21 <./figures/ieee2areas.png>]
+<figures/frequency/mpc_load.png, id=98, 1082.0425pt x 880.28876pt>
+File: figures/frequency/mpc_load.png Graphic file (type png)
+<use figures/frequency/mpc_load.png>
+Package pdftex.def Info: figures/frequency/mpc_load.png  used on input line 646.
+(pdftex.def)             Requested size: 241.49895pt x 186.3108pt.
+<figures/frequency/non_mpc_load.png, id=100, 1207.51125pt x 874.26625pt>
+File: figures/frequency/non_mpc_load.png Graphic file (type png)
+<use figures/frequency/non_mpc_load.png>
+Package pdftex.def Info: figures/frequency/non_mpc_load.png  used on input line 655.
+(pdftex.def)             Requested size: 241.49895pt x 188.52019pt.
 
-
-[21 <./figures/mpc_load.png> <./figures/non_mpc_load.png>]
 
 [22]
 
-[23]
+[23 <./figures/frequency/mpc_load.png> <./figures/frequency/non_mpc_load.png>]
+<figures/frequency/mpc_generator.png, id=112, 462.528pt x 346.896pt>
+File: figures/frequency/mpc_generator.png Graphic file (type png)
+<use figures/frequency/mpc_generator.png>
+Package pdftex.def Info: figures/frequency/mpc_generator.png  used on input line 671.
+(pdftex.def)             Requested size: 241.49895pt x 255.91353pt.
+<figures/frequency/non_mpc_generator.png, id=114, 414.54875pt x 467.7475pt>
+File: figures/frequency/non_mpc_generator.png Graphic file (type png)
+<use figures/frequency/non_mpc_generator.png>
+Package pdftex.def Info: figures/frequency/non_mpc_generator.png  used on input line 680.
+(pdftex.def)             Requested size: 241.49895pt x 254.25293pt.
+
 
 [24]
+Overfull \vbox (43.39282pt too high) has occurred while \output is active []
 
-[25]
+
+
+[25 <./figures/frequency/mpc_generator.png> <./figures/frequency/non_mpc_generator.png>]
+<figures/frequency/mpc_line.png, id=127, 462.528pt x 346.896pt>
+File: figures/frequency/mpc_line.png Graphic file (type png)
+<use figures/frequency/mpc_line.png>
+Package pdftex.def Info: figures/frequency/mpc_line.png  used on input line 695.
+(pdftex.def)             Requested size: 241.49895pt x 251.7396pt.
+<figures/frequency/non_mpc_line.png, id=129, 462.528pt x 346.896pt>
+File: figures/frequency/non_mpc_line.png Graphic file (type png)
+<use figures/frequency/non_mpc_line.png>
+Package pdftex.def Info: figures/frequency/non_mpc_line.png  used on input line 704.
+(pdftex.def)             Requested size: 241.49895pt x 262.71223pt.
+
 
 [26]
+Overfull \vbox (47.67819pt too high) has occurred while \output is active []
 
-[27]
+
+
+[27 <./figures/frequency/mpc_line.png> <./figures/frequency/non_mpc_line.png>]
 
 [28]
 
@@ -1055,17 +1082,27 @@ Package pdftex.def Info: figures/non_mpc_load.png  used on input line 602.
 
 [30]
 
-[31
+[31]
+
+[32]
+
+[33]
+
+[34]
+
+[35]
+
+[36
 
 ]
-Overfull \hbox (5.23892pt too wide) in paragraph at lines 801--801
+Overfull \hbox (5.23892pt too wide) in paragraph at lines 900--900
 \OT1/cmr/m/n/10 vices pro-vi-sion,'' \OT1/cmr/m/it/10 IEEE Trans-ac-tions on Smart Grid\OT1/cmr/m/n/10 , vol. 10, no. 4, pp. 3551{
  []
 
 
 
-[32]
-runsystem(latexminted cleantemp  --timestamp 20250708171306 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
+[37]
+runsystem(latexminted cleantemp  --timestamp 20250709195359 FAD58DE7366495DB4650CFEFAC2FCD61)...executed safely (allowed).
 
  (./main.aux)
  ***********
@@ -1077,18 +1114,18 @@ Package logreq Info: Writing requests to 'main.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 48000 strings out of 473362
- 1159708 string characters out of 5720989
- 2314264 words of memory out of 5000000
- 70562 multiletter control sequences out of 15000+600000
+ 47619 strings out of 473362
+ 1148863 string characters out of 5720989
+ 2306004 words of memory out of 5000000
+ 70187 multiletter control sequences out of 15000+600000
  568627 words of font info for 77 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 85i,15n,93p,1086b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 85i,15n,93p,1073b,1754s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on main.pdf (32 pages, 534864 bytes).
+Output written on main.pdf (37 pages, 768758 bytes).
 PDF statistics:
- 223 PDF objects out of 1000 (max. 8388607)
- 139 compressed objects within 2 object streams
+ 261 PDF objects out of 1000 (max. 8388607)
+ 158 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 38 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 94 words of extra memory for PDF output out of 10000 (max. 10000000)
 

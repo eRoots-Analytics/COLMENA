@@ -502,6 +502,28 @@
       \field{title}{Distributed Nonlinear Model Predictive Control for District Heating Networks}
       \field{year}{2021}
     \endentry
+    \entry{coinor-ipopt}{misc}{}{}
+      \name{author}{1}{}{%
+        {{hash=1be5c66ef067b9313ad7fab3217531dc}{%
+           family={COIN-OR},
+           familyi={C\bibinithyphendelim O\bibinitperiod}}}%
+      }
+      \strng{namehash}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{fullhash}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{fullhashraw}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{bibnamehash}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{authorbibnamehash}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{authornamehash}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{authorfullhash}{1be5c66ef067b9313ad7fab3217531dc}
+      \strng{authorfullhashraw}{1be5c66ef067b9313ad7fab3217531dc}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://github.com/coin-or/Ipopt}}
+      \field{note}{Accessed: 2025-07-08}
+      \field{title}{{IPOPT} - Interior Point OPTimizer}
+    \endentry
     \entry{grids:ieee39}{article}{}{}
       \name{author}{3}{}{%
         {{hash=ee4ca01e1345ce76abe2748f432f0e59}{%
@@ -988,29 +1010,6 @@
       \true{nocite}
       \field{pages}{672\bibrangedash 680}
       \range{pages}{9}
-    \endentry
-    \entry{coinor-ipopt}{misc}{}{}
-      \name{author}{1}{}{%
-        {{hash=1be5c66ef067b9313ad7fab3217531dc}{%
-           family={COIN-OR},
-           familyi={C\bibinithyphendelim O\bibinitperiod}}}%
-      }
-      \strng{namehash}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{fullhash}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{fullhashraw}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{bibnamehash}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{authorbibnamehash}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{authornamehash}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{authorfullhash}{1be5c66ef067b9313ad7fab3217531dc}
-      \strng{authorfullhashraw}{1be5c66ef067b9313ad7fab3217531dc}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{howpublished}{\url{https://github.com/coin-or/Ipopt}}
-      \field{note}{Accessed: 2025-07-08}
-      \field{title}{{IPOPT} - Interior Point OPTimizer}
-      \true{nocite}
     \endentry
   \enddatalist
 \endrefsection
