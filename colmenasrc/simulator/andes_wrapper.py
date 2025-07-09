@@ -10,8 +10,9 @@ class AndesWrapper:
     def __init__(self, load = True):
 
         self.andes_url = Config.andes_url
+        self.failure = Config.failure
         #self.case_path = get_case(Config.case_path)
-        self.case_path = 'andes/cases/npcc/npcc_modified.xlsx'
+        self.case_path = f'andes/cases/{Config.case_path}'
         self.initialised = False
         if self.case_path is not None and load:
             self.load_simulation(self.case_path)
@@ -220,6 +221,10 @@ class AndesWrapper:
             # Move legend outside
             plt.legend(title="Generators", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
             plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on right for legend
+            try:
+                plt.savefig("/home/output_plots.png")
+            except:
+                _ = 0
             plt.show()
         except Exception as e:
             print(f"[Get] Failed to get power transfer: {e}")

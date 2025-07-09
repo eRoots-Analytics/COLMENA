@@ -9,5 +9,11 @@ ENV PYTHONPATH=/home/colmenasrc:$PYTHONPATH
 # Copy the 'src' folder from the host machine into the container's home directory
 COPY colmenasrc/ /home/colmenasrc/
 COPY andes/ /home/andes/
+COPY requirements.txt /home/
+COPY main_colmena.py /home/
 
-RUN python3 /home/colmenasrc/scripts/main_colmena.py
+# Install Python dependencies
+RUN python3 -m pip install --upgrade pip \
+ && python3 -m pip install -r /home/requirements.txt
+
+CMD ["python3", "/home/main_colmena.py"]

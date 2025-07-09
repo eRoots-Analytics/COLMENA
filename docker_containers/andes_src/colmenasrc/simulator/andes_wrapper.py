@@ -3,15 +3,25 @@ Andes client API wrapper to simplfy calls.
 """
 
 import requests
-
+import json
 from colmenasrc.config.config import Config
 
 class AndesWrapper:
     def __init__(self):
-
+        
+        self.case_name = Config.case_name
         self.andes_url = Config.andes_url
-        #self.case_path = get_case(Config.case_path)
-        self.case_path = 'andes/cases/npcc/npcc_modified.xlsx'
+        self.case_path = Config.case_name
+        self.failure = Config.failure
+
+        if self.case_name == 'ieee39':
+            self.case_path = 'andes/cases/ieee39/ieee39_full.xlsx'
+        elif self.case_name == 'kundur':
+            self.case_path = 'andes/cases/kundur/kundur_full.xlsx'
+        elif self.case_name == 'npcc':
+            self.case_path = 'andes/cases/npcc/npcc_modified.xlsx'
+        else:
+            raise Exception('Grid not supported')
         self.initialised = False
         if self.case_path is not None:
             

@@ -91,7 +91,7 @@ class AgentControl(Service):
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = 400
+            self.max_iter = 650
             self.data_read = getattr(self, 'Data_' + str(self.area))
             self.data_write = getattr(self, 'Data_' + str(self.area+1 if self.area < self.n_areas else 1))
 
@@ -103,6 +103,7 @@ class AgentControl(Service):
             self.agent.setup = False
             self.initialized_decorators = False
             self.online_step = 0
+            time.sleep(0.1)
 
         @Persistent()
         def behavior(self):
@@ -112,16 +113,16 @@ class AgentControl(Service):
             self.agent.initialize_variables_values()
             self.agent.first_warm_start()
             self.global_error.publish({'agent':1, 'error':self.error})
-
             if not self.initialized_decorators:
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.state_horizon_jsonlike)
                 self.initialized_decorators = True
-                time.sleep(1)
+            else:
+                time.sleep(0.1)
 
             # Stop Flask logs
             time_start = time.time()
-            while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)(self.max_iter):
+            while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)*(self.max_iter):
                 print(f'Iteration {self.iter}')
                 initial_state_horizon_jsonlike = self.data_read.get()
                 if self.agent.generators: 
@@ -170,8 +171,11 @@ class AgentControl(Service):
             time.sleep(max(0,self.agent.dt - time_spent))
 
             if self.agent.area == self.n_areas:
-                time.sleep(0.4)
-                for i in range(int(self.coordinator.tdmpc/self.coordinator.dt)):
+                time.sleep(0.01)
+                for i in range(30):
                     success, new_time = self.andes.run_step()
+                    time.sleep(0.1)
                     print(f"Step was {success} and time is {new_time}")
             return 1
+    
+    

@@ -51,7 +51,7 @@ class Coordinator:
         self.K =          Config.K
         self.tdmpc =      Config.tdmpc
         self.td =         Config.td
-
+        self.failure =    Config.failure
         self.controlled = Config.controlled
 
         self.disturbance = False
@@ -245,35 +245,42 @@ class Coordinator:
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
 
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'tm0',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'u',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-
-                    self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_0',
+                    if self.andes.failure == 'load':
+                        self.andes.set_value({'model': 'PQ',
+                                          'idx': 'PQ_1',
                                           'src': 'Ppf',
                                           'attr': 'v',
-                                          'value': 5.0})
+                                          'value': 0.0})
+                    elif self.andes.failure == 'line':
+                        self.andes.set_value({'model': 'Line',
+                                          'idx': 'Line_1',
+                                          'src': 'u',
+                                          'attr': 'v',
+                                          'value': 0})
+                    elif self.andes.failure == 'generator':
+                        self.andes.set_value({'model': 'GENROU',
+                                          'idx': 'GENROU_1',
+                                          'src': 'u',
+                                          'attr': 'v',
+                                          'value': 0})
 
                 # === Simulate system forward ===
                 sync_time = self.andes.get_dae_time()
-                if self.t < 2:
+                if self.t < 6:
                     success, new_time = self.andes.run_step()
                     self.k += 1
                     self.t += self.tstep
+                    time.sleep(self.tstep)
                 else:
-                    while sync_time == initial_time:
+                    while sync_time == initial_time and sync_time < self.tf:
                         sync_time = self.andes.get_dae_time()
-                        time.sleep(0.1)
-                        print('Sleeping')
-
+                        time.sleep(0.001)
+                        print(f'[Run] Waiting, initial_time is {initial_time}, sync_time is {sync_time}')
+                    self.t += self.tstep
+                    self.k += 1
+                    
+                if sync_time > self.tf:
+                    return True
             return True
         except Exception as e:
             print(f"[Exception] Error during loop: {e}")

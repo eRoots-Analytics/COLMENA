@@ -4,12 +4,12 @@ This class contains all the parameter values for the configuration of the simula
 class Config:
 
     andes_url = "http://127.0.0.1:5000" # andes_url = 'http://192.168.68.59:5000'
-    case_name = "npcc" # case_name = "kundur" "ieee39" "npcc"
+    case_name = "ieee39" # case_name = "kundur" "ieee39" "npcc"
     case_path = f"{case_name}/{case_name}_modified.xlsx" 
-
+    failure = 'load'
     # Simulator 
     tstep = 0.05
-    tf = 20.0
+    tf = 25.0
 
     # Disturbance 
     td = 5.0

@@ -1,0 +1,42 @@
+{
+    "id": {
+        "value": "AgentControl"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "grid_areas",
+            "imageId": "grid_areas:latest"
+        },
+        {
+            "id": "all_global",
+            "imageId": "all_global:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "Distributed_MPC",
+            "imageId": "distributed_mpc:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": [
+                {
+                    "query": "AgentControl/frequency[5s] < 1.001 or AgentControl/frequency[5s] > 0.999"
+                }
+            ]
+        },
+        {
+            "id": "MonitoringRole",
+            "imageId": "monitoringrole:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": [
+                {
+                    "query": "always_negative[10s] > 1"
+                }
+            ]
+        }
+    ]
+}

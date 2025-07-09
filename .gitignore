@@ -1,7 +1,6 @@
 # ================================
 # Python bytecode and cache
 # ================================
-__pycache__/
 *.py[cod]
 *$py.class
 .history/
@@ -20,7 +19,6 @@ __pycache__/
 .Python
 env/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/

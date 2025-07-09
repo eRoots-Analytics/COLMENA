@@ -7,6 +7,6 @@ from colmenasrc.simulator.andes_wrapper import AndesWrapper
 from colmenasrc.controller.coordinator import Coordinator
 
 andes = AndesWrapper(load = False)
-for t in range(300):
+for t in range(400):
     success, new_time = andes.run_step()
     time.sleep(0.01)

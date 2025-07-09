@@ -1,51 +1,60 @@
 import numpy as np
 import subprocess
 import time
+import os 
 
-pre_command = 'source /home/pablo/myenv/bin/activate'
-script_name = "mpc_consensus"
+script_name = os.getenv('service_file')
+colmena_dir = os.getenv('colmena_dir')
+python_dir  = os.getenv('python_dir')
+docker_user = os.getenv('docker_user')
+grid_name   = os.getenv('grid_name')
+
+if script_name is None:
+    script_name = "mpc_kpi_driven"
+if grid_name is None:
+    grid_name = "ieee39"
+if colmena_dir is None:
+    colmena_dir = "/home/pablo/Desktop/Colmena"
+if python_dir is None:
+    python_dir = "/home/pablo/myenv/bin/python"
+    python_dir = 'python3'
+if docker_user is None:
+    docker_user = "pablodejuan"
+current_dir = os.getcwd()
 folder_name = 'colmena_services'
 
-colmena_command = f"""
-/home/pablo/myenv/bin/python -m colmena_build \
---service_path='/home/pablo/Desktop/eroots/COLMENA/{folder_name}/mpc_multiple_areas.py' \
---build_file='/home/pablo/Desktop/Colmena/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' 
-"""
 
 build_command = {
-        "cmd": "/home/pablo/myenv/bin/python -m colmena_build "
-               f"--service_path='/home/pablo/Desktop/eroots/COLMENA/{folder_name}/{script_name}.py' "
-               "--build_file='/home/pablo/Desktop/Colmena/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' ",
-        "cwd": "/home/pablo/Desktop/Colmena/programming-model/colmena/building_tool"  
+        "cmd": f"{python_dir} -m colmena_build "
+               f"--service_path='{current_dir}/{folder_name}/{script_name}.py' "
+               f"--build_file='{colmena_dir}/programming-model/dist/colmena_swarm_pm-0.1.4.tar.gz' ",
+        "cwd": f"{colmena_dir}/programming-model/colmena/building_tool"  
     }
+
 deploy_command = {
-        "cmd": f"/home/pablo/myenv/bin/python -m colmena_deploy --build_path='/home/pablo/Desktop/eroots/COLMENA/{folder_name}/{script_name}/build' "
+        "cmd": f"{python_dir} -m colmena_deploy --build_path='{current_dir}/{folder_name}/{script_name}/build' "
                "--platform='linux/amd64' "
-               "--user=pablodejuan",
-        "cwd": "/home/pablo/Desktop/Colmena/deployment-tool/deployment"  # Change to the correct directory
+               f"--user={docker_user}",
+        "cwd": f"{colmena_dir}/deployment-tool/deployment"  # Change to the correct directory
     }
+
 zenoh_command = {
         "cmd": "docker compose -f compose-zenoh.yaml up --abort-on-container-exit",
-        "cwd": "/home/pablo/Desktop/Colmena/agent"  # Change to the directory where compose.yaml is located
+        "cwd": f"{colmena_dir}/agent"  # Change to the directory where compose.yaml is located
     }
 agent_command= {
         "cmd": "HARDWARE={hardware} AGENT_ID={agent_name} POLICY={strategy} docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
-        "cwd": "/home/pablo/Desktop/Colmena/agent", 
+        "cwd": f"{colmena_dir}/agent", 
         'is_agent': True,
     }
 
-compose_down = " 'docker compose --file '/home/pablo/Desktop/Colmena/agent/compose.yaml' --project-name 'area_1' down' "
-
-agents = [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_a'},
-          {'hardware':'TRANSFORMER', 'strategy':'eager', 'agent_name':'device_b'}, 
-          {'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_c'}, 
-          {'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':'device_d'}] 
-
-mpc_agents = True
-n_area = 6
-n_generators = 5
-if mpc_agents:
-    agents = [{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_1'},{'hardware':'AREA', 'strategy':'eager', 'agent_name':'area_2'}] 
+compose_down = f" 'docker compose --file f'{colmena_dir}/agent/compose.yaml' --project-name 'area_1' down' "
+if grid_name == 'ieee39':
+    n_area = 2
+    n_generators = 0
+elif grid_name == 'npcc':
+    n_area = 6
+    n_generators = 5
 
 agents = []
 if n_area >= 2:
@@ -53,19 +62,19 @@ if n_area >= 2:
         agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}] 
 if n_generators >= 2:
     for i in range(1, n_generators+1):
-        agents +=  [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':f'genrou_{20+3*i}'}]
+        j = 20+3*i
+        if grid_name == 'ieee39':
+            j = max(j, 10)
+        agents +=  [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':f'genrou_{j}'}]
 
+print(agents)
 commands =  [zenoh_command] + [agent_command]*(n_area+n_generators) + [deploy_command]  
-#commands = [build_command]
-#commands = [deploy_command]
 processes = []
 
 cmd = zenoh_command['cmd']
 cwd = zenoh_command['cwd']
-terminal_cmd = f"gnome-terminal -- bash -c './{folder_name}/activate_env.sh {zenoh_command['cwd']} \"{zenoh_command['cmd']}\"; exec bash'"
+terminal_cmd = f"gnome-terminal -- bash -c 'cd {zenoh_command['cwd']} && {zenoh_command['cmd']}; exec bash'"
 build_cmd = f"gnome-terminal -- bash -c './{folder_name}/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
-#terminal_cmd = f"gnome-terminal -- bash -c './AndesRoles/colmena_deploy/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
-#process = subprocess.Popen(terminal_cmd, shell=True)
 subprocess.Popen(terminal_cmd,shell=True)
 #subprocess.Popen(build_cmd,shell=True)
 

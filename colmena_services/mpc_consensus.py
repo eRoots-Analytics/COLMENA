@@ -28,6 +28,41 @@ from colmena import (
     Data,
     Dependencies
 )
+import re
+
+def filter_global_error(input_dict: dict, target_iter: int) -> dict:
+    """
+    Filters a dictionary, keeping entries where the key is in 'X_Y' format
+    and 'Y' matches target_iter OR (target_iter - 1). Non-'X_Y' keys are also preserved.
+
+    Args:
+        input_dict (dict): The dictionary to filter.
+        target_iter (int): The integer representing the current 'y' value.
+                           The function will keep keys with 'y' equal to target_iter
+                           or (target_iter - 1).
+
+    Returns:
+        dict: A new dictionary containing only the desired entries.
+    """
+    filtered_dict = {}
+    target_iter_str = str(target_iter)
+    
+    # Calculate the previous iteration and convert to string for comparison
+    prev_iter_str = str(max(target_iter - 1,0)) 
+
+    for key, value in input_dict.items():
+        # Regex to match keys like 'area_0', 'foo_123' and capture the number
+        match = re.match(r'^[^_]+_(\d+)$', key)
+        if match:
+            y_str = match.group(1)  # Extract the 'y' part as a string
+            
+            # Check if y_str matches target_iter OR (target_iter - 1)
+            if y_str == target_iter_str or y_str == prev_iter_str:
+                filtered_dict[key] = value
+        else:
+            # If the key doesn't match the 'X_Y' format, preserve it
+            filtered_dict[key] = value
+    return filtered_dict
 
 #Service to deploy a one layer control
 andes_url = 'http://127.0.0.1:5000'
@@ -91,7 +126,7 @@ class AgentControl(Service):
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = 350
+            self.max_iter = 450
             self.data_read = getattr(self, 'Data_' + str(self.area))
             self.data_write = getattr(self, 'Data_' + str(self.area+1 if self.area < self.n_areas else 1))
 
@@ -103,19 +138,22 @@ class AgentControl(Service):
             self.agent.setup = False
             self.initialized_decorators = False
             self.online_step = 0
+            self.reach_consensus = False
 
         @Persistent()
         def behavior(self):
             print('running')
-            self.error = 100
             self.iter = 0
             self.agent.initialize_variables_values()
             self.agent.first_warm_start()
 
-            if not self.initialized_decorators:
+            if self.area == 1:
                 self.global_error.publish({'error':1, 'to_publish':1})
+            if not self.initialized_decorators:
+                self.error = 1
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.state_horizon_jsonlike)
+                self.data_read.publish(self.state_horizon_jsonlike)
                 self.initialized_decorators = True
                 time.sleep(1)
 
@@ -123,7 +161,7 @@ class AgentControl(Service):
             time_start = time.time()
             while self.error > self.admm.tol and self.iter < self.max_iter:
                 print(f'Iteration {self.iter}')
-                initial_state_horizon_jsonlike = self.data_read.get()
+                initial_state_horizon_jsonlike = json.loads(self.data_read.get()) 
                 if self.agent.generators: 
                     if self.iter ==0: 
                         # Initialize the model for the first iteration
@@ -141,21 +179,34 @@ class AgentControl(Service):
                 self.variables_horizon_values_json = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.variables_horizon_values_json)
                 
-                #We read the global_error data channel and wait to publish our error when its the agent's turn
-                global_error_dict = self.global_error.get()
-                while global_error_dict['to_publish'] != self.area:
+                if self.reach_consensus:
+                    #We read the global_error data channel and wait to publish our error when its the agent's turn
                     global_error_dict = self.global_error.get()
-                    time.sleep(0.001)
-                global_error_dict[f'{self.area}_{self.iter}'] = mse_error
-                global_error_dict['to_publish'] = self.area + 1 if self.area < self.n_areas else 1
-                self.global_error.publish(global_error_dict)
+                    if not isinstance(global_error_dict, dict):
+                        global_error_dict = json.loads(global_error_dict)
+                    while global_error_dict['to_publish'] != self.area:
+                        global_error_dict = self.global_error.get()
+                        if not isinstance(global_error_dict, dict):
+                            global_error_dict = json.loads(global_error_dict)
+                        print(f'waiting for areas to publish errors {global_error_dict} in {self.area}')
+                        time.sleep(0.001)
+                    global_error_dict[f'{self.area}_{self.iter}'] = mse_error
+                    global_error_dict['to_publish'] = self.area + 1 if self.area < self.n_areas else 1
+                    self.global_error.publish(global_error_dict)
 
-                global_error_dict = self.global_error.get()
-                new_error = 0
-                while global_error_dict['to_publish'] != 1:
-                    new_error = (max(new_error, global_error_dict[f'{i}_{self.iter}']) for i in range(1,self.n_areas+1))
-                self.error = new_error
-                print('[Main] Current mse error is self.error')
+                    #Once all agents have updated the error, we compute the global error from the previous iteration (!)
+                    new_error = 0
+                    if self.iter >= 1:
+                        for i in range(1,self.n_areas+1):
+                            new_error = max(new_error, global_error_dict[f'{i}_{self.iter-1}']) 
+                    else:
+                        new_error = 1
+                    if self.area == self.n_areas:
+                        global_error_dict = filter_global_error(global_error_dict, self.iter)
+                        global_error_dict['to_publish'] = 1
+                        self.global_error.publish(global_error_dict)
+                    self.error = new_error
+                    print('f[Main] Current mse error is {self.error}')
 
                 #We wait until we have received a new message from the other area
                 changed_horizon = False
@@ -199,10 +250,15 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             #WE FIRST INITIALIZE THE ROLE PARAMETERS
+            self.grid = 'npcc'
             self.andes_url = andes_url
-            self.agent_id = os.getenv('AGENT_ID')
+            self.agent_id = os.getenv('AGENT_ID').upper()
+            self.governor_model = 'TGOV1N'
             match = re.search(r'(\d+)$', self.agent_id)
-            self.gov_idx = 'TGOV1N_' + match.group(1)
+            if self.grid == 'npcc':
+                self.gov_idx = 'TGOV1_' + str(int(match.group(1))-21)
+            else:
+                self.gov_idx = 'TGOV1_' + match.group(1)
             self.device_dict = {'model':'GENROU', 'idx':self.agent_id}
             self.andes = AndesWrapper()
             PI_params = self.device_dict.get('PI_params', {})
@@ -214,14 +270,18 @@ class AgentControl(Service):
 
             self.reference = PI_params.get('reference', 1)
             self.ctrl_input = PI_params.get('ctrl_input', 1)
-            self.x = self.andes.get_partial_variable(model='TGOV1N', var ='paux0', idx=self.agent_id)
+            self.x = self.andes.get_partial_variable(model=self.governor_model, var ='paux0', idx=[self.gov_idx])[0]
             self.first = True
             self.last_time = 0
         
         @Persistent()
         def behavior(self):
-            u_input = self.andes.get_partial_variable(model='GENROU', var ='omega', idx=self.agent_id)
-            paux_actual = self.andes.get_partial_variable(model='TGOV1N', var ='paux0', idx=self.gov_idx)
+            u_input = self.andes.get_partial_variable(model='GENROU', var ='omega', idx=[self.agent_id])
+            u_input = u_input[0]
+
+            if u_input > 1.001 or u_input < 0.999:
+                return
+            paux_actual = self.andes.get_partial_variable(model=self.governor_model, var ='paux0', idx=[self.gov_idx])[0]
             self.x = paux_actual
             if self.first:
                 dt=0
@@ -235,7 +295,7 @@ class AgentControl(Service):
                 self.t_last = t_now
             self.x += dt*self.Ki*(u_input-self.reference)
             y = self.x + self.Kp*(u_input-self.reference)
-            roleChangeDict = {'model': 'TGOV1N', 'var':'paux0', 'idx': self.gov_idx, 'value':y}
+            roleChangeDict = {'model': self.governor_model, 'var':'paux0', 'idx': self.gov_idx, 'value':y}
             self.andes.change_parameter_value(roleChangeDict)
             time.sleep(0.01)
             return True

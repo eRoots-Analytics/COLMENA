@@ -159,23 +159,30 @@ class Coordinator:
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
 
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'tm0',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'u',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-
-                    self.andes.set_value({'model': 'PQ',
+                    if self.andes.failure == 'load':
+                        self.andes.set_value({'model': 'PQ',
                                           'idx': 'PQ_1',
                                           'src': 'Ppf',
                                           'attr': 'v',
                                           'value': 8.0})
+                    elif self.andes.failure == 'line':
+                        self.andes.set_value({'model': 'Line',
+                                          'idx': 'Line_1',
+                                          'src': 'u',
+                                          'attr': 'v',
+                                          'value': 0})
 
+                        self.andes.set_value({'model': 'Line',
+                                          'idx': 'Line_2',
+                                          'src': 'u',
+                                          'attr': 'v',
+                                          'value': 0})
+                    elif self.andes.failure == 'generator':
+                        self.andes.set_value({'model': 'GENROU',
+                                          'idx': 'GENROU_1',
+                                          'src': 'u',
+                                          'attr': 'v',
+                                          'value': 0})
                 # === Execute control ===
                 if self.k >= j * int(self.tdmpc/self.tstep):
                     j += 1
@@ -250,35 +257,42 @@ class Coordinator:
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
 
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'tm0',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'u',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
+                # === Disturbance injection ===
+                if self.k == int(self.td/self.tstep):
+                    self.disturbance = True
+                    print("[Loop] Disturbance acting")
 
-                    self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_1',
-                                          'src': 'Ppf',
+                    if self.andes.failure == 'line':
+                        self.andes.set_value({'model': 'Line',
+                                          'idx': 'Line_1',
+                                          'src': 'u',
                                           'attr': 'v',
-                                          'value': 0.0})
-                    self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_2',
-                                          'src': 'Ppf',
+                                          'value': 0})
+                    elif self.andes.failure == 'generator':
+                        self.andes.set_value({'model': 'GENROU',
+                                          'idx': 'GENROU_1',
+                                          'src': 'u',
                                           'attr': 'v',
-                                          'value': 0.0})
-                    for i in range(1, 11):
-                        if i == 5:
-                            continue
+                                          'value': 0})
+                    else:
                         self.andes.set_value({'model': 'PQ',
-                                          'idx': f'PQ_{i*3}',
-                                          'src': 'Ppf',
-                                          'attr': 'v',
-                                          'value': 0.0})
+                                              'idx': 'PQ_1',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        self.andes.set_value({'model': 'PQ',
+                                              'idx': 'PQ_2',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        for i in range(1, 11):
+                            if i == 5:
+                                continue
+                            self.andes.set_value({'model': 'PQ',
+                                              'idx': f'PQ_{i*3}',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
 
 
                 # === Simulate system forward ===
@@ -287,6 +301,7 @@ class Coordinator:
                     success, new_time = self.andes.run_step()
                     self.k += 1
                     self.t += self.tstep
+                    time.sleep(self.tstep)
                 else:
                     while sync_time == initial_time and sync_time < self.tf:
                         sync_time = self.andes.get_dae_time()
