@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     # Plotting
     import matplotlib
-    matplotlib.use("TkAgg") 
+    matplotlib.use("Agg") 
     from utils.plotting import plot_omegas, plot_omega_coi
     print(sim)
     plot_omegas(sim)

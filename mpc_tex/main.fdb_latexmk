@@ -1,13 +1,13 @@
 # Fdb version 4
-["biber main"] 0 "main.bcf" "main.bbl" "main" 1752080926.71472 -1
-  "main.bcf" 1752080926.61734 109057 4631dad6c45cc9330d7f542b82e55ca8 "pdflatex"
+["biber main"] 0 "main.bcf" "main.bbl" "main" 1752083641.64323 -1
+  "main.bcf" 1752083641.53999 109057 4631dad6c45cc9330d7f542b82e55ca8 "pdflatex"
   "ref.bib" 1751987824 7704 4cab4c91e38c645ab4ca152a119f7157 ""
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1752080924.5293 "/home/pablo/Desktop/eroots/COLMENA/mpc_tex/main.tex" "main.pdf" "main" 1752080926.71501 0
-  "/home/pablo/Desktop/eroots/COLMENA/mpc_tex/main.tex" 1752080923.18846 67322 02dca0fd4db18bb7b5f6e5132a9f962b ""
+["pdflatex"] 1752083639.32468 "/home/pablo/Desktop/eroots/COLMENA/mpc_tex/main.tex" "main.pdf" "main" 1752083641.64356 0
+  "/home/pablo/Desktop/eroots/COLMENA/mpc_tex/main.tex" 1752083637.82601 68144 231c38ac46fc2b7ce781f3882c3ed037 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/tcrm1000.tfm" 1136768653 1536 e07581a4bb3136ece9eeb4c3ffab8233 ""
@@ -248,10 +248,10 @@
   "figures/ieee2areas.png" 1751987824 125250 b19ef0d5366cc95a7758753ca3b633c8 ""
   "figures/twoareas.pdf" 1751987824 2364 e1418d7f3cf6a50af2b5925a92c79cef ""
   "figures/twoareas.pdf_tex" 1751987824 2572 bbce48870db21af04736392c649cd66c ""
-  "main.aux" 1752080926.61434 9561 b25a71403fc9c0ea0de5acd5a4d15ae5 "pdflatex"
+  "main.aux" 1752083641.53699 9561 0b6d446f192692dfb11a3c03cd08ab3d "pdflatex"
   "main.bbl" 1752075611.11139 41761 5cdc93ef5313772d0a354a26f1d4256e "biber main"
-  "main.run.xml" 1752080926.61834 2390 084982b9e83c4fcf38893e7b6e9ffeb1 "pdflatex"
-  "main.tex" 1752080923.18846 67322 02dca0fd4db18bb7b5f6e5132a9f962b ""
+  "main.run.xml" 1752083641.54099 2390 084982b9e83c4fcf38893e7b6e9ffeb1 "pdflatex"
+  "main.tex" 1752083637.82601 68144 231c38ac46fc2b7ce781f3882c3ed037 ""
   (generated)
   "main.aux"
   "main.bcf"

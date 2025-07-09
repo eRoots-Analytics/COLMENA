@@ -517,7 +517,7 @@ In this implementation of the MPC, we define $n_{agents}$ data channels where $n
 \label{fig:mpc_agents}
 \end{figure}
 
-Additionally, for tracking the convergence of the ADMM we define a data channel called global error. The data channel tracks the error of every area in the form of a dictionary where the area's number is the key and the value is that area's error. To syncronise the different agent we also define an attribute \textit{to_publish}. In every iteration the agent in area $i$ can only publish if the value of \textit{to_publish} saved in the data is equal to its areas number, if not it waits. When it can finally publish it publishes its error and updates  \textit{to_publish} to $i+1$. Effectively, this means that the agents publsh the error in the same order as their areas. In practice, this scheme works but its quite inefficient time wise, so we chose to just run the ADMM for a fixed number of iterations. 
+Additionally, for tracking the convergence of the ADMM we define a data channel called global error. The data channel tracks the error of every area in the form of a dictionary where the area's number is the key and the value is that area's error. To syncronise the different agent we also define an attribute \textit{to\_publish}. In every iteration the agent in area $i$ can only publish if the value of \textit{to\_publish} saved in the data is equal to its areas number, if not it waits. When it can finally publish it publishes its error and updates  \textit{to\_publish} to $i+1$. Effectively, this means that the agents publsh the error in the same order as their areas. In practice, this scheme works but its quite inefficient time wise, so we chose to just run the ADMM for a fixed number of iterations. 
 
 \subsubsection*{Activation}
 
@@ -564,9 +564,11 @@ To run the Andes simulation in a separate docker container we run the following 
 
 \begin{verbatim}
 docker run \
+  -p 5000:5000 \
   -v $(pwd)/config.py:/home/colmenasrc/config/config.py \
   -v $(pwd)/home/output_plots:/home/output_plots \
   pablodejuan/andes_src
+
 \end{verbatim}
 
 The configuration file can have the following aspect. The attribute "failure" describes the type of perturbation that will happen in the simulation, it can have the following values: "line", "generator", "load". A model configuration file is present in the main directory of the repository as an example. We can also change other values relative to the simulation such as the simulation time, the final time, the disturbance time and other parameters. 
@@ -641,7 +643,7 @@ We define a perturbation at $t=5s$ that consists in a load suddenly disconnectin
 
     \begin{minipage}{0.7\textwidth}
         \centering
-        \includegraphics[width=\textwidth, trim=0 0 3.8cm 0cm, clip]{figures/frequency/mpc_load.png}
+        \includegraphics[width=\textwidth, trim=0 0 0cm 1.6cm, clip]{figures/frequency/mpc_load.png}
         \caption{Frequency evolution for study case 1 with MPC}
         \label{fig:frequency_response_1}
     \end{minipage}
@@ -650,7 +652,7 @@ We define a perturbation at $t=5s$ that consists in a load suddenly disconnectin
 
     \begin{minipage}{0.7\textwidth}
         \centering
-        \includegraphics[width=\textwidth, trim=0 0 5cm 1.3cm, clip]{figures/frequency/non_mpc_load.png}
+        \includegraphics[width=\textwidth, trim=0 0 5cm 1.5cm, clip]{figures/frequency/non_mpc_load.png}
         \caption{Frequency evolution for study case 1 without MPC}
         \label{fig:frequency_response_2}
     \end{minipage}
@@ -666,7 +668,7 @@ For this case study we define the perturbation as a sudden loss of generation. T
 
     \begin{minipage}{0.7\textwidth}
         \centering
-        \includegraphics[width=\textwidth, trim=0 0 5.4cm 0.9cm, clip]{figures/frequency/mpc_generator.png}
+        \includegraphics[width=\textwidth, trim=0 0 5.6cm 0.9cm, clip]{figures/frequency/mpc_generator.png}
         \caption{Frequency evolution for study case 2 with MPC}
         \label{fig:frequency_response_3}
     \end{minipage}
@@ -699,7 +701,7 @@ For this case study we define the perturbation as a line outage, the line discon
 
     \begin{minipage}{0.7\textwidth}
         \centering
-        \includegraphics[width=\textwidth, trim=0 0 5.5cm 0.7cm, clip]{figures/frequency/non_mpc_line.png}
+        \includegraphics[width=\textwidth, trim=0 0 5.6cm 0.6cm, clip]{figures/frequency/non_mpc_line.png}
         \caption{Frequency evolution for study case 3 without MPC}
         \label{fig:frequency_response_6}
     \end{minipage}

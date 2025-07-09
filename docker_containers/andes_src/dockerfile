@@ -8,6 +8,7 @@ ENV PYTHONPATH=/home/colmenasrc:$PYTHONPATH
 
 # Copy the 'src' folder from the host machine into the container's home directory
 COPY colmenasrc/ /home/colmenasrc/
+COPY utils/ /home/utils/
 COPY andes/ /home/andes/
 COPY requirements.txt /home/
 COPY main_colmena.py /home/

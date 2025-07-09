@@ -36,9 +36,9 @@ def plot_omegas(coordinator):
     # Move legend outside
     plt.legend(title="Generators", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
     plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on right for legend
-    output_dir = './home/output_plots'
+    output_dir = '/home/output_plots'
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(f'./home/output_plots/omegas_plot1_area_{Config.case_name}_{Config.failure}.png')
+    plt.savefig(f'/home/output_plots/omegas_plot1_area_{Config.case_name}_{Config.failure}.png')
 
 
     try:
@@ -114,9 +114,10 @@ def plot_omega_coi(coordinator):
     plt.legend(title="Generators", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
     plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on right for legend
 
-    output_dir = './home/output_plots'
+    output_dir = '/home/output_plots'
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(f'./home/output_plots/omegas_plot2_area_{Config.case_name}_{Config.failure}.png')
+    print('plotting')
+    plt.savefig(f'/home/output_plots/omegas_plot2_area_{Config.case_name}_{Config.failure}.png')
 
     try:
         plt.show()
