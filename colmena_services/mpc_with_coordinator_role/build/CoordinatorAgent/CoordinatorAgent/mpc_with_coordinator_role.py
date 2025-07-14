@@ -32,11 +32,21 @@ from colmena import (
 #Service to deploy a one layer control
 andes_url = 'http://127.0.0.1:5000'
 
+class GridAll(Context):
+    @Dependencies(*["pyomo", "requests"])
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def locate(self, device):
+        id = {'id':1}
+        print(json.dumps(id))
+
 class AgentControl(Service):
-    @Data(name = 'dual_vars')
-    @Data(name = 'primal_vars')
-    @Data(name = 'global_error')
-    @Channel(name= 'to_coordinator')
+    @Context(class_ref = GridAll, name='all_global')
+    @Data(name = 'dual_vars', scope = 'all_global/id = .')
+    @Data(name = 'primal_vars', scope = 'all_global/id = .')
+    @Data(name = 'global_error', scope = 'all_global/id = .')
+    @Channel(name= 'to_coordinator', scope = 'all_global/id = .')
     @Metric('frequency')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,10 +55,11 @@ class AgentControl(Service):
         @Requirements('AREA')
         @Metric('frequency')
         @Dependencies(*["pyomo", "requests"])
-        @Data(name = 'dual_vars')
-        @Data(name = 'primal_vars')
-        @Data(name = 'global_error')
-        @Channel(name= 'to_coordinator')
+        @Context(class_ref = GridAll, name='all_global')
+        @Data(name = 'dual_vars', scope = 'all_global/id = .')
+        @Data(name = 'primal_vars', scope = 'all_global/id = .')
+        @Data(name = 'global_error', scope = 'all_global/id = .')
+        @Channel(name= 'to_coordinator', scope = 'all_global/id = .')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
@@ -58,7 +69,7 @@ class AgentControl(Service):
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = 650
+            self.max_iter = 500
             self.data_read = self.primal_vars
             self.data_write = self.to_coordinator
 
@@ -82,7 +93,10 @@ class AgentControl(Service):
             if not self.initialized_decorators:
                 self.global_error.publish({'agent':1, 'error':self.error})
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
-                self.data_write.publish(self.state_horizon_jsonlike)
+                self.data_read.publish(self.state_horizon_jsonlike)
+                state_horizon_message = self.state_horizon_jsonlike
+                state_horizon_message['type'] = 'error'
+                self.data_write.publish(state_horizon_message)
                 self.initialized_decorators = True
             else:
                 time.sleep(0.1)
@@ -105,7 +119,6 @@ class AgentControl(Service):
 
                 self.admm._update_duals()
                 self.admm._update_pyomo_params(self.agent) 
-
                 self.variables_horizon_values_json = {
                     f"{a}_{b}_{c}_{self.area}": val
                     for (a, b, c, d), val in self.coordinator.variables_horizon_values.items()
@@ -114,6 +127,15 @@ class AgentControl(Service):
                 self.variables_horizon_values_json['type'] = 'primal' 
                 self.data_write.publish(self.variables_horizon_values_json)
                 
+                #We publish the error and then get it back
+                inf_error = self.admm._compute_primal_residual_inf()
+                self.data_write.publish({'area':self.area, 'error':inf_error, 'type':'error'})
+                new_error = 0
+                error_dict = json.loads(self.global_error.get())
+                for i in self.n_areas:
+                    new_error = max(new_error, error_dict[i])
+                self.error = new_error
+
                 #We wait until we have received a new message from the other area
                 changed_horizon = False
                 change_time_start = time.time()
@@ -143,7 +165,7 @@ class AgentControl(Service):
 
             if self.agent.area == self.n_areas:
                 time.sleep(0.01)
-                for i in range(30):
+                for i in range(50):
                     success, new_time = self.andes.run_step()
                     time.sleep(0.1)
                     print(f"Step was {success} and time is {new_time}")
@@ -151,10 +173,13 @@ class AgentControl(Service):
     
     class CoordinatorAgent(Role):
         @Metric('frequency')
-        @Data(name = 'dual_vars')
-        @Data(name = 'primal_vars')
-        @Data(name = 'global_error')
-        @Channel(name= 'to_coordinator')
+        @Context(class_ref = GridAll, name='all_global')
+        @Requirements('AREA')
+        @Dependencies(*["pyomo", "requests"])
+        @Data(name = 'dual_vars', scope = 'all_global/id = .')
+        @Data(name = 'primal_vars', scope = 'all_global/id = .')
+        @Data(name = 'global_error', scope = 'all_global/id = .')
+        @Channel(name= 'to_coordinator', scope = 'all_global/id = .')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
@@ -166,18 +191,32 @@ class AgentControl(Service):
 
         @Async(msg="to_coordinator")
         def behavior(self, msg):
-            print('received incoming data')
-            data = json.loads(msg)
-            if data['type'] == 'primal':
-                primal_data = json.loads(self.primal_vars.get)
-                primal_data = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in primal_data.items()}
-                primal_data.update(data)
-                self.primal_vars.publish(primal_data)
-            elif data['type'] == 'error':
-                global_error = json.loads(self.global_error.get)
-                global_error = {f"{a}": val for (a), val in global_error.items()}
-                global_error.update(data)
-                self.global_error.publish(global_error)
-            else:
-                raise Exception('Data type sent not recognized')
+            print('Received incoming data')
+            print(f'data is {msg}')
+            data = json.loads(msg)['value']
+            agent_from = json.loads(msg)['value']
+            #if type(data) == str:
+            #    data['type'] == 'str'
+            #if type(data) == dict:
+            #    for key in data.keys():
+            #        self.primal_vars.publish({key:'this'})
+
+            try:
+                if data['type'] == 'primal':
+                    data.pop('type')
+                    primal_data = json.loads(self.primal_vars.get())
+                    primal_data.update(data)
+                    self.primal_vars.publish(primal_data)
+                elif data['type'] == 'error':
+                    data.pop('type')
+                    global_error = json.loads(self.global_error.get())
+                    global_error.update(data)
+                    self.global_error.publish(global_error)
+                else:
+                    raise Exception('Data type sent not recognized')
+            except KeyError as e:
+                print(f"KeyError: {e}. Data was: {data}")
+                raise
+                self.dual_vars.publish(data)
+
             return (1)

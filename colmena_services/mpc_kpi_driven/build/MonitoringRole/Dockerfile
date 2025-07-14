@@ -1,4 +1,4 @@
-FROM python:3.9.18-slim-bookworm
+FROM pablodejuan/agent_src
 COPY . /home
 WORKDIR /home
 RUN python3 -m pip install .

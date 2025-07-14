@@ -22,7 +22,7 @@
             ],
             "kpis": [
                 {
-                    "query": "AgentControl/frequency[5s] < 1.001 or AgentControl/frequency[5s] > 0.999"
+                    "query": "agentcontrol/frequency < 1.001"
                 }
             ]
         },
@@ -34,7 +34,7 @@
             ],
             "kpis": [
                 {
-                    "query": "always_negative[10s] > 1"
+                    "query": "agentcontrol/always_negative[3s] > 1"
                 }
             ]
         }

@@ -10,7 +10,7 @@ docker_user = os.getenv('docker_user')
 grid_name   = os.getenv('grid_name')
 
 if script_name is None:
-    script_name = "mpc_kpi_driven"
+    script_name = "kpi_test_2"
 if grid_name is None:
     grid_name = "ieee39"
 if colmena_dir is None:
@@ -57,15 +57,23 @@ elif grid_name == 'npcc':
     n_generators = 5
 
 agents = []
+if 'kpi' in script_name:
+    agent_strategy = 'lazy'
+else:
+    agent_strategy = 'eager'
+
 if n_area >= 2:
     for i in range(1, n_area+1):
-        agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}] 
+        if i == 1:
+            agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}] 
+        else:
+            agents +=  [{'hardware':'AREA', 'strategy':agent_strategy, 'agent_name':f'area_{i}'}] 
 if n_generators >= 2:
     for i in range(1, n_generators+1):
         j = 20+3*i
         if grid_name == 'ieee39':
             j = max(j, 10)
-        agents +=  [{'hardware':'GENERATOR', 'strategy':'eager', 'agent_name':f'genrou_{j}'}]
+        agents +=  [{'hardware':'GENERATOR', 'strategy':agent_strategy, 'agent_name':f'genrou_{j}'}]
 
 print(agents)
 commands =  [zenoh_command] + [agent_command]*(n_area+n_generators) + [deploy_command]  
@@ -76,8 +84,7 @@ cwd = zenoh_command['cwd']
 terminal_cmd = f"gnome-terminal -- bash -c 'cd {zenoh_command['cwd']} && {zenoh_command['cmd']}; exec bash'"
 build_cmd = f"gnome-terminal -- bash -c './{folder_name}/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
 subprocess.Popen(terminal_cmd,shell=True)
-#subprocess.Popen(build_cmd,shell=True)
-
+subprocess.Popen(build_cmd,shell=True)
 time.sleep(2)
 agent_i = 0
 for cmd in commands:

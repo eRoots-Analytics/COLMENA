@@ -62,6 +62,7 @@ class AgentControl(Service):
     @Data(name = 'Data_6', scope = 'all_global/id = .')
     @Data(name = 'global_error', scope = 'all_global/id = .')
     @Metric('frequency')
+    @Metric('always_negative')
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -69,7 +70,7 @@ class AgentControl(Service):
         @Requirements('AREA')
         @Metric('frequency')
         @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
-        @KPI('AgentControl/frequency[5s] < 1.001 or AgentControl/frequency[5s] > 0.999')
+        @KPI('agentcontrol/frequency < 1.001')
         @Context(class_ref = GlobalError, name='all_global')
         @Context(class_ref = GridAreas, name='grid_areas')
         @Dependencies(*["pyomo", "requests"])
@@ -115,6 +116,7 @@ class AgentControl(Service):
             self.agent.initialize_variables_values()
             self.agent.first_warm_start()
             self.global_error.publish({'agent':1, 'error':self.error})
+            self.frequency.publish(2)
             if not self.initialized_decorators:
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.state_horizon_jsonlike)
@@ -186,8 +188,9 @@ class AgentControl(Service):
     class MonitoringRole(Role):
         @Requirements('AREA')
         @Metric('frequency')
+        @Dependencies(*["pyomo", "requests"])
         @Metric('always_negative')
-        @KPI('always_negative[10s] > 1')
+        @KPI('agentcontrol/always_negative[3s] > 1')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url

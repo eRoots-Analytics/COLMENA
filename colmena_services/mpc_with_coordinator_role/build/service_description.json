@@ -1,0 +1,30 @@
+{
+    "id": {
+        "value": "AgentControl"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "all_global",
+            "imageId": "all_global:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "Distributed_MPC",
+            "imageId": "distributed_mpc:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": []
+        },
+        {
+            "id": "CoordinatorAgent",
+            "imageId": "coordinatoragent:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": []
+        }
+    ]
+}

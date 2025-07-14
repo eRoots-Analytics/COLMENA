@@ -1,0 +1,92 @@
+%! TeX program = pdflatex
+\documentclass{article}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{minted}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+% \usepackage{tikz-cd}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+\usepackage{comment}
+\usepackage{float}
+\usepackage{circuitikz}
+\usepackage{import}
+\usepackage{xifthen}
+\usepackage{pdfpages}
+\usepackage{transparent}
+\usepackage{float}
+\newcommand{\incfig}[1]{%
+    \def\svgwidth{\columnwidth}
+    \import{./figures/}{#1.pdf_tex}
+}
+% \usetikzlibrary{shapes, arrows, positioning}
+% \lstset{ 
+%     language=Python,                 % the language of the code
+%     basicstyle=\ttfamily\small,      % the size of the fonts that are used for the code
+%     numbers=left,                    % where to put the line-numbers
+%     numberstyle=\tiny\color{gray},   % the style that is used for the line-numbers
+%     stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+%     numbersep=5pt,                   % how far the line-numbers are from the code
+%     backgroundcolor=\color{white},   % choose the background color. You must add \usepackage{color}
+%     showspaces=false,                % show spaces adding particular underscores
+%     showstringspaces=false,          % underline spaces within strings
+%     showtabs=false,                  % show tabs within strings adding particular underscores
+%     frame=single,                    % adds a frame around the code
+%     rulecolor=\color{black},         % if not rolframe-color may be changed on line-breaks within not black text (e.g. comments (green here))
+%     tabsize=4,                       % sets default tabsize to 4 spaces
+%     captionpos=b,                    % sets the caption-position to bottom
+%     breaklines=true,                 % sets automatic line breaking
+%     breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+%     title=\lstname,                  % show the filename of files included with \lstinputlisting; also try caption instead of title
+%     keywordstyle=\color{blue},       % keyword style
+%     commentstyle=\color{green},      % comment style
+%     stringstyle=\color{red},         % string literal style
+%     escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+%     morekeywords={*,...} 
+% }            % if you want to add more keywords to the rol\newenvironment{notation}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+\newtheorem{property}{Property}
+
+\setlength\parindent{0pt}
+
+\newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}
+
+\title{Decentralized Grid Control in COLMENA \\ Activity 3}
+\author{Pablo de Juan Vela $^{1}$, Marco Muttoni $^{1}$, Josep Fanals i Batllori $^{1}$ \\
+        \small $^{1}$eRoots Analytics, Barcelona, Spain \\
+}
+\date{\today}
+
+\usepackage[style=ieee]{biblatex}
+\addbibresource{ref.bib}
+\setlength{\parskip}{1em} 
+\begin{document}
+\maketitle
+\section{Introduction}
+
+In this phase, we present the evaluation of the COLMENA platform, a prototype developed to enable distributed control of electrical grids through autonomous agents and edge computing capabilities. Building on the prototype, we are currently scaling and deploying it in the NPCC grid to assess its behaviour under a wide range of conventional and abnormal operating scenarios.
+
+The evaluation focuses on examining the viability of the system’s response in terms of several key performance indicators (KPIs), such as grid robustness, voltage ranges, branch overloads, short-circuit currents, and response times. These KPIs will be measured and analysed across different configurations of the initial system, aiming to demonstrate the platform’s ability to adapt and reconfigure effectively in dynamic conditions.
+
+\section{Evaluation criteria}
+
+\subsection{Agent Coordination Schemes}
+
+\subsection*{Fully Distributed}
+
+
+\subsection*{Coordinator Agent}
+
+\subsection{Test}
+\end{document}
