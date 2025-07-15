@@ -450,16 +450,19 @@ def delta_equivalent():
             else:
                 omega_filtered = low_pass_filter_series(copy_omega, dt=dt, cutoff_period_s=3.0)
 
-            omega_dot_fit = fit_omega_dot_as_exp_cosine(copy_omega[-40:])
-    
+            try:
+                omega_dot_fit = fit_omega_dot_as_exp_cosine(copy_omega[-40:])   
+            except:
+                solved = False
+                _ = 0
             # Predict omega_dot using the model for the next 3 seconds
             # Assuming omega_dot_fit is a function that returns the predicted values
             # (as a lambda function or previously defined prediction function)
             forecast_steps = int(3 / dt)  # Number of steps for the next 3 seconds based on dt
             
             # Generate prediction for the next 3 seconds
-            t_new = np.linspace(df.index[-1], df.index[-1] + 3, forecast_steps)  # Time vector for the next 3 seconds
-            omega_dot_forecast = omega_dot_fit(t_new)  # Using the omega_dot_fit function to get the forecasted omega_dot
+            #t_new = np.linspace(df.index[-1], df.index[-1] + 3, forecast_steps)  # Time vector for the next 3 seconds
+            #omega_dot_forecast = omega_dot_fit(t_new)  # Using the omega_dot_fit function to get the forecasted omega_dot
             
             # Initialize point_wise_sum to zeros with the correct length
             if i == 0:
@@ -478,7 +481,6 @@ def delta_equivalent():
                 p_gen += system.GENROU.tm.v[i]
                 d_M_omega += system.GENROU.M.v[i]*d_omega_i*system.GENROU.u.v[i]
                 d_M_omega_alter += system.GENROU.omega.e[i]
-                d_M_omega_ts += system.GENROU.M.v[i]*omega_dot_forecast
                 d_omega += (d_omega_i)
         p_demand = 0
         for i, gen_idx in enumerate(system.PQ.idx.v):
@@ -495,7 +497,6 @@ def delta_equivalent():
         result['alter_losses'] = p_losses_alter
         result['d_M_omega'] = d_M_omega
         result['d_M_omega_alter'] = d_M_omega_alter
-        result['d_M_omega_ts'] = list(d_M_omega_ts)
         omega_filtered.plot()
         plt.xlabel("Time [s]")
         plt.ylabel("Filtered Omega")
@@ -1049,9 +1050,9 @@ def run_colmena_time():
         if app.config['grid'] == 'ieee39':
             Ppf_pq5 = system.PQ.Ppf.v[4]
             Ppf_pq6 = system.PQ.Ppf.v[5]
-            set_points += [{'model':'GENROU', 'idx':'GENROU_1', 't':3, 'param':'u', 'value':0, 'add':False}]
+            #set_points += [{'model':'GENROU', 'idx':'GENROU_1', 't':3, 'param':'u', 'value':0, 'add':False}]
             #set_points += [{'model':'Line', 'idx':'Line_21', 't':3, 'param':'u', 'value':0, 'add':False}]
-            #set_points += [{'model':'PQ', 'idx':'PQ_6', 't':3, 'param':'Ppf', 'value':2.0*Ppf_pq6, 'add':False}]
+            set_points += [{'model':'PQ', 'idx':'PQ_6', 't':3, 'param':'Ppf', 'value':2.0*Ppf_pq6, 'add':False}]
 
         print(f"Running Simulation 2")
         t_run = float(request.args.get('t_run', 40))  

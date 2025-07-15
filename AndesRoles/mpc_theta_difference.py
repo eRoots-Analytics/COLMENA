@@ -192,7 +192,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         else:
             pmax = 11
             pmin = 0
-        return (pmin, pmax+2)
+        return (pmin-1, pmax+2)
     
     #We define the decision variable of the problem:
         #delta (size T) the angle of the area
@@ -290,7 +290,7 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     print(f'plosses is {p_losses} alternative is {p_losses_expression_bis}')
     time.sleep(3)
 
-    self.ramp_up = 1e-1
+    self.ramp_up = 1
     def initial_p(model, i):
         return (model.tm0[i]*model.u_generators[i] - self.dt*self.ramp_up*model.u_generators[i], model.Pg[i,0], 
                 model.tm0[i]*model.u_generators[i] + self.dt*self.ramp_up*model.u_generators[i])
@@ -319,8 +319,8 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
     model.constrains_dynamics2 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: 1.3*self.correcting_factor*model.M*(model.freq[t+1] - model.freq[t])/dt == ((-model.D(model.freq[t]-1) + model.P[t] - model.Pd[t] - model.P_exchange[t] + math.exp(-t)*model.p_losses)))
     model.constrains_dynamics3 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: (model.Pg[i, t+1] - model.Pg[i, t]) <= self.dt*self.ramp_up)
     model.constrains_dynamics4 = pyo.Constraint(model.generators, model.TimeDynamics, rule=lambda model, i, t: -self.ramp_up*self.dt*model.u_generators[i] <= (model.Pg[i, t+1] - model.Pg[i, t])*model.u_generators[i])
-    model.constrains_dynamics5 = pyo.Constraint(model.generators, rule=lambda model, i: model.Pg[i, self.T] <= self.tm_initial[gen_order[i]] + self.ramp_up*self.T*self.dt)
-    model.constrains_dynamics6 = pyo.Constraint(model.generators, rule=lambda model, i: model.Pg[i, self.T] >= self.tm_initial[gen_order[i]] - self.ramp_up*self.T*self.dt)
+    #model.constrains_dynamics5 = pyo.Constraint(model.generators, rule=lambda model, i: model.Pg[i, self.T] <= self.tm_initial[gen_order[i]] + self.ramp_up*self.T*self.dt)
+    #model.constrains_dynamics6 = pyo.Constraint(model.generators, rule=lambda model, i: model.Pg[i, self.T] >= self.tm_initial[gen_order[i]] - self.ramp_up*self.T*self.dt)
 
     #We limit the change in P_exchange:
     #model.power_exchanged_limit_1 = pyo.Constraint(model.TimeDynamics, rule=lambda model, t: (model.P_exchange[t+1] - model.P_exchange[t]) <=  self.ramp_up*10)
@@ -412,8 +412,8 @@ def setup_mpc(self, mpc_problem, dt = 0.5, controllable_redual = False):
         a += 0*sum((model.delta_areas[i,t+1] - model.delta_areas[i,t])**2 for i in model.other_areas for t in model.TimeDynamics)
         b += 1*sum((model.freq[t+1] - model.freq[t])**2 for t in model.TimeDynamics)
         return 0*a + b
-    model.cost = pyo.Objective(rule=lambda model: 1e8*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
-                       + penalty_term(model) + 5e1*damping_term(model) + 1e7*terminal_cost(model) + 1e6*smoothing_term(model) + 0.00*power_normalization(model), sense=pyo.minimize)
+    model.cost = pyo.Objective(rule=lambda model: 1e2*freq_cost(model) + 1*lagrangian_term(model) + 0*steady_state_condition(model)
+                       + penalty_term(model) + 1e1*damping_term(model) + 1e1*terminal_cost(model) + 1e1*smoothing_term(model) + 0.00*power_normalization(model), sense=pyo.minimize)
     return model
 
 class mpc_agent:
@@ -429,7 +429,7 @@ class mpc_agent:
         responseAndes = requests.get(self.andes_url + '/assign_device', params = {'agent': self.agent_id})
         self.device_dict = responseAndes.json()
         self.t_start = time.time()
-        self.T = 20 #number of timesteps when performing the MPC
+        self.T = 17 #number of timesteps when performing the MPC
         self.rho_diff = 10
         self.areas = requests.get(andes_url + '/complete_variable_sync', params={'model':'Area', 'var':'idx'}).json()['value']
         self.other_areas = [i for i in self.areas if i != self.area]
@@ -526,7 +526,7 @@ class mpc:
         self.areas = {}
         self.error = 100
         self.rho_diff = 100
-        self.T_send = min(20, self.T)
+        self.T_send = min(10, self.T)
         self.error_save = []
         self.Ki = 2e-2
         self.Kd = 5e-4
@@ -612,7 +612,7 @@ def solve_mpc(verbose = False):
     agents = [agent_1, agent_2]
     mpc_problem = mpc(agents)
     mpc_problem.rho = 0.1
-    mpc_problem.iter = 200
+    mpc_problem.iter = 250
     alpha0_used = False
     other = {"area_1": agent_2, "area_2": agent_1}
     mpc_problem.alpha = mpc_problem.rho
@@ -770,7 +770,7 @@ def solve_mpc(verbose = False):
             mpc_problem.alpha0 *= 1.5
             alpha0_used = True
         
-        mpc_problem.rho = 2e1
+        mpc_problem.rho = 5e1
         mpc_problem.rho_diff = 1e1
         print(f"norm2_error is {norm2_error} and norm2_dual_error is {norm2_dual_error}")
         for agent in agents:
@@ -794,7 +794,7 @@ def solve_mpc(verbose = False):
 
         #If Converged we send all the new set points to the generator's governors
         #All the new set points are sent to andes and not just the first one
-        if (converged or i >= mpc_problem.iter-1) and i>20:
+        if (converged or i >= mpc_problem.iter-1) and i>1:
             for x_agent in agents:
                 generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
                 print(generators)
@@ -803,8 +803,8 @@ def solve_mpc(verbose = False):
             time_start = float(responseAndes.json()['time'])
             for x_agent in agents:
                 generators = requests.post(andes_url + '/area_variable_sync', json={'model':'GENROU', 'var':'idx', 'area':x_agent.area}).json()['value']
-                params = ['pref0', 'p_goal', 'paux0', 'tm0']
                 params = ['p_direct', 'b']
+                params = ['paux0']
                 for gen_id in generators:
                     for t in range(mpc_problem.T_send):
                         for param in params:
@@ -830,7 +830,14 @@ def solve_mpc(verbose = False):
                                     roleChangeDict['idx'] = id_number
                             
                             if roleChangeDict['var'] == 'paux0':
-                                roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value - x_agent.model.Pg[gen_id, 0].value 
+                                dict_query = deepcopy(roleChangeDict)
+                                dict_query['idx'] = [dict_query['idx']]
+                                dict_query['var'] = 'pref0'
+                                response = requests.post(x_agent.andes_url + '/partial_variable_sync', json = dict_query)
+                                print(response)
+                                print(response.json())
+                                pref0_value = response.json()['value'][0]
+                                roleChangeDict['value'] = x_agent.model.Pg[gen_id, t].value - pref0_value
                             elif roleChangeDict['var'] == 'b':
                                 roleChangeDict['value'] = 1
                             else:
