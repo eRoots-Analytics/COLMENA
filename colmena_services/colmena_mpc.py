@@ -10,9 +10,9 @@ docker_user = os.getenv('docker_user')
 grid_name   = os.getenv('grid_name')
 
 if script_name is None:
-    script_name = "kpi_test_2"
+    script_name = "mpc_with_coordinator_role"
 if grid_name is None:
-    grid_name = "ieee39"
+    grid_name = "npcc"
 if colmena_dir is None:
     colmena_dir = "/home/pablo/Desktop/Colmena"
 if python_dir is None:
@@ -48,19 +48,35 @@ agent_command= {
         'is_agent': True,
     }
 
+agent_port_command= {
+        "cmd": "HARDWARE={hardware} AGENT_ID={agent_name} POLICY={strategy} docker compose -p area_3 -f compose-with-ports.yaml up --abort-on-container-exit",
+        "cwd": f"{colmena_dir}/agent", 
+        'is_agent': True,
+    }
+
 compose_down = f" 'docker compose --file f'{colmena_dir}/agent/compose.yaml' --project-name 'area_1' down' "
+agents = []
+n_converters = 0
+if 'kpi' in script_name:
+    agent_strategy = 'lazy'
+    n_area = 2
+    n_generators = 0
+else:
+    agent_strategy = 'eager'
 if grid_name == 'ieee39':
     n_area = 2
     n_generators = 0
 elif grid_name == 'npcc':
-    n_area = 6
-    n_generators = 5
+    npcc = 6
+    n_generators = 0
 
-agents = []
-if 'kpi' in script_name:
-    agent_strategy = 'lazy'
-else:
-    agent_strategy = 'eager'
+if grid_name == 'npcc' and 'multiple_roles' in script_name:
+    n_area = 3
+    n_generators = 2
+    n_converters = 1
+
+if grid_name == 'npcc' and 'coordinator_role' in script_name:
+    n_area = 5
 
 if n_area >= 2:
     for i in range(1, n_area+1):
@@ -68,23 +84,38 @@ if n_area >= 2:
             agents +=  [{'hardware':'AREA', 'strategy':'eager', 'agent_name':f'area_{i}'}] 
         else:
             agents +=  [{'hardware':'AREA', 'strategy':agent_strategy, 'agent_name':f'area_{i}'}] 
-if n_generators >= 2:
+if n_generators >= 1:
+    first = True
     for i in range(1, n_generators+1):
+        if first:
+            agent_strategy = 'eager'
+            first = False
+        else:
+            agent_strategy = 'lazy'
+
         j = 20+3*i
         if grid_name == 'ieee39':
-            j = max(j, 10)
+            j = max(round(j/3), 10)
         agents +=  [{'hardware':'GENERATOR', 'strategy':agent_strategy, 'agent_name':f'genrou_{j}'}]
+    
+    for i in range(1, n_converters+1):
+        agents +=  [{'hardware':'CONVERTER', 'strategy':agent_strategy, 'agent_name':f'redual_{i}'}]
+
 
 print(agents)
-commands =  [zenoh_command] + [agent_command]*(n_area+n_generators) + [deploy_command]  
+commands =  [zenoh_command] + [agent_command]*(n_area+n_generators+n_converters) + [deploy_command]  
 processes = []
 
 cmd = zenoh_command['cmd']
 cwd = zenoh_command['cwd']
 terminal_cmd = f"gnome-terminal -- bash -c 'cd {zenoh_command['cwd']} && {zenoh_command['cmd']}; exec bash'"
 build_cmd = f"gnome-terminal -- bash -c './{folder_name}/activate_env.sh {build_command['cwd']} \"{build_command['cmd']}\"; exec bash'"
+#agent_terminal_cmd = f"gnome-terminal -- bash -c './{folder_name}/activate_env.sh {agent_port_command['cwd']} \"{agent_port_command['cmd']}\"; exec bash'"
+
 subprocess.Popen(terminal_cmd,shell=True)
-subprocess.Popen(build_cmd,shell=True)
+#subprocess.Popen(build_cmd,shell=True)
+#subprocess.Popen(agent_terminal_cmd,shell=True)
+
 time.sleep(2)
 agent_i = 0
 for cmd in commands:

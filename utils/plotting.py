@@ -50,6 +50,7 @@ from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
 
 def plot_omega_coi(coordinator):
     # Step 1: Group actual omega_coi by time
@@ -123,3 +124,68 @@ def plot_omega_coi(coordinator):
     except:
         _ = 0
 
+def plot_coordinator_log(coordinator, log=None):
+    if log is None:
+        return
+    
+    omega_log = getattr(coordinator, log)
+    times = []
+    gen_series = defaultdict(list)
+
+    # Actual generator omega logging
+    for time, omega_by_agent in omega_log:
+        times.append(time)
+        for agent_id, omega_list in omega_by_agent.items():
+            for local_gen_index, omega_val in enumerate(omega_list):
+                gen_name = f"A{agent_id}_G{local_gen_index}"
+                gen_series[gen_name].append(omega_val)
+
+    # Check if gen_series has data to plot
+    if not gen_series:
+        print(f"No data found for log {log}")
+        return
+
+    num_to_plot = min(20, len(gen_series))  # Ensure we don't try to plot more than available
+    sampled_gen_series = random.sample(list(gen_series.items()), num_to_plot)
+    
+    # Plot actual generator omega time series
+    plt.figure()
+    color_map = {}
+
+    for gen_name, omega_vals in sampled_gen_series:
+        plt.plot(times, omega_vals, label=gen_name)
+
+    # Formatting
+    if 'redual' in log:
+        unit = 'p.u.'
+        device = 'Converter'
+    else:
+        device = 'Bus'
+        unit = 'p.u.'
+
+    if 'v' in log:
+        measurement = 'Voltage'
+    else:
+        measurement = 'Frequency'
+        
+    plt.xlabel("Time [s]", fontsize=12)
+    plt.ylabel(f"{measurement} [{unit}]", fontsize=12)
+    plt.title(f"{device} {measurement} Time Series", fontsize=14)
+    plt.grid(True, alpha=0.3)
+
+    # Move legend outside
+    plt.legend(title="Generators", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+    
+    # Ensure tight_layout is called after the legend
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # Leave space on right for legend
+
+    # Save the plot
+    output_dir = './home/output_plots'
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(f'./home/output_plots/{log}_area_{Config.case_name}_{Config.failure}.png')
+
+    # Display the plot
+    try:
+        plt.show()
+    except:
+        _ = 0

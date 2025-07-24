@@ -1459,7 +1459,7 @@ REECA1:
         - PMAX
         - PMIN
         - Imax
-        - Tpord
+        - Tprod
         - Vq1
         - Iq1
         - Vq2
@@ -1520,7 +1520,7 @@ REECA1:
         PMAX: PMAX
         PMIN: PMIN
         Imax: Imax
-        Tpord: Tpord
+        Tprod: Tprod
         Vq1: Vq1
         Iq1: Iq1
         Vq2: Vq2

@@ -656,12 +656,13 @@ class DataSelect(BaseService):
 
     @property
     def v(self):
-        if self._v is None:
+        if self._v is None or self._v == []:
             self._v = [v1 if v1 is not None and not np.isnan(v1)
                        else v2
                        for v1, v2 in zip(self.optional.v, self.fallback.v)]
 
         return self._v
+    
 
 
 class DeviceFinder(BaseService):

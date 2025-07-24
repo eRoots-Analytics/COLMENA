@@ -1,16 +1,21 @@
 """
 Andes server API: rules and protocols to communicate with Andes via a flask app.
 """
+import sys
+import os
+cwd = os.getcwd()
+sys.path.insert(0, cwd)
 
 import traceback
 import numpy as np
 from flask import Flask
 from flask import request, jsonify
-
+import matplotlib.pyplot as plt
+import matplotlib
 from colmenasrc.config.config import Config
 from andes import load
 from andes.routines.tds import TDS
-
+import andes as ad
 # App 
 app = Flask(__name__)
 
@@ -22,9 +27,11 @@ tds = None
 def load_simulation():
     global system
     global tds
+    global set_points
     try:
         # Parse sent case into Python dict.
         case = request.get_json()
+        set_points = [] 
         case_file = case['case_file']
         if 'ieee39' in case_file:
             app.config['grid'] = 'ieee39'
@@ -39,7 +46,11 @@ def load_simulation():
             case_file,
             setup=False
         )
-        system.prepare()
+        if 'converter' in case_file:
+            print(case_file)
+            print(ad.__file__)
+            system.REDUAL.prepare()
+            
         system.setup()
         system.files.no_output = True # no .lst, .npz and .txt output
         system.PFlow.run()
@@ -82,7 +93,7 @@ def sync_time():
 @app.route('/run_step', methods=['POST'])
 def run_step():
     global tds
-
+    global set_points
     if tds is None:
         return jsonify({"error": "TDS not initialized"}), 400
 
@@ -90,6 +101,26 @@ def run_step():
         return jsonify({"message": "Simulation finished", "final_time": tds.t}), 200
 
     try:
+        for i, set_point in enumerate(set_points):
+            if set_point['t'] > tds.t:
+                set_point.pop('t')
+                model_name = set_point['model']
+                src = set_point['src']
+                idx = set_point['idx']
+                attr = set_point['attr']
+                value = set_point['value']
+        
+                if not hasattr(system, model_name):
+                    return jsonify({"error": f"Model '{model_name}' not found"}), 400
+        
+                model = getattr(system, model_name)
+        
+                # Apply the value using .set()
+                var = getattr(model, src)
+                model.set(src=src, idx=idx, attr=attr, value=value)
+                print(f'Value changed succesfully')
+                set_points.pop(i)
+
         tds.itm_step()
         tds.t += tds.config.tstep
         return jsonify({"message": "Step executed successfully", "time": tds.t}), 200
@@ -290,7 +321,104 @@ def exact_power_transfer():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-    
+# Route to compute the equivalent angles of the area
+@app.route('/delta_equivalent', methods=['GET'])
+def delta_equivalent():
+    try:
+        all_areas = system.Area.idx.v  # List of all areas
+        
+        # Initialize connecting lines for every pair of areas
+        connecting_lines = {(area1, area2): [] for area1 in all_areas for area2 in all_areas if area1 != area2}
+        connecting_susceptance = {}  # Initialize connecting susceptance for all areas
+        delta_equivalent = {1:0}  # Initialize delta equivalent for all areas
+        delta_ref = {}  # Set the reference angle for the current area as 0
+        
+        # Step 1: Populate connecting lines for each pair of areas (both directions)
+        for i, line in enumerate(system.Line.idx.v):
+            if not system.Line.u.v[i]:
+                continue  # Skip if the line is not up (inactive)
+            
+            bus1 = system.Line.bus1.v[i]
+            bus2 = system.Line.bus2.v[i]
+            bus1_index = system.Bus.idx2uid(bus1)
+            bus2_index = system.Bus.idx2uid(bus2)
+            area1 = system.Bus.area.v[bus1_index]
+            area2 = system.Bus.area.v[bus2_index]
+
+            if area1 != area2:  # If the line connects two different areas
+                connecting_lines[(area1, area2)].append(line)  # Save line from area1 to area2
+                connecting_lines[(area2, area1)].append(line)  # Save line from area2 to area1
+                print(f"Connecting line {line} between areas {area1} and {area2}")
+
+        # Step 2: Compute the total susceptance for each area
+        for (area1, area2), lines in connecting_lines.items():
+            bi = 0  # Initialize susceptance for this area pair
+            for line in lines:
+                line_uid = system.Line.idx2uid(line)
+                connection_status = system.Line.u.v[line_uid]
+                xi = system.Line.x.v[line_uid]
+                bi += (1/xi) * connection_status
+                print(f"Line {line}, Susceptance bi: {bi}")
+            # Store the computed susceptance for the pair of areas (area1, area2)
+            connecting_susceptance[(area1, area2)] = bi
+            connecting_susceptance[(area2, area1)] = bi  # Susceptance is symmetric between areas
+
+        # Step 3: Compute power exchanged for each area and reference angle
+        for area1 in all_areas:
+            for area2 in all_areas:
+                p_exchanged = 0
+                for line in connecting_lines[(area1, area2)]:
+                    i = system.Line.idx2uid(line)
+                    if not system.Line.u.v[i]:
+                        continue  # Skip if the line is inactive
+                    
+                    bus1 = system.Line.bus1.v[i]
+                    bus2 = system.Line.bus2.v[i]
+                    bus1_index = system.Bus.idx2uid(bus1)
+                    bus2_index = system.Bus.idx2uid(bus2)
+                    area1 = system.Bus.area.v[bus1_index]
+                    area2 = system.Bus.area.v[bus2_index]
+                    delta1 = system.Bus.a.v[bus1_index]
+                    delta2 = system.Bus.a.v[bus2_index]
+                    v1 = system.Bus.v.v[bus1_index]
+                    v2 = system.Bus.v.v[bus2_index]
+                    line_uid = system.Line.idx2uid(line)
+                    xi = system.Line.x.v[line_uid]
+                    ri = system.Line.r.v[line_uid]
+                    b_shunt = system.Line.b.v[line_uid]
+
+                    # Power exchange computation
+                    p_exchanged += 1 * (-1/xi) * np.sin(delta1 - delta2) * v1 * v2
+                    p_exchanged += 0 * (v1 * v2 * ((ri/xi**2) * np.cos(delta1 - delta2) + (1/xi) * np.sin(delta1 - delta2)) - v1 * v1 * ((ri/xi**2) + b_shunt))
+
+                # Susceptance check to avoid division by zero
+                if area1 in delta_equivalent.keys() and area2 in delta_equivalent.keys():
+                    delta1 = delta_equivalent[area1]
+                    delta2 = delta_equivalent[area2]
+                    delta_ref[(area1, area2)] = p_exchanged/connecting_susceptance[(area1, area2)] - (delta1-delta2)
+                elif area1 in delta_equivalent.keys():
+                    delta1 = delta_equivalent[area1]
+                    delta2 = -p_exchanged/connecting_susceptance[(area1, area2)] + delta1
+                    delta_equivalent[area2] = delta2
+                    delta_ref[(area1, area2)] = 0
+                elif area2 in delta_equivalent.keys():
+                    delta2 = delta_equivalent[area2]
+                    delta1 = p_exchanged/connecting_susceptance[(area1, area2)] + delta2
+                    delta_equivalent[area1] = delta1
+                    delta_ref[(area1, area2)] = 0
+
+        response = {}
+        response['delta_equivalent'] = delta_equivalent
+        response['delta_ref'] = delta_ref
+        # Output the reference angles and delta equivalent for all areas
+        print(f"Reference Angles: {delta_ref}")
+        print(f"Delta Equivalents: {delta_equivalent}")
+        return jsonify(response), 200
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/complete_variable_sync', methods=['GET'])
 def complete_variable_sync(all_devices = False):
     global system
@@ -410,6 +538,34 @@ def area_variable_sync(all_devices=False):
 
     except Exception as e:
         print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/add_set_point', methods=['POST'])
+def add_set_point():
+    global system
+    global set_points
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "No JSON data received"}), 400
+
+        required = ['model', 'src', 'idx', 'attr', 'value', 't']
+        for field in required:
+            if field not in data:
+                return jsonify({"error": f"Missing required field '{field}'"}), 400
+
+        model_name = data['model']
+
+        if not hasattr(system, model_name):
+            return jsonify({"error": f"Model '{model_name}' not found"}), 400
+
+        set_points.append(data)
+
+        return jsonify({"message": "Value set successfully"}), 200
+    except Exception as e:
+        import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 

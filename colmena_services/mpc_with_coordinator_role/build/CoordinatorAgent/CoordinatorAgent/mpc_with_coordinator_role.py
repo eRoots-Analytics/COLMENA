@@ -63,13 +63,17 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            self.andes = AndesWrapper()
+            try:
+                self.andes = AndesWrapper(load =False)
+            except:
+                self.andes = AndesWrapper()
+            
             self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = 500
+            self.max_iter = 10
             self.data_read = self.primal_vars
             self.data_write = self.to_coordinator
 
@@ -81,7 +85,13 @@ class AgentControl(Service):
             self.agent.setup = False
             self.initialized_decorators = False
             self.online_step = 0
-            time.sleep(0.1)
+            time.sleep(2)
+
+            #time measurements
+            self.time_comms = 0
+            self.time_all = 0
+            self.list_comms = []
+            self.list_all = []
 
         @Persistent()
         def behavior(self):
@@ -91,12 +101,12 @@ class AgentControl(Service):
             self.agent.initialize_variables_values()
             self.agent.first_warm_start()
             if not self.initialized_decorators:
-                self.global_error.publish({'agent':1, 'error':self.error})
+                self.global_error.publish({self.area:self.error})
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_read.publish(self.state_horizon_jsonlike)
                 state_horizon_message = self.state_horizon_jsonlike
-                state_horizon_message['type'] = 'error'
-                self.data_write.publish(state_horizon_message)
+                #state_horizon_message['type'] = 'primal'
+                #self.data_write.publish(state_horizon_message)
                 self.initialized_decorators = True
             else:
                 time.sleep(0.1)
@@ -104,8 +114,12 @@ class AgentControl(Service):
             # Stop Flask logs
             time_start = time.time()
             while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)*(self.max_iter):
-                print(f'Iteration {self.iter}')
+                self.time_comms = 0
+                self.time_all = 0
+                time_iter_start = time.time()
+                time_comm_start = time.time()
                 initial_state_horizon_jsonlike = self.data_read.get()
+                self.time_comms += time.time() -time_comm_start
                 if self.agent.generators: 
                     if self.iter ==0: 
                         # Initialize the model for the first iteration
@@ -125,22 +139,42 @@ class AgentControl(Service):
                     if d == self.area  # <--- This is the new condition
                 }
                 self.variables_horizon_values_json['type'] = 'primal' 
+                time_comm_start = time.time()
                 self.data_write.publish(self.variables_horizon_values_json)
+                self.time_comms += time.time() -time_comm_start
                 
                 #We publish the error and then get it back
                 inf_error = self.admm._compute_primal_residual_inf()
-                self.data_write.publish({'area':self.area, 'error':inf_error, 'type':'error'})
+                time_comm_start = time.time()
+                self.data_write.publish({self.area: inf_error, 'type':'error'})
+                self.time_comms += time.time() -time_comm_start
+
                 new_error = 0
+                time_comm_start = time.time()
                 error_dict = json.loads(self.global_error.get())
-                for i in self.n_areas:
-                    new_error = max(new_error, error_dict[i])
+                self.time_comms += time.time() -time_comm_start
+
+                for i in range(1, self.n_areas+1):
+                    try:
+                        new_error = max(new_error, error_dict[i])
+                    except:
+                        new_error = 1
+                        break
                 self.error = new_error
 
                 #We wait until we have received a new message from the other area
                 changed_horizon = False
+                wait = False
                 change_time_start = time.time()
                 while not changed_horizon: 
+                    time_comm_start = time.time()
                     state_horizon_jsonlike = json.loads(self.data_read.get()) 
+                    self.time_comms += time.time() -time_comm_start
+                    if not wait:
+                        state_horizon_read = {tuple(map(int, key.split("_"))): val for key, val in state_horizon_jsonlike.items()}
+                        self.coordinator.variables_horizon_values.update(state_horizon_read)
+                        break
+                    self.time_comms += time.time() - time_comm_start
                     print(f'Waiting 3 for iter {self.iter} and online step {self.online_step}')
                     if state_horizon_jsonlike != initial_state_horizon_jsonlike:
                         changed_horizon = True
@@ -152,7 +186,19 @@ class AgentControl(Service):
                         print(f'Wait broken')
                         break
                 self.iter += 1
-                        
+                self.time_all = time.time() - time_iter_start
+                self.list_all.append(self.time_all)
+                self.list_comms.append(self.time_comms)       
+                self.error = 100
+
+            with open("output_time.txt", "a") as f:  # mode "w" = write (overwrites if exists)
+                data1 = np.array(self.list_all)
+                data2 = np.array(self.list_comms)
+                f.write(f"hello {Config.case_name}")
+                mean1 = np.mean(data1) if len(data1) else float('nan')
+                mean2 = np.mean(data2) if len(data2) else float('nan')
+                f.write(f" {mean1} / {mean2}\n")       
+ 
             role_change_list = self.coordinator.collect_role_changes(specific_agent = self.agent)
             for role_change in role_change_list:
                 if not role_change: 
@@ -167,14 +213,16 @@ class AgentControl(Service):
                 time.sleep(0.01)
                 for i in range(50):
                     success, new_time = self.andes.run_step()
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     print(f"Step was {success} and time is {new_time}")
+                    with open("output_time.txt", "a") as f:  # mode "w" = write (overwrites if exists)
+                        f.write(f"'hello {self.iter}")       
             return 1
-    
+        
     class CoordinatorAgent(Role):
         @Metric('frequency')
         @Context(class_ref = GridAll, name='all_global')
-        @Requirements('AREA')
+        @Requirements('COORDINATOR')
         @Dependencies(*["pyomo", "requests"])
         @Data(name = 'dual_vars', scope = 'all_global/id = .')
         @Data(name = 'primal_vars', scope = 'all_global/id = .')
@@ -183,7 +231,7 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            self.andes = AndesWrapper()
+            self.andes = AndesWrapper(load =False)
             self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.online_step = 0
             self.initialize = 0
@@ -192,31 +240,18 @@ class AgentControl(Service):
         @Async(msg="to_coordinator")
         def behavior(self, msg):
             print('Received incoming data')
-            print(f'data is {msg}')
             data = json.loads(msg)['value']
-            agent_from = json.loads(msg)['value']
-            #if type(data) == str:
-            #    data['type'] == 'str'
-            #if type(data) == dict:
-            #    for key in data.keys():
-            #        self.primal_vars.publish({key:'this'})
-
-            try:
-                if data['type'] == 'primal':
-                    data.pop('type')
-                    primal_data = json.loads(self.primal_vars.get())
-                    primal_data.update(data)
-                    self.primal_vars.publish(primal_data)
-                elif data['type'] == 'error':
-                    data.pop('type')
-                    global_error = json.loads(self.global_error.get())
-                    global_error.update(data)
-                    self.global_error.publish(global_error)
-                else:
-                    raise Exception('Data type sent not recognized')
-            except KeyError as e:
-                print(f"KeyError: {e}. Data was: {data}")
-                raise
-                self.dual_vars.publish(data)
-
+            print(data.keys())
+            if data['type'] == 'primal':
+                data.pop('type')
+                primal_data = json.loads(self.primal_vars.get())
+                primal_data.update(data)
+                self.primal_vars.publish(primal_data)
+            elif data['type'] == 'error':
+                data.pop('type')
+                global_error = json.loads(self.global_error.get())
+                global_error.update(data)
+                self.global_error.publish(global_error)
+            else:
+                raise Exception('Data type sent not recognized')
             return (1)

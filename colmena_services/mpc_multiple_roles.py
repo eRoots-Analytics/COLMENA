@@ -85,13 +85,13 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            self.andes = AndesWrapper()
+            self.andes = AndesWrapper(load =False)
             self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = 650
+            self.max_iter = 20
             self.data_read = getattr(self, 'Data_' + str(self.area))
             self.data_write = getattr(self, 'Data_' + str(self.area+1 if self.area < self.n_areas else 1))
 
@@ -104,6 +104,12 @@ class AgentControl(Service):
             self.initialized_decorators = False
             self.online_step = 0
             time.sleep(0.1)
+
+            #time measurements
+            self.time_comms = 0
+            self.time_all = 0
+            self.list_comms = []
+            self.list_all = []
 
         @Persistent()
         def behavior(self):
@@ -124,7 +130,12 @@ class AgentControl(Service):
             time_start = time.time()
             while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)*(self.max_iter):
                 print(f'Iteration {self.iter}')
+                self.time_comms = 0
+                self.time_all = 0
+                time_iter_start = time.time()
+                time_comm_start = time.time()
                 initial_state_horizon_jsonlike = self.data_read.get()
+                self.time_comms += time.time() -time_comm_start
                 if self.agent.generators: 
                     if self.iter ==0: 
                         # Initialize the model for the first iteration
@@ -140,13 +151,18 @@ class AgentControl(Service):
                 self.admm._update_pyomo_params(self.agent) 
 
                 self.variables_horizon_values_json = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
+                time_comm_start = time.time()
                 self.data_write.publish(self.variables_horizon_values_json)
+                self.time_comms += time.time() -time_comm_start
                 
                 #We wait until we have received a new message from the other area
                 changed_horizon = False
                 change_time_start = time.time()
                 while not changed_horizon: 
+                    time_comm_start = time.time()
                     state_horizon_jsonlike = json.loads(self.data_read.get()) 
+                    self.time_comms += time.time() -time_comm_start
+
                     print(f'Waiting 3 for iter {self.iter} and online step {self.online_step}')
                     if state_horizon_jsonlike != initial_state_horizon_jsonlike:
                         changed_horizon = True
@@ -158,7 +174,13 @@ class AgentControl(Service):
                         print(f'Wait broken')
                         break
                 self.iter += 1
-                        
+                self.list_all.append(self.time_all)
+                self.list_comms.append(self.time_comms)
+
+            with open("output.txt", "w") as f:  # mode "w" = write (overwrites if exists)
+                data1 = np.array(self.list_all)
+                data2 = np.array(self.list_comms)
+                f.write(str(np.mean(data1) + '  ' + np.mean(data2)))           
             self.frequency.publish(1)
             role_change_list = self.coordinator.collect_role_changes(specific_agent = self.agent)
             for role_change in role_change_list:
@@ -195,7 +217,7 @@ class AgentControl(Service):
             else:
                 self.gov_idx = 'TGOV1_' + match.group(1)
             self.device_dict = {'model':'GENROU', 'idx':self.agent_id}
-            self.andes = AndesWrapper()
+            self.andes = AndesWrapper(load =False)
             PI_params = self.device_dict.get('PI_params', {})
             self.Ki = PI_params.get('Ki', -75)
             self.Kp = PI_params.get('Kp', -35)
@@ -235,16 +257,22 @@ class AgentControl(Service):
             time.sleep(0.01)
             return True
     
-        class GridFormingRole(Role):
-            @Metric('frequency')
-            @KPI('agentcontrol/frequency[1s] < 1.2')
-            @Dependencies("requests")
-            @Requirements('TRANSFORMER')
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.andes_url = andes_url
-                self.agent_id = os.getenv('AGENT_ID')
-                roleChangeDict = {'model': self.governor_model, 'var':'paux0', 'idx': self.gov_idx, 'value':y}
-                self.andes.change_parameter_value(roleChangeDict) 
+    class GridFormingRole(Role):
+        @Metric('frequency')
+        #@KPI('agentcontrol/frequency[1s] < 1.2')
+        @Dependencies("requests")
+        @Requirements('TRANSFORMER')
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.andes_url = andes_url
+            self.agent_id = os.getenv('AGENT_ID')
+            match = re.search(r'(\d+)$', self.agent_id)
+            self.idx = 'REDUAL' + match.group(1)
+            
+        @Persistent()
+        def behavior(self):
+            return
+            roleChangeDict = {'model': 'REDUAL', 'var':'is_GFM', 'idx': self.idx, 'value':1}
+            self.andes.change_parameter_value(roleChangeDict) 
     
     

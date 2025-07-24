@@ -17,4 +17,3 @@ from andes.core.service import (BackRef, BaseService, ConstService,  # NOQA
 from andes.core.var import (Algeb, BaseVar, ExtAlgeb, ExtState, ExtVar,  # NOQA
                             State,)
 from andes.core.symprocessor import SymProcessor  # NOQA
-from andes.core.connman import ConnMan  # NOQA

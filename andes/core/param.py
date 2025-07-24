@@ -726,7 +726,7 @@ class ExtParam(NumParam):
             if isinstance(parent_instance.v, np.ndarray):
                 self.v = parent_instance.v[uid]
             else:
-                self.v = [parent_instance.v[i] for i in uid]
+                self.v = [parent_instance.v[i] if i is not None else None for i in uid]
             try:
                 self.vin = parent_instance.vin[uid]
                 self.pu_coeff = parent_instance.pu_coeff[uid]

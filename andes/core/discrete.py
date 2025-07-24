@@ -38,8 +38,7 @@ class Discrete:
         if not hasattr(self, 'export_flags_tex'):
             self.export_flags_tex = []
 
-        # The following two dicts are registries; currently not used for computation
-        self.input_list = []  # references to input variables
+        self.input_list = []   # references to input variables
         self.param_list = []  # references to parameters
 
         self.x_set = list()
@@ -48,8 +47,7 @@ class Discrete:
         self.warn_flags = []  # warn if flags in `warn_flags` not initialized to zero
         self.no_warn = no_warn
 
-        # default minimum iteration number and error tolerance to for this
-        # discrete block to be enabled.
+        # default minimum iteration number and error tolerance to allow checking
         # To enable `min_iter` and `err_tol`, a `Discrete` subclass needs to call
         # `check_iter_err()` manually in `check_var()` and/or `check_eq()`.
 

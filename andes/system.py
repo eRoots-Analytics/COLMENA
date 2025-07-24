@@ -23,7 +23,7 @@ from collections import OrderedDict, defaultdict
 from typing import Dict, Optional, Tuple, Union
 
 import andes.io
-from andes.core import AntiWindup, Config, Model, ConnMan
+from andes.core import AntiWindup, Config, Model
 from andes.io.streaming import Streaming
 from andes.models import file_classes
 from andes.models.group import GroupBase
@@ -193,7 +193,6 @@ class System:
         self.files = FileMan(case=case, **self.options)    # file path manager
         self.dae = DAE(system=self)                        # numerical DAE storage
         self.streaming = Streaming(self)                   # Dime2 streaming
-        self.conn = ConnMan(system=self)                   # connectivity manager
 
         # dynamic imports of groups, models and routines
         self.import_groups()
@@ -474,10 +473,10 @@ class System:
 
         self.collect_ref()
         self._list2array()     # `list2array` must come before `link_ext_param`
+        self.find_devices()    # find or add required devices
         if not self.link_ext_param():
             ret = False
 
-        self.find_devices()    # find or add required devices
 
         # === no device addition or removal after this point ===
         self.calc_pu_coeff()   # calculate parameters in system per units
@@ -488,9 +487,6 @@ class System:
         self.set_dae_names(self.exist.pflow)        # needs perf. optimization
         self.store_sparse_pattern(self.exist.pflow)
         self.store_adder_setter(self.exist.pflow)
-
-        # init connectivity manager
-        self.conn.init()
 
         if ret is True:
             self.is_setup = True  # set `is_setup` if no error occurred
@@ -1260,9 +1256,6 @@ class System:
         # store `a` and `v` indices for zeroing out residuals
         self.Bus.islanded_a = np.array(self.Bus.islanded_buses)
         self.Bus.islanded_v = self.Bus.n + self.Bus.islanded_a
-        # `self.Bus.n_islanded_buses` is used to determine if `g_islands`
-        # needs to be call
-        self.Bus.n_islanded_buses = len(self.Bus.islanded_a)
 
         # find islanded areas - Goderya's algorithm
         temp = spmatrix(list(u) * 4,
@@ -1545,6 +1538,9 @@ class System:
         loaded = self._load_calls()
 
         stale_models = self._find_stale_models()
+        
+        #to avoid nested processing:
+        autogen_stale = False
 
         if loaded is False:
             self.prepare(quick=True, incremental=False)
@@ -1602,7 +1598,9 @@ class System:
 
             # md5
             model.calls.md5 = getattr(pycode_model, 'md5', None)
-
+            md5 = model.calls.md5
+            if md5 is None or md5 == '' or name == 'GENROU_bimode':
+                _ = 0
             # reload stored variables
             for item in dilled_vars:
                 model.calls.__dict__[item] = pycode_model.__dict__[item]
@@ -2319,6 +2317,9 @@ def _set_hi_name(mdl, vars_dict, dests):
     """
 
     mdl_name = mdl.class_name
+    if mdl_name == 'REDUAL' and 'ud' in vars_dict.keys():
+        #vars_dict.pop('am')
+        _ = 0
     idx = mdl.idx
     for item in vars_dict.values():
         if len(item.r) != len(idx.v):

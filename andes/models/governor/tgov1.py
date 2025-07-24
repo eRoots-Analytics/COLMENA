@@ -138,7 +138,7 @@ class TGOV1NDBModel(TGOV1DBModel):
         self.pref.v_str = 'tm0'
         self.pref.e_str = 'pref0 - pref'
 
-        self.pd.e_str = 'ue*(-DB_y * gain + pref + paux) - pd'
+        self.pd.e_str = 'ue*(DB_y * gain + pref + paux) - pd'
 
 
 class TGOV1ModelAlt(TGBase):
@@ -203,6 +203,9 @@ class TGOV1(TGOV1Data, TGOV1Model):
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1Model.__init__(self, system, config)
+        self.b = NumParam(default = 0, info = "binary variable that defines if the pout is directly controled or not")
+        self.p_direct = NumParam(default = 0, info = "Power output with direct control")
+        self.pout.e_str = "b*(pout - p_direct)+ (1-b)*("+self.pout.e_str+")"
 
 
 class TGOV1N(TGOV1Data, TGOV1NModel):
@@ -238,7 +241,9 @@ class TGOV1N(TGOV1Data, TGOV1NModel):
     def __init__(self, system, config):
         TGOV1Data.__init__(self)
         TGOV1NModel.__init__(self, system, config)
-
+        self.b = NumParam(default = 0, info = "binary variable that defines if the pout is directly controled or not")
+        self.p_direct = NumParam(default = 0, info = "Power output with direct control")
+        self.pout.e_str = "b*(pout - p_direct)+ (1-b)*("+self.pout.e_str+")"
 
 class TGOV1DB(TGOV1DBData, TGOV1DBModel):
     """
@@ -258,3 +263,10 @@ class TGOV1NDB(TGOV1DBData, TGOV1NDBModel):
     def __init__(self, system, config):
         TGOV1DBData.__init__(self)
         TGOV1NDBModel.__init__(self, system, config)
+
+class TGOV1_bis(TGOV1):
+    def __init__(self, system, config):
+        TGOV1.__init__(self, system, config)
+        self.p_add = NumParam(name = 'p_add', default=0)
+        self.pout.e_str = self.pout.e_str + '+p_add'
+        self.pout.v_str = self.pout.v_str + '+p_add'

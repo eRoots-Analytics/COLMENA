@@ -67,3 +67,18 @@ class Motor5(MotorBaseData, Motor5Model):
     def __init__(self, system, config):
         MotorBaseData.__init__(self)
         Motor5Model.__init__(self, system, config)
+
+class Motor5_intermittent(Motor5):
+    """
+    Fifth-order induction motor model.
+
+    See "Power System Modelling and Scripting" by F. Milano.
+
+    To simulate motor startup, set the motor status ``u`` to ``0``
+    and use a ``Toggle`` to control the model.
+    """
+
+    def __init__(self, system, config):
+        Motor5.__init__(self, system, config)
+        self.P.e_str = self.P.e_str.replace('-P', '-0.5*P')
+        self.Q.e_str = self.Q.e_str.replace('-P', '-0.5*P')

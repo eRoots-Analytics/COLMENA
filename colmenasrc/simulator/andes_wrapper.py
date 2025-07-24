@@ -11,6 +11,8 @@ class AndesWrapper:
 
         self.andes_url = Config.andes_url
         self.failure = Config.failure
+        self.additional_failures = Config.additional_failures
+        
         #self.case_path = get_case(Config.case_path)
         self.case_path = f'andes/cases/{Config.case_path}'
         self.initialised = False
@@ -59,6 +61,17 @@ class AndesWrapper:
         
         except Exception as e:
             print(f"[Get] Failed to get susceptance: {e}")
+
+    def get_delta_equivalent(self):
+        try:
+            response = requests.get(
+                f"{self.andes_url}/delta_equivalent"
+            )
+            raw_dict = response.json()
+            return raw_dict
+        
+        except Exception as e:
+            print(f"[Get] Failed to get deltas: {e}")
     
     def get_interface_buses(self, area: int, other_areas: list[int]):
         try: 
@@ -128,6 +141,20 @@ class AndesWrapper:
         except Exception as e:
             print(f"[Set] Failed to send value: {e}")
 
+    def add_set_point(self, set_point_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/add_set_point",
+                json=set_point_dict
+            )
+            if response.status_code != 200:
+                print(f"[Set] Server error: {response.json()}")
+            else:
+                print(f"[Set] Success: {set_point_dict}")
+        except Exception as e:
+            print(f"[Set] Failed to send value: {e}")
+
+
 
     def send_setpoint(self, role_change_dict: dict):
         try:
@@ -137,6 +164,16 @@ class AndesWrapper:
             )
         except Exception as e:
             print(f"[Send] Failed to send setpoint: {e}")
+
+    def send_coordinator_setpoint(self, role_change_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/send_coordinator_setpoint",
+                json=role_change_dict
+            )
+        except Exception as e:
+            print(f"[Send] Failed to send setpoint: {e}")
+
 
     def change_parameter_value(self, role_change_dict: dict):
         try:

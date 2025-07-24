@@ -42,7 +42,7 @@ class AgentControl(Service):
         @Metric('frequency')
         @Context(class_ref=GlobalError, name='all_global')
         @Metric('always_negative')
-        @KPI('agentcontrol/frequency[3s] < 1')
+        @KPI('min((min_over_time(agentcontrol_frequency[30s])>=0)) < 1')
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url

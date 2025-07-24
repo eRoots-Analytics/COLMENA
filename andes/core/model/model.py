@@ -188,33 +188,36 @@ class Model:
             self.cache = ModelCache()
 
         # variables
-        self.states = OrderedDict()  # internal states
-        self.states_ext = OrderedDict()  # external states
-        self.algebs = OrderedDict()  # internal algebraic variables
-        self.algebs_ext = OrderedDict()  # external algebraic vars
-        self.vars_decl_order = OrderedDict()  # variable in the order of declaration
+        if not hasattr(self, 'states'):
+            self.states = OrderedDict()  # internal states
+            self.states_ext = OrderedDict()  # external states
+            self.algebs = OrderedDict()  # internal algebraic variables
+            self.algebs_ext = OrderedDict()  # external algebraic vars
+            self.vars_decl_order = OrderedDict()  # variable in the order of declaration
 
-        self.params_ext = OrderedDict()  # external parameters
+        if not hasattr(self, 'params_ext'):
+            self.params_ext = OrderedDict()  # external parameters
 
-        self.discrete = OrderedDict()  # discrete comp.
-        self.blocks = OrderedDict()  # blocks
+            self.discrete = OrderedDict()  # discrete comp.
+            self.blocks = OrderedDict()  # blocks
 
-        self.services = OrderedDict()  # service/temporary variables
-        self.services_var = OrderedDict()  # variable services updated each step/iter
-        self.services_var_seq = OrderedDict()
-        self.services_var_nonseq = OrderedDict()
-        self.services_post = OrderedDict()  # post-initialization storage services
-        self.services_subs = OrderedDict()  # to-be-substituted services
-        self.services_icheck = OrderedDict()  # post-initialization check services
-        self.services_ref = OrderedDict()  # BackRef
-        self.services_fnd = OrderedDict()  # services to find/add devices
-        self.services_ext = OrderedDict()  # external services (to be retrieved)
-        self.services_ops = OrderedDict()  # operational services (for special usages)
+        if not hasattr(self, 'services'):
+            self.services = OrderedDict()  # service/temporary variables
+            self.services_var = OrderedDict()  # variable services updated each step/iter
+            self.services_var_seq = OrderedDict()
+            self.services_var_nonseq = OrderedDict()
+            self.services_post = OrderedDict()  # post-initialization storage services
+            self.services_subs = OrderedDict()  # to-be-substituted services
+            self.services_icheck = OrderedDict()  # post-initialization check services
+            self.services_ref = OrderedDict()  # BackRef
+            self.services_fnd = OrderedDict()  # services to find/add devices
+            self.services_ext = OrderedDict()  # external services (to be retrieved)
+            self.services_ops = OrderedDict()  # operational services (for special usages)
 
-        self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
-                                      ('sys_f', 'f_{sys}'),
-                                      ('sys_mva', 'S_{b,sys}'),
-                                      ))
+            self.tex_names = OrderedDict((('dae_t', 't_{dae}'),
+                                          ('sys_f', 'f_{sys}'),
+                                          ('sys_mva', 'S_{b,sys}'),
+                                          ))
 
         # Model behavior flags
         self.flags = ModelFlags()
@@ -244,10 +247,11 @@ class Model:
                               adjust_upper=(0, 1),
                               )
 
-        self.calls = ModelCall()  # callback and LaTeX string storage
-        self.triplets = JacTriplet()  # Jacobian triplet storage
-        self.syms = SymProcessor(self)  # symbolic processor instance
-        self.docum = Documenter(self)  # documenter instance
+        if not hasattr(self, 'calls'):
+            self.calls = ModelCall()  # callback and LaTeX string storage
+            self.triplets = JacTriplet()  # Jacobian triplet storage
+            self.syms = SymProcessor(self)  # symbolic processor instance
+            self.docum = Documenter(self)
 
         # cached class attributes
         self.cache.add_callback('all_vars', self._all_vars)
@@ -269,15 +273,17 @@ class Model:
         self.cache.add_callback('e_adders', self._e_adders)
         self.cache.add_callback('e_setters', self._e_setters)
 
-        self._input = OrderedDict()  # cached dictionary of inputs
-        self._input_z = OrderedDict()  # discrete flags, storage only.
-        self._rhs_f = OrderedDict()  # RHS of external f
-        self._rhs_g = OrderedDict()  # RHS of external g
+        if not hasattr(self, '_input'):
+            self._input = OrderedDict()  # cached dictionary of inputs
+            self._input_z = OrderedDict()  # discrete flags, storage only.
+            self._rhs_f = OrderedDict()  # RHS of external f
+            self._rhs_g = OrderedDict()  # RHS of external g
 
-        self.f_args = []
-        self.g_args = []  # argument value lists
-        self.j_args = dict()
-        self.s_args = OrderedDict()
+            self.f_args = []
+            self.g_args = []  # argument value lists
+            self.j_args = dict()
+            self.s_args = OrderedDict()
+        
         self.ia_args = OrderedDict()
         self.ii_args = OrderedDict()
         self.ij_args = OrderedDict()
@@ -285,7 +291,6 @@ class Model:
         self.coeffs = dict()  # pu conversion coefficient storage
         self.bases = dict()   # base storage, such as Vn, Vb, Zn, Zb
         self.debug_equations = list()  # variable names for debugging corresponding equation
-        self.non_top_level = list()  # list of non-top-level components
 
     def _register_attribute(self, key, value):
         """
@@ -347,7 +352,6 @@ class Model:
                 var_instance.name = f'{prepend}{var_name}'
                 var_instance.tex_name = f'{var_instance.tex_name}_{{{tex_append}}}'
                 self.__setattr__(var_instance.name, var_instance)
-                var_instance.not_top_level = True
 
     def _check_attribute(self, key, value):
         """
@@ -508,17 +512,7 @@ class Model:
         uid = self.idx2uid(idx)
         instance = self.__dict__[src]
 
-        # Check if the destination is a list
-        if isinstance(instance.__dict__[attr], list):
-            # Use a for-loop to set values
-            if isinstance(uid, list):
-                for i, u in enumerate(uid):
-                    instance.__dict__[attr][u] = value[i]
-            else:
-                instance.__dict__[attr][uid] = value
-        else:
-            # Default behavior for numpy arrays or other types
-            instance.__dict__[attr][uid] = value
+        instance.__dict__[attr][uid] = value
 
         # update differential equations' time constants stored in `dae.Tf`
 
@@ -532,11 +526,15 @@ class Model:
                     # set diagonal elements of `Teye` for each element in `uid``
                     uid_int = state.a.tolist()
                     for ii in uid:
-                        self.system.TDS.Teye[uid_int[ii], uid_int[ii]] = instance.v[ii]
+                        if self.system.TDS.Teye is not None:
+                            self.system.TDS.Teye[uid_int[ii], uid_int[ii]] = instance.v[ii]
+                        elif self.system.TDS_stepwise.Teye is not None:
+                            self.system.TDS_stepwise.Teye[uid_int[ii], uid_int[ii]] = instance.v[ii]
+                            self.system.TDS.Teye = self.system.TDS_stepwise.Teye
 
         return True
 
-    def alter(self, src, idx, value, attr='v'):
+    def alter(self, src, idx, value):
         """
         Alter values of input parameters or constant service.
 
@@ -556,43 +554,17 @@ class Model:
             The device to alter
         value : float
             The desired value
-        attr : str
-            The attribute to alter, default is 'v'.
-
-        Notes
-        -----
-        New in version 1.9.3: Added the `attr` parameter and the feature to alter
-        specific attributes. This feature is useful when you need to manipulate parameter
-        values in the system base and ensure that these changes are reflected in the
-        dumped case file.
-
-        Examples
-        --------
-        >>> import andes
-        >>> ss = andes.load(andes.get_case('5bus/pjm5bus.xlsx'), setup=True)
-        >>> ss.GENCLS.alter(src='M', idx=2, value=1, attr='v')
-        >>> ss.GENCLS.get(src='M', idx=2, attr='v')
-        3.0
-        >>> ss.GENCLS.alter(src='M', idx=2, value=1, attr='vin')
-        >>> ss.GENCLS.get(src='M', idx=2, attr='v')
-        1.0
         """
 
         instance = self.__dict__[src]
 
         if hasattr(instance, 'vin') and (instance.vin is not None):
+            self.set(src, idx, 'vin', value)
+
             uid = self.idx2uid(idx)
-            if attr == 'vin':
-                self.set(src, idx, 'vin', value / instance.pu_coeff[uid])
-                self.set(src, idx, 'v', value=value)
-            else:
-                self.set(src, idx, 'vin', value)
-                self.set(src, idx, 'v', value * instance.pu_coeff[uid])
-        elif not hasattr(instance, 'vin') and attr == 'vin':
-            logger.warning(f"{self.class_name}.{src} has no `vin` attribute, changing `v`.")
-            self.set(src, idx, 'v', value)
+            self.set(src, idx, 'v', value * instance.pu_coeff[uid])
         else:
-            self.set(src, idx, attr=attr, value=value)
+            self.set(src, idx, 'v', value)
 
     def get_inputs(self, refresh=False):
         """
@@ -782,6 +754,8 @@ class Model:
         for name, instance in self.services.items():
             if name in self.calls.s:
                 func = self.calls.s[name]
+                if name in ['Id0','Iq0']:
+                    a = 0
                 if callable(func):
                     self.get_inputs(refresh=True)
                     # NOTE:
@@ -1003,7 +977,11 @@ class Model:
         Evaluate algebraic equations.
         """
         if callable(self.calls.g):
-            g_ret = self.calls.g(*self.g_args)
+            try:
+                g_ret = self.calls.g(*self.g_args)
+            except:
+                g_ret = self.calls.g(*self.g_args[:-4])
+
             for i, var in enumerate(self.cache.algebs_and_ext.values()):
                 if var.e_inplace:
                     var.e += g_ret[i]
@@ -1467,8 +1445,10 @@ class Model:
         2. Use Newton-Krylov method for iterative initialization
         3. Custom init
         """
-
+        
         # evaluate `ConstService` and `VarService`
+        if self.__class__.__name__ == 'GENROU':
+            a=0
         self.s_update()
         self.s_update_var()
 

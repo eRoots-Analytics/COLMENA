@@ -22,7 +22,7 @@
             "id": "CoordinatorAgent",
             "imageId": "coordinatoragent:latest",
             "hardwareRequirements": [
-                "AREA"
+                "COORDINATOR"
             ],
             "kpis": []
         }

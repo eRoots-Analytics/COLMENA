@@ -1,5 +1,6 @@
 from andes.core.service import VarService
 from andes.models.exciter.exdc2 import EXDC2Data, EXDC2Model
+from andes.core.param import NumParam
 
 
 class IEEEX1Model(EXDC2Model):
@@ -26,3 +27,6 @@ class IEEEX1(EXDC2Data, IEEEX1Model):
         IEEEX1Model.__init__(self, system, config)
 
         self.vout.e_str = 'ue * vp - vout'
+        self.v_aux = NumParam(default=0)
+        self.vi.e_str = self.vi.e_str + '+ v_aux'
+        self.vi.v_str = self.vi.v_str + '+ v_aux'

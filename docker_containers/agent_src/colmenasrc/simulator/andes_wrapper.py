@@ -7,13 +7,16 @@ import requests
 from colmenasrc.config.config import Config
 
 class AndesWrapper:
-    def __init__(self):
+    def __init__(self, load = True):
 
         self.andes_url = Config.andes_url
+        self.failure = Config.failure
+        self.additional_failures = Config.additional_failures
+        
         #self.case_path = get_case(Config.case_path)
-        self.case_path = 'andes/cases/npcc/npcc_modified.xlsx'
+        self.case_path = f'andes/cases/{Config.case_path}'
         self.initialised = False
-        if self.case_path is not None and not Config.agent:
+        if self.case_path is not None and load:
             self.load_simulation(self.case_path)
 
     def load_simulation(self, case_path, redual=False):
@@ -58,6 +61,17 @@ class AndesWrapper:
         
         except Exception as e:
             print(f"[Get] Failed to get susceptance: {e}")
+
+    def get_delta_equivalent(self):
+        try:
+            response = requests.get(
+                f"{self.andes_url}/delta_equivalent"
+            )
+            raw_dict = response.json()
+            return raw_dict
+        
+        except Exception as e:
+            print(f"[Get] Failed to get deltas: {e}")
     
     def get_interface_buses(self, area: int, other_areas: list[int]):
         try: 
@@ -127,6 +141,20 @@ class AndesWrapper:
         except Exception as e:
             print(f"[Set] Failed to send value: {e}")
 
+    def add_set_point(self, set_point_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/add_set_point",
+                json=set_point_dict
+            )
+            if response.status_code != 200:
+                print(f"[Set] Server error: {response.json()}")
+            else:
+                print(f"[Set] Success: {set_point_dict}")
+        except Exception as e:
+            print(f"[Set] Failed to send value: {e}")
+
+
 
     def send_setpoint(self, role_change_dict: dict):
         try:
@@ -136,6 +164,16 @@ class AndesWrapper:
             )
         except Exception as e:
             print(f"[Send] Failed to send setpoint: {e}")
+
+    def send_coordinator_setpoint(self, role_change_dict: dict):
+        try:
+            response = requests.post(
+                f"{self.andes_url}/send_coordinator_setpoint",
+                json=role_change_dict
+            )
+        except Exception as e:
+            print(f"[Send] Failed to send setpoint: {e}")
+
 
     def change_parameter_value(self, role_change_dict: dict):
         try:
@@ -178,6 +216,53 @@ class AndesWrapper:
             )
             time = response.json()["time"]
             return response.json()["time"]
+        except Exception as e:
+            print(f"[Get] Failed to get power transfer: {e}")
+            return {}
+
+    def plot_results(self, var):
+        try:
+            response = requests.get(
+                f"{self.andes_url}/plot"
+            )
+
+            import pandas as pd
+            import matplotlib.pyplot as plt
+            import matplotlib.cm as cm
+            import matplotlib.colors as mcolors
+
+            # Load the CSV
+            df = pd.read_csv("plots/data_2.csv")
+            # Use the "Time [s]" column as the x-axis
+            time = df["Time [s]"]
+
+            # Define omega columns to plot
+            omega_cols = [f"{var} GENROU {i}" for i in range(1, 5)]
+
+            # Check that all required columns are present
+            missing = [col for col in omega_cols if col not in df.columns]
+            if missing:
+                raise ValueError(f"Missing columns in CSV: {missing}")
+
+            plt.figure(figsize=(14, 6))
+            num_lines = len(omega_cols)
+            colors = cm.get_cmap('tab10', num_lines) 
+            for i, col in enumerate(omega_cols):
+                plt.plot(time, df[col], label=col, color=colors(i), linewidth=1.5)
+
+            plt.xlabel("Time [s]", fontsize=12)
+            plt.ylabel("Frequency [Hz]", fontsize=12)
+            plt.title("Generator Frequency Time Series", fontsize=14)
+            plt.grid(True, alpha=0.3)
+
+            # Move legend outside
+            plt.legend(title="Generators", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+            plt.tight_layout(rect=[0, 0, 0.85, 1])  # leave space on right for legend
+            try:
+                plt.savefig("/home/output_plots.png")
+            except:
+                _ = 0
+            plt.show()
         except Exception as e:
             print(f"[Get] Failed to get power transfer: {e}")
             return {}

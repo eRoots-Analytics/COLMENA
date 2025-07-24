@@ -6,7 +6,7 @@ import logging
 from collections import OrderedDict
 
 from andes.utils.misc import elapsed
-from andes.routines.base import BaseRoutine, check_conn_before_init
+from andes.routines.base import BaseRoutine
 from andes.variables.report import Report
 from andes.shared import np, matrix, sparse, newton_krylov
 
@@ -16,9 +16,6 @@ logger = logging.getLogger(__name__)
 class PFlow(BaseRoutine):
     """
     Power flow calculation routine.
-
-    Power flow analysis currently supports limiting reactive power (needs to to be
-    turned on via `config.pv2pq`) but does not enforce voltage limits.
     """
 
     def __init__(self, system=None, config=None):
@@ -63,7 +60,6 @@ class PFlow(BaseRoutine):
         self.x_sol = None
         self.y_sol = None
 
-    @check_conn_before_init
     def init(self):
         """
         Initialize variables for power flow.
@@ -239,7 +235,7 @@ class PFlow(BaseRoutine):
         t0, _ = elapsed()
 
         # ---------- Call solution methods ----------
-        if method in ('nr', 'dishonest'):
+        if method == 'nr':
             self.nr_solve()
         elif method == 'nk':
             self.newton_krylov()

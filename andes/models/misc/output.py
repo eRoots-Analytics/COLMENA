@@ -50,9 +50,9 @@ class Output(OutputData, Model):
         """
 
         if v_code == 'x':
-            return np.isin(self.xidx, addr)
+            return np.in1d(self.xidx, addr)
         if v_code == 'y':
-            return np.isin(self.yidx, addr)
+            return np.in1d(self.yidx, addr)
 
         raise NotImplementedError("v_code <%s> not recognized" % v_code)
 

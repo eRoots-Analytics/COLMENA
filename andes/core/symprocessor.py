@@ -118,18 +118,11 @@ class SymProcessor:
                 self.tex_names[name] = sp.Symbol(tex_name)
         # -----------------------------------------------------------
 
-        # `all_params_names` include parameters, services, exports from blocks, etc.
         for var in self.cache.all_params_names:
-            is_real = True
-
-            if var in self.parent.services:
-                if self.parent.services[var].vtype == complex:
-                    is_real = False
-
-            self.inputs_dict[var] = sp.Symbol(var, real=is_real)
+            self.inputs_dict[var] = sp.Symbol(var)
 
         for var in self.cache.all_vars_names:
-            tmp = sp.Symbol(var, real=True)  # all DAE variables are real
+            tmp = sp.Symbol(var)
             self.vars_dict[var] = tmp
             self.inputs_dict[var] = tmp
             if var in self.cache.vars_int:
@@ -137,7 +130,7 @@ class SymProcessor:
 
         # store tex names defined in `self.config`
         for key in self.config.as_dict():
-            tmp = sp.Symbol(key, real=True)  # not expecting complex numbers in config
+            tmp = sp.Symbol(key)
             self.inputs_dict[key] = tmp
             if key in self.config.tex_names:
                 self.tex_names[tmp] = sp.Symbol(self.config.tex_names[key])
@@ -221,6 +214,7 @@ class SymProcessor:
                         expr = sp.sympify(instance.e_str, locals=self.inputs_dict)
                         expr = self._do_substitute(expr)
                     except (sp.SympifyError, TypeError) as e:
+                        print(f"Transformed code: {instance.e_str}")
                         logger.error('Error parsing equation "%s "for %s.%s',
                                      instance.e_str, instance.owner.class_name, name)
                         raise e
@@ -245,6 +239,8 @@ class SymProcessor:
                 # manually append additional arguments for select.
                 if 'select' in inspect.getsource(self.calls.__dict__[ename]):
                     eargs.extend(select_args_add)
+                    self.calls.__dict__[ename] = sp.lambdify(eargs, tuple(elist),
+                                                         modules=self.lambdify_func)
 
         # convert to SymPy matrices
         self.f_matrix = sp.Matrix(self.f_list)
@@ -292,6 +288,8 @@ class SymProcessor:
                 s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
                 if 'select' in inspect.getsource(s_calls[name]):
                     s_args[name].extend(select_args_add)
+                    s_calls[name] = sp.lambdify(s_args[name], s_syms[name], modules=self.lambdify_func)
+
             else:
                 s_calls_nonseq.append(expr)
                 s_calls_nonseq_args.extend(args_expr)
@@ -301,6 +299,8 @@ class SymProcessor:
             sns_calls = sp.lambdify(sns_args, tuple(s_calls_nonseq), modules=self.lambdify_func)
             if 'select' in inspect.getsource(sns_calls):
                 sns_args.extend(select_args_add)
+                sns_calls = sp.lambdify(sns_args, tuple(s_calls_nonseq), modules=self.lambdify_func)
+
 
         self.s_syms = s_syms
         self.calls.s = s_calls
@@ -387,6 +387,8 @@ class SymProcessor:
             # manually append additional arguments for select
             if 'select' in inspect.getsource(self.calls.j[jname]):
                 self.calls.j_args[jname].extend(select_args_add)
+                self.calls.j[jname] = sp.lambdify(self.calls.j_args[jname], Tuple(*j_calls[jname]), modules=self.lambdify_func)
+
 
         self.calls.j_names = list(j_calls.keys())
 
@@ -417,8 +419,6 @@ class SymProcessor:
 
             self.calls.append_ijv(f'{var.e_code}{var.v_code}c', e_idx, v_idx, eps)
             self.calls.need_diag_eps.append(var.name)
-
-        self.calls.need_diag_eps = sorted(list(set(self.calls.need_diag_eps)))
 
     def generate_pretty_print(self):
         """
@@ -721,6 +721,8 @@ from andes.thirdparty.npfunc import *                               # NOQA
             init_a[name] = sp.lambdify(ia_args[name], expr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_a[name]):
                 ia_args[name].extend(select_args_add)
+                init_a[name] = sp.lambdify(ia_args[name], expr, modules=self.lambdify_func)
+
 
         for name, expr in self.init_itn.items():
             fs = self._check_expr_symbols(expr)
@@ -728,6 +730,8 @@ from andes.thirdparty.npfunc import *                               # NOQA
             init_i[name] = sp.lambdify(ii_args[name], expr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_i[name]):
                 ii_args[name].extend(select_args_add)
+                init_a[name] = sp.lambdify(ia_args[name], expr, modules=self.lambdify_func)
+
 
             jexpr = self.init_jac[name]
             fs = self._check_expr_symbols(jexpr)
@@ -735,6 +739,7 @@ from andes.thirdparty.npfunc import *                               # NOQA
             init_j[name] = sp.lambdify(ij_args[name], jexpr, modules=self.lambdify_func)
             if 'select' in inspect.getsource(init_j[name]):
                 ij_args[name].extend(select_args_add)
+                init_a[name] = sp.lambdify(ia_args[name], expr, modules=self.lambdify_func)
 
         self.calls.ia = init_a
         self.calls.ii = init_i

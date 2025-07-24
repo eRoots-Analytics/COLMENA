@@ -9,7 +9,7 @@ import sys
 import time
 from collections import OrderedDict
 
-from andes.routines.base import BaseRoutine, check_conn_before_init
+from andes.routines.base import BaseRoutine
 from andes.routines.daeint import Trapezoid, method_map
 from andes.routines.criteria import deltadelta
 from andes.shared import matrix, np, pd, spdiag, tqdm, tqdm_nb
@@ -128,7 +128,7 @@ class TDS(BaseRoutine):
             self.config.kqrt = system.options.get('kqrt')
 
         # if data is from a CSV file instead of simulation
-        self.from_csv = None
+        self.from_csv = system.options.get('from_csv')
         self.data_csv = None
         self.k_csv = 0    # row number
 
@@ -174,7 +174,6 @@ class TDS(BaseRoutine):
         self.method = Trapezoid()
         self.set_method(self.config.method)
 
-    @check_conn_before_init
     def init(self):
         """
         Initialize the status, storage and values for TDS.
@@ -194,7 +193,7 @@ class TDS(BaseRoutine):
 
         self.reset()
         self._load_pert()
-
+        self.save_roles = {'ua':[]}
         # restore power flow solutions
         system.dae.x[:len(system.PFlow.x_sol)] = system.PFlow.x_sol
         system.dae.y[:len(system.PFlow.y_sol)] = system.PFlow.y_sol
@@ -238,7 +237,9 @@ class TDS(BaseRoutine):
 
         # discard initialized values and use that from CSV if provided
         if self.data_csv is not None:
-            self._csv_data_to_dae()
+            system.dae.x[:] = self.data_csv[0, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[0, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            system.vars_to_models()
 
         # connect to data streaming server
         if system.streaming.dimec is None:
@@ -322,7 +323,7 @@ class TDS(BaseRoutine):
         logger.debug("Resuming simulation: initial step size is h=%.4fs.", self.h)
         logger.debug("Resuming from t=%.4fs.", system.dae.t)
 
-    def run(self, no_summary=False, from_csv=None, **kwargs):
+    def run(self, no_summary=False, **kwargs):
         """
         Run time-domain simulation using numerical integration.
 
@@ -340,16 +341,12 @@ class TDS(BaseRoutine):
             system.exit_code += 1
             return succeed
 
-        if no_summary is False and (system.dae.t == 0):
-            self.summary()
-
-        # load from csv if provided
-        if from_csv is not None:
-            self.from_csv = from_csv
-        else:
-            self.from_csv = system.options.get("from_csv")
+        # load from csv is provided
         if self.from_csv is not None:
             self.data_csv = self._load_csv(self.from_csv)
+
+        if no_summary is False and (system.dae.t == 0):
+            self.summary()
 
         # only initializing at t<0 allows to continue when `run` is called again.
         if system.dae.t < 0:
@@ -385,6 +382,14 @@ class TDS(BaseRoutine):
         while (system.dae.t - self.h < self.config.tf) and (not self.busted):
             logger.debug("Start to integrate time step t=%g", system.dae.t)
 
+            try:
+                if system.dae.t > 2.5:
+                     _ = 0
+                if system.GENROU_bimode.omega.v[0] > 1.003 - 0.0001:
+                    _ = 0
+            except:
+                _ = 0
+            
             # call perturbation file if specified
             if self.callpert is not None:
                 self.callpert(dae.t, system)
@@ -536,12 +541,13 @@ class TDS(BaseRoutine):
     def _csv_step(self):
         """
         Fetch data for the next step from ``data_csv``.
-
-        When `Output` exists, the target variables `x` and `y` are filled with the data,
-        while the remaining variables are set to zero.
         """
 
-        self._csv_data_to_dae()
+        system = self.system
+        if self.data_csv is not None:
+            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
+            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
+            system.vars_to_models()
 
         self.converged = True
         return self.converged
@@ -923,18 +929,9 @@ class TDS(BaseRoutine):
             raise ValueError("Data from CSV is not 2-dimensional (time versus variable)")
         if data.shape[0] < 2:
             logger.warning("CSV data does not contain more than one time step.")
-
-        system = self.system
-        if data.shape[1] < (system.dae.m + system.dae.n):
-            if system.Output.n < 1:
-                logger.warning("CSV data contains fewer variables than required.")
-                logger.warning("Check if the CSV data file is generated from the test case.")
-            else:
-                logger.info("Output selection detected.")
-                # NOTE: data has first column as time, so the rest should be `n+m` from `Output`
-                if data.shape[1] - 1 < (len(system.Output.xidx + system.Output.yidx)):
-                    logger.warning("CSV data contains fewer variables than required.")
-                    logger.warning("Check if the CSV data file is generated with selected output.")
+        if data.shape[1] < (self.system.dae.m + self.system.dae.n):
+            logger.warning("CSV data contains fewer variables than required.")
+            logger.warning("Check if the CSV data file is generated from the test case.")
 
         # set start and end times from data
         self.config.t0 = data[0, 0]
@@ -1091,22 +1088,3 @@ class TDS(BaseRoutine):
         res = deltadelta(self.system.dae.x[self.system.SynGen.delta_addr],
                          self.config.ddelta_limit)
         return res
-
-    def _csv_data_to_dae(self):
-        """
-        Helper function to fetch data when replaying from CSV file.
-
-        When loading from a partial CSV file, the recorded data is loaded
-        while the rest of the variables remain to be initial values.
-        """
-        system = self.system
-        if system.Output.n < 1:
-            system.dae.x[:] = self.data_csv[self.k_csv, 1:system.dae.n + 1]
-            system.dae.y[:] = self.data_csv[self.k_csv, system.dae.n + 1:system.dae.n + system.dae.m + 1]
-        else:
-            xidx = system.Output.xidx
-            system.dae.x[xidx] = self.data_csv[self.k_csv, 1:len(xidx) + 1]
-            yidx = system.Output.yidx
-            system.dae.y[yidx] = self.data_csv[self.k_csv, len(xidx) + 1:len(xidx) + len(yidx) + 1]
-
-            system.vars_to_models()
