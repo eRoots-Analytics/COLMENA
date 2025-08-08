@@ -1,25 +1,19 @@
 import numpy as np
 import subprocess
 import time
-import os 
+import os
 
-script_name = os.getenv('service_file')
-colmena_dir = os.getenv('colmena_dir')
-python_dir  = os.getenv('python_dir')
-docker_user = os.getenv('docker_user')
-grid_name   = os.getenv('grid_name')
+#script_name = os.getenv('service_file')
+script_name = 'mpc_multiple_areas'
+#colmena_dir = os.getenv('colmena_dir')
+colmena_dir = '/home/xcasas/gitlab/'
+#python_dir  = os.getenv('python_dir')
+python_dir = 'python3'
+#docker_user = os.getenv('docker_user')
+docker_user = 'xaviercasasbsc'
+#grid_name   = os.getenv('grid_name')
+grid_name = 'ieee39'
 
-if script_name is None:
-    script_name = "mpc_kpi_driven"
-if grid_name is None:
-    grid_name = "ieee39"
-if colmena_dir is None:
-    colmena_dir = "/home/pablo/Desktop/Colmena"
-if python_dir is None:
-    python_dir = "/home/pablo/myenv/bin/python"
-    python_dir = 'python3'
-if docker_user is None:
-    docker_user = "pablodejuan"
 current_dir = os.getcwd()
 folder_name = 'colmena_services'
 
@@ -43,7 +37,7 @@ zenoh_command = {
         "cwd": f"{colmena_dir}/agent"  # Change to the directory where compose.yaml is located
     }
 agent_command= {
-        "cmd": "HARDWARE={hardware} AGENT_ID={agent_name} POLICY={strategy} docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
+        "cmd": "HARDWARE={hardware} AGENT_ID={agent_name} POLICY={strategy} ZENOH_ROUTER=172.18.0.1 docker compose -p {agent_name} -f compose.yaml up --abort-on-container-exit",
         "cwd": f"{colmena_dir}/agent", 
         'is_agent': True,
     }
