@@ -7,7 +7,7 @@ import copy
 import pyomo.environ as pyo
 import logging
 import sys
-sys.path.append('/home/pablo/Desktop/eroots/COLMENA')
+sys.path.append('/home/xcasas/github/COLMENA')
 from colmenasrc.controller.mpc_agent import MPCAgent
 from colmenasrc.controller.coordinator import Coordinator
 from colmenasrc.controller.admm import ADMM
@@ -97,6 +97,8 @@ class AgentControl(Service):
 
             Config.agent = True
             self.agent = MPCAgent(self.area, self.andes)
+            self.logger.info(f"Generators: {self.agent.generators}")
+            self.logger.info(f"All GENROU IDs: {self.andes.get_complete_variable('GENROU', 'idx')}")
             self.coordinator = Coordinator(self.andes)
             self.admm = self.coordinator.admm
             self.model = self.agent.setup_dmpc(self.coordinator)

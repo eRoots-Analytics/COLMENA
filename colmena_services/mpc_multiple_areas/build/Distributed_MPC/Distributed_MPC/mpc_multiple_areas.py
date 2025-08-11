@@ -7,7 +7,7 @@ import copy
 import pyomo.environ as pyo
 import logging
 import sys
-sys.path.append('/home/pablo/Desktop/eroots/COLMENA')
+sys.path.append('/home/xcasas/github/COLMENA')
 from colmenasrc.controller.mpc_agent import MPCAgent
 from colmenasrc.controller.coordinator import Coordinator
 from colmenasrc.controller.admm import ADMM
@@ -85,11 +85,7 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            try:
-                self.andes = AndesWrapper(load =False)
-            except:
-                self.andes = AndesWrapper()
-            
+            self.andes = AndesWrapper()
             self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])
@@ -101,13 +97,15 @@ class AgentControl(Service):
 
             Config.agent = True
             self.agent = MPCAgent(self.area, self.andes)
+            self.logger.info(f"Generators: {self.agent.generators}")
+            self.logger.info(f"All GENROU IDs: {self.andes.get_complete_variable('GENROU', 'idx')}")
             self.coordinator = Coordinator(self.andes)
             self.admm = self.coordinator.admm
             self.model = self.agent.setup_dmpc(self.coordinator)
             self.agent.setup = False
             self.initialized_decorators = False
             self.online_step = 0
-            time.sleep(1)
+            time.sleep(0.1)
 
         @Persistent()
         def behavior(self):
@@ -120,21 +118,17 @@ class AgentControl(Service):
             if not self.initialized_decorators:
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.data_write.publish(self.state_horizon_jsonlike)
-                #self.data_read.publish(self.state_horizon_jsonlike)
                 self.initialized_decorators = True
-                time.sleep(1)
             else:
-                time.sleep(1)
+                time.sleep(0.1)
 
             # Stop Flask logs
             time_start = time.time()
             while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)*(self.max_iter):
                 print(f'Iteration {self.iter}')
                 initial_state_horizon_jsonlike = self.data_read.get()
-                if not isinstance(initial_state_horizon_jsonlike, dict):
-                    initial_state_horizon_jsonlike = json.loads(initial_state_horizon_jsonlike)
                 if self.agent.generators: 
-                    if self.iter == 0: 
+                    if self.iter ==0: 
                         # Initialize the model for the first iteration
                         self.agent.initialize_variables_values()
 
@@ -160,12 +154,14 @@ class AgentControl(Service):
                         changed_horizon = True
                         state_horizon_read = {tuple(map(int, key.split("_"))): val for key, val in state_horizon_jsonlike.items()}
                         self.coordinator.variables_horizon_values.update(state_horizon_read)
-                        time.sleep(0.01)
+                        time.sleep(0.005)
+                        break 
                     if time.time() - change_time_start > 2:
                         print(f'Wait broken')
                         break
                 self.iter += 1
                         
+            self.frequency.publish(1)
             role_change_list = self.coordinator.collect_role_changes(specific_agent = self.agent)
             for role_change in role_change_list:
                 if not role_change: 
@@ -178,7 +174,7 @@ class AgentControl(Service):
 
             if self.agent.area == self.n_areas:
                 time.sleep(0.01)
-                for i in range(50):
+                for i in range(30):
                     success, new_time = self.andes.run_step()
                     time.sleep(0.1)
                     print(f"Step was {success} and time is {new_time}")

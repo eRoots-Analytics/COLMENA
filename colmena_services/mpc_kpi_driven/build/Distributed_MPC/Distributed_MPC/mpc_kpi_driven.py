@@ -1,18 +1,15 @@
-import time, os
+import os
 import numpy as np
 import json
 import time
-import requests 
-import pyomo.environ as pyo
+import requests
 import sys
-sys.path.append('/home/pablo/Desktop/eroots/COLMENA')
+sys.path.append('/home/xcasas/github/COLMENA')
 from colmenasrc.controller.mpc_agent import MPCAgent
 from colmenasrc.controller.coordinator import Coordinator
-from colmenasrc.controller.admm import ADMM
 from colmenasrc.simulator.andes_wrapper import AndesWrapper
 from colmenasrc.config.config import Config
 
-from copy import deepcopy
 from colmena import (
     Context,
     Service,
@@ -69,7 +66,7 @@ class AgentControl(Service):
         @Requirements('AREA')
         @Metric('frequency')
         @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
-        @KPI('AgentControl/frequency[5s] < 1.001 or AgentControl/frequency[5s] > 0.999')
+        @KPI('abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001')
         @Context(class_ref = GlobalError, name='all_global')
         @Context(class_ref = GridAreas, name='grid_areas')
         @Dependencies(*["pyomo", "requests"])
@@ -84,7 +81,7 @@ class AgentControl(Service):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
             try:
-                self.andes = AndesWrapper(load =False)
+                self.andes = AndesWrapper(load = False)
             except:
                 self.andes = AndesWrapper()
             
@@ -105,11 +102,11 @@ class AgentControl(Service):
             self.agent.setup = False
             self.initialized_decorators = False
             self.online_step = 0
-            time.sleep(10)
+            time.sleep(0.1)
 
         @Persistent()
         def behavior(self):
-            print('running')
+            self.logger.info('Running')
             self.error = 100
             self.iter = 0
             self.agent.initialize_variables_values()
@@ -120,14 +117,13 @@ class AgentControl(Service):
                 self.data_write.publish(self.state_horizon_jsonlike)
                 self.data_read.publish(self.state_horizon_jsonlike)
                 self.initialized_decorators = True
-                time.sleep(1)
             else:
-                time.sleep(1)
+                time.sleep(0.1)
 
             # Stop Flask logs
             time_start = time.time()
             while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)*(self.max_iter):
-                print(f'Iteration {self.iter}')
+                self.logger.info(f'Iteration {self.iter}')
                 initial_state_horizon_jsonlike = self.data_read.get()
                 if not isinstance(initial_state_horizon_jsonlike, dict):
                     initial_state_horizon_jsonlike = json.loads(initial_state_horizon_jsonlike)
@@ -140,7 +136,7 @@ class AgentControl(Service):
                         self.admm._solve_agent(self.agent, self.iter)
 
                     # Residual computation
-                    print(f"Iteration {self.iter}, Primal Residual: is undefinided")
+                    self.logger.info(f"Iteration {self.iter}, Primal Residual: is undefinided")
 
                 self.admm._update_duals()
                 self.admm._update_pyomo_params(self.agent) 
@@ -152,8 +148,8 @@ class AgentControl(Service):
                 changed_horizon = False
                 change_time_start = time.time()
                 while not changed_horizon: 
-                    state_horizon_jsonlike = json.loads(self.data_read.get()) 
-                    print(f'Waiting 3 for iter {self.iter} and online step {self.online_step}')
+                    state_horizon_jsonlike = json.loads(self.data_read.get())
+                    self.logger.info(f'Waiting 3 for iter {self.iter} and online step {self.online_step}')
                     if state_horizon_jsonlike != initial_state_horizon_jsonlike:
                         changed_horizon = True
                         state_horizon_read = {tuple(map(int, key.split("_"))): val for key, val in state_horizon_jsonlike.items()}
@@ -161,15 +157,15 @@ class AgentControl(Service):
                         time.sleep(0.005)
                         break 
                     if time.time() - change_time_start > 2:
-                        print(f'Wait broken')
+                        self.logger.info(f'Wait broken')
                         break
                 self.iter += 1
                         
             role_change_list = self.coordinator.collect_role_changes(specific_agent = self.agent)
             for role_change in role_change_list:
-                if not role_change: 
-                    print("[Warning] Empty role change detected.")
-                print(f'Role change is {role_change}')
+                if not role_change:
+                    self.logger.info("[Warning] Empty role change detected.")
+                self.logger.info(f'Role change is {role_change}')
                 self.andes.set_value(role_change)
             time_spent = time.time() - time_start
             self.online_step += 1
@@ -180,20 +176,19 @@ class AgentControl(Service):
                 for i in range(30):
                     success, new_time = self.andes.run_step()
                     time.sleep(0.1)
-                    print(f"Step was {success} and time is {new_time}")
+                    self.logger.info(f"Step was {success} and time is {new_time}")
             return 1
     
     class MonitoringRole(Role):
         @Requirements('AREA')
         @Metric('frequency')
-        @Metric('always_negative')
-        @KPI('always_negative[10s] > 1')
+        @Dependencies(*['pyomo', 'requests'])
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
             self.area = os.getenv('AGENT_ID')[-1]
             try:
-                self.andes = AndesWrapper(load =False)
+                self.andes = AndesWrapper(load = False)
             except:
                 self.andes = AndesWrapper()
 
@@ -201,7 +196,7 @@ class AgentControl(Service):
         def behavior(self):
             area_frequency = self.andes.get_area_variable(model='GENROU', var='omega', area = self.area)
             area_M = self.andes.get_area_variable(model='GENROU', var='M', area = self.area)
-            mean_freq = np.dot(area_frequency, area_M)
+            mean_freq = np.dot(area_frequency, area_M) / np.sum(area_M)
+            self.logger.info(mean_freq)
             self.frequency.publish(mean_freq)
-            self.always_negative.publish(-1)
             return 1

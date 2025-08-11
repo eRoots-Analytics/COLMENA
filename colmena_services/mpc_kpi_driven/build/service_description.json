@@ -22,7 +22,7 @@
             ],
             "kpis": [
                 {
-                    "query": "AgentControl/frequency[5s] < 1.001 or AgentControl/frequency[5s] > 0.999"
+                    "query": "abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001"
                 }
             ]
         },
@@ -32,11 +32,7 @@
             "hardwareRequirements": [
                 "AREA"
             ],
-            "kpis": [
-                {
-                    "query": "always_negative[10s] > 1"
-                }
-            ]
+            "kpis": []
         }
     ]
 }
