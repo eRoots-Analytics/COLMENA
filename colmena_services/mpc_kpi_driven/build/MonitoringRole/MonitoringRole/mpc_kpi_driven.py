@@ -171,12 +171,6 @@ class AgentControl(Service):
             self.online_step += 1
             time.sleep(max(0,self.agent.dt - time_spent))
 
-            if self.agent.area == self.n_areas:
-                time.sleep(0.01)
-                for i in range(30):
-                    success, new_time = self.andes.run_step()
-                    time.sleep(0.1)
-                    self.logger.info(f"Step was {success} and time is {new_time}")
             return 1
     
     class MonitoringRole(Role):
@@ -186,17 +180,24 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            self.area = os.getenv('AGENT_ID')[-1]
+            self.area = int(os.getenv('AGENT_ID')[-1])
             try:
                 self.andes = AndesWrapper(load = False)
             except:
                 self.andes = AndesWrapper()
+            self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
 
         @Persistent()
         def behavior(self):
             area_frequency = self.andes.get_area_variable(model='GENROU', var='omega', area = self.area)
             area_M = self.andes.get_area_variable(model='GENROU', var='M', area = self.area)
             mean_freq = np.dot(area_frequency, area_M) / np.sum(area_M)
-            self.logger.info(mean_freq)
             self.frequency.publish(mean_freq)
+            if self.area == self.n_areas:
+                self.logger.info("Update step")
+                time.sleep(0.01)
+                for i in range(30):
+                    success, new_time = self.andes.run_step()
+                    time.sleep(0.1)
+                    self.logger.info(f"Step was {success} and time is {new_time}")
             return 1
