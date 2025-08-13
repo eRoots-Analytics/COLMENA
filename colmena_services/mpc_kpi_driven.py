@@ -3,12 +3,14 @@ import numpy as np
 import json
 import time
 import requests
-import sys
-sys.path.append('/home/xcasas/github/COLMENA')
-from colmenasrc.controller.mpc_agent import MPCAgent
-from colmenasrc.controller.coordinator import Coordinator
-from colmenasrc.simulator.andes_wrapper import AndesWrapper
-from colmenasrc.config.config import Config
+
+try:
+    from colmenasrc.controller.mpc_agent import MPCAgent
+    from colmenasrc.controller.coordinator import Coordinator
+    from colmenasrc.simulator.andes_wrapper import AndesWrapper
+    from colmenasrc.config.config import Config
+except ModuleNotFoundError:
+    print("colmenasrc not imported.")
 
 from colmena import (
     Context,

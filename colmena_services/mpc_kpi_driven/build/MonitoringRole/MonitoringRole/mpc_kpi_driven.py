@@ -3,22 +3,22 @@ import numpy as np
 import json
 import time
 import requests
-import sys
-sys.path.append('/home/xcasas/github/COLMENA')
-from colmenasrc.controller.mpc_agent import MPCAgent
-from colmenasrc.controller.coordinator import Coordinator
-from colmenasrc.simulator.andes_wrapper import AndesWrapper
-from colmenasrc.config.config import Config
+
+try:
+    from colmenasrc.controller.mpc_agent import MPCAgent
+    from colmenasrc.controller.coordinator import Coordinator
+    from colmenasrc.simulator.andes_wrapper import AndesWrapper
+    from colmenasrc.config.config import Config
+except ModuleNotFoundError:
+    print("colmenasrc not imported.")
 
 from colmena import (
     Context,
     Service,
     Role,
-    Channel,
     Requirements,
     Metric,
     Persistent,
-    Async,
     KPI,
     Data,
     Dependencies
@@ -51,12 +51,6 @@ class AgentControl(Service):
     @Context(class_ref = GridAreas, name='grid_areas')
     @Context(class_ref = GlobalError, name='all_global')
     @Data(name = 'dual_vars', scope = 'grid_areas/id =.')
-    #@Data(name = 'Data_1', scope = 'all_global/id = .')
-    #@Data(name = 'Data_2', scope = 'all_global/id = .')
-    #@Data(name = 'Data_3', scope = 'all_global/id = .')
-    #@Data(name = 'Data_4', scope = 'all_global/id = .')
-    #@Data(name = 'Data_5', scope = 'all_global/id = .')
-    #@Data(name = 'Data_6', scope = 'all_global/id = .')
     @Data(name = 'state', scope = 'all_global/id = .')
     @Data(name = 'global_error', scope = 'all_global/id = .')
     @Metric('frequency')
@@ -71,12 +65,6 @@ class AgentControl(Service):
         @Context(class_ref = GlobalError, name='all_global')
         @Context(class_ref = GridAreas, name='grid_areas')
         @Dependencies(*["pyomo", "requests"])
-        #@Data(name = 'Data_1', scope = 'all_global/id = .')
-        #@Data(name = 'Data_2', scope = 'all_global/id = .')
-        #@Data(name = 'Data_3', scope = 'all_global/id = .')
-        #@Data(name = 'Data_4', scope = 'all_global/id = .')
-        #@Data(name = 'Data_5', scope = 'all_global/id = .')
-        #@Data(name = 'Data_6', scope = 'all_global/id = .')
         @Data(name = 'state')
         @Data(name = 'global_error', scope = 'all_global/id = .')
         def __init__(self, *args, **kwargs):
@@ -93,8 +81,7 @@ class AgentControl(Service):
             self.neighbors = requests.get(andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
             self.max_iter = 650
-            #self.data_read = getattr(self, 'Data_' + str(self.area))
-            #self.data_write = getattr(self, 'Data_' + str(self.area+1 if self.area < self.n_areas else 1))
+
             self.data_read_scope = f"grid_areas/id = {str(self.agent_id)}"
             self.data_write_scope = f"grid_areas/id = area_{str(self.area+1 if self.area < self.n_areas else 1)}"
             self.logger.info(f"data read scope is {self.data_read_scope}")
@@ -122,8 +109,6 @@ class AgentControl(Service):
                 self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.state.publish(self.state_horizon_jsonlike, scope=self.data_write_scope)
                 self.state.publish(self.state_horizon_jsonlike, scope=self.data_read_scope)
-                #self.data_write.publish(self.state_horizon_jsonlike)
-                #self.data_read.publish(self.state_horizon_jsonlike)
                 self.initialized_decorators = True
             else:
                 time.sleep(0.1)
@@ -150,7 +135,6 @@ class AgentControl(Service):
                 self.admm._update_pyomo_params(self.agent) 
 
                 self.variables_horizon_values_json = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
-                #self.data_write.publish(self.variables_horizon_values_json)
                 self.state.publish(self.variables_horizon_values_json, scope=self.data_write_scope)
                 
                 #We wait until we have received a new message from the other area
