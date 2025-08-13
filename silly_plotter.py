@@ -3,46 +3,6 @@ from datetime import datetime
 import re
 
 log = """
-2025/08/11 12:31:04 HTTP server listening on port: 5555
-2025/08/11 12:33:23 Received service description for service:  AgentControl
-2025/08/11 12:33:23 RoleId: Distributed_MPC matches hardware AREA
-2025/08/11 12:33:23 RoleId: MonitoringRole matches hardware AREA
-2025/08/11 12:33:23 Parsed kpis: [{abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001 0 0.001 < Distributed_MPC }]
-2025/08/11 12:33:23 Parsed roles: [{Distributed_MPC xaviercasasbsc/distributed_mpc:latest [AREA] [{abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001 }]} {MonitoringRole xaviercasasbsc/monitoringrole:latest [AREA] []}]
-2025/08/11 12:33:23 isRunning for role MonitoringRole to true
-2025/08/11 12:33:23 Decided to run role: MonitoringRole, serviceId: AgentControl
-2025/08/11 12:33:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown
-2025/08/11 12:33:35 Failed to unmarshal JSON: json: cannot unmarshal object into Go struct field KPIQuery.KPIs.value of type float64
-2025/08/11 12:34:04 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:34:05 Received alert for service:  AgentControl
-2025/08/11 12:34:05 KPI query: [abs(avg(avg_over_time(agentcontrol_frequency#LABELS#[1m])) - 1)] < 0.001, associated role: AgentControl-8NTUDwFbvEYYnZuRYdsQah, level: Broken
-2025/08/11 12:34:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Broken
-2025/08/11 12:34:34 Decided to run role: Distributed_MPC, serviceId: AgentControl
-2025/08/11 12:34:35 Received alert for service:  AgentControl
-2025/08/11 12:34:35 KPI query: [abs(avg(avg_over_time(agentcontrol_frequency#LABELS#[1m])) - 1)] < 0.001, associated role: AgentControl-8NTUDwFbvEYYnZuRYdsQah, level: Critical
-2025/08/11 12:35:04 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Critical
-2025/08/11 12:35:05 Received alert for service:  AgentControl
-2025/08/11 12:35:05 KPI query: [abs(avg(avg_over_time(agentcontrol_frequency#LABELS#[1m])) - 1)] < 0.001, associated role: AgentControl-8NTUDwFbvEYYnZuRYdsQah, level: Critical
-2025/08/11 12:35:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Critical
-2025/08/11 12:35:35 Received alert for service:  AgentControl
-2025/08/11 12:35:35 KPI query: [abs(avg(avg_over_time(agentcontrol_frequency#LABELS#[1m])) - 1)] < 0.001, associated role: AgentControl-8NTUDwFbvEYYnZuRYdsQah, level: Critical
-2025/08/11 12:36:04 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Critical
-2025/08/11 12:36:05 Received alert for service:  AgentControl
-2025/08/11 12:36:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:36:34 Decided to stop role: Distributed_MPC, serviceId: AgentControl
-2025/08/11 12:36:35 Received alert for service:  AgentControl
-2025/08/11 12:37:04 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:37:05 Received alert for service:  AgentControl
-2025/08/11 12:37:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:37:35 Received alert for service:  AgentControl
-2025/08/11 12:38:04 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:38:05 Received alert for service:  AgentControl
-2025/08/11 12:38:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:38:35 Received alert for service:  AgentControl
-2025/08/11 12:39:04 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:39:05 Received alert for service:  AgentControl
-2025/08/11 12:39:34 KPI query: abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001, associated role: Distributed_MPC, level: Unknown_NoResults
-2025/08/11 12:39:35 Received alert for service:  AgentControl
 """
 
 pattern = re.compile(r'(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) Decided to (run|stop) role: (\w+),')
