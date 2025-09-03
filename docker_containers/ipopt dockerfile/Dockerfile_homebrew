@@ -1,0 +1,59 @@
+# Stage 1: Get the pre-compiled COIN-OR solvers
+# This stage uses the 'coinor/coin-or-optimization-suite' image as a source for solvers.
+FROM coinor/coin-or-optimization-suite AS solver-source
+
+# Stage 2: Final image - based on Python 3.9.18 slim-bookworm
+# This stage will be smaller and contain only essential components + copied solvers.
+FROM python:3.9.18-slim-bookworm AS final
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install common system dependencies needed for solver runtime and building Python packages.
+# - ca-certificates: For HTTPS connections.
+# - libgfortran5: Fortran runtime libraries needed by many scientific packages.
+# - libblas3, liblapack3: Essential linear algebra libraries.
+# - pkg-config: CRUCIAL for cyipopt to find Ipopt libraries during installation.
+# - build-essential: Provides compilers (gcc, g++) needed for some Python package builds.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libgfortran5 \
+    libblas3 \
+    liblapack3 \
+    pkg-config \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the Ipopt and GLPK executables from the 'solver-source' stage.
+# We assume they are in /usr/local/bin in the coinor/coin-or-optimization-suite image.
+COPY --from=solver-source /usr/local/bin/ipopt /usr/local/bin/
+
+# Copy the pkgconfig files from the 'solver-source' stage.
+# These files (e.g., ipopt.pc) tell pkg-config where to find the libraries and headers.
+# We assume they are in /usr/local/lib/pkgconfig in the coinor/coin-or-optimization-suite image.
+COPY --from=solver-source /usr/local/lib/pkgconfig/ipopt.pc /usr/local/lib/pkgconfig/
+
+# --- IMPORTANT FIX: Copy required shared libraries and set LD_LIBRARY_PATH ---
+# The error "libipoptamplinterface.so.3: cannot open shared object file" means
+# the Ipopt executable needs this specific library at runtime, and it's not
+# in the final image's default library paths.
+# We need to copy it (and potentially other COIN-OR shared libs) from the source stage.
+# Assuming libraries are in /usr/local/lib or /usr/lib in the coinor image.
+# We'll try /usr/local/lib first, as that's where executables were found.
+
+# You might need to add more specific libraries here if further errors occur.
+# Common ones include libblas, liblapack, libmumps, etc., but we install system versions where possible.
+
+# Update environment variables to ensure the system finds the copied solvers and pkgconfig files.
+ENV PATH="/usr/local/bin:${PATH}"
+ENV PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:${PKG_CONFIG_PATH}"
+# CRUCIAL: Add the directory where we copied the shared libraries to LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
+
+# Install Python dependencies:
+RUN pip install --no-cache-dir pyomo 
+
+# Set working directory for your application
+WORKDIR /app
+# Set the default command when the container starts
+CMD ["bash"]

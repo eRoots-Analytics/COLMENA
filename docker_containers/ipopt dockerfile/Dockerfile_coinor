@@ -1,0 +1,28 @@
+# Your Dockerfile starts here
+FROM coinor/coin-or-optimization-suite
+
+# Now, add your instructions to install Python, Pyomo, and your test script
+# This image already contains many COIN-OR solvers like Ipopt, Cbc, Cgl, Clp, etc.
+# You will likely need to install Python and Pyomo on top of it.
+
+# Example of what you might add next:
+# Install Python 3 and pip (if not already present in the base image, you'd need to check its contents)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Pyomo
+RUN pip3 install --no-cache-dir pyomo
+
+# Set working directory
+WORKDIR /app
+
+# Copy your test script
+COPY test_pyomo_ipopt.py .
+
+# Run your test script
+RUN python3 test_pyomo_ipopt.py
+
+# Set default command
+CMD ["bash"]
