@@ -503,4 +503,21 @@ class Coordinator:
                             }
                         andes_role_changes.append(role_change.copy())
 
+                # Apply load curtailment (if available in agent model)
+                if not Config.angles and hasattr(agent.model, "Pshed") and hasattr(agent, "Ppf_values"):
+                    for i, load_id in enumerate(agent.loads):
+                        shed = agent.model.Pshed[0, load_id].value
+                        if shed is None:
+                            shed = 0.0
+                        base_load = agent.Ppf_values[i]
+                        new_load = max(0.0, base_load - shed)
+                        role_change = {
+                            'model': 'PQ',
+                            'src': 'Ppf',
+                            'idx': load_id,
+                            'attr': 'v',
+                            'value': new_load
+                        }
+                        andes_role_changes.append(role_change.copy())
+
         return andes_role_changes
