@@ -190,12 +190,14 @@ class Coordinator:
                     self.omega_coi_log.append(
                     (self.t, {str(agent.area): omega_coi})
                     )
-                if 'converters' in Config.case_name:
+
+                if Config.converters:
                     value_snapshot = {}
                     for agent_id, agent in self.agents.items():
                         omega = self.andes.get_partial_variable("Bus", "v", agent.generators)
                         omega_snapshot[agent_id] = omega
                     self.bus_v_log.append((self.t, value_snapshot))
+                    print(f'value snapshot is {value_snapshot}')
 
                     value_snapshot = {}
                     for agent_id, agent in self.agents.items():
@@ -208,10 +210,10 @@ class Coordinator:
                         omega = self.andes.get_partial_variable("REDUAL", "a", agent.generators)
                         omega_snapshot[agent_id] = omega
                     self.redual_a_log.append((self.t, value_snapshot))
-
+                    
                     value_snapshot = {}
                     for agent_id, agent in self.agents.items():
-                        omega = self.andes.get_partial_variable("REDUAL", "a", agent.generators)
+                        omega = self.andes.get_partial_variable("REDUAL", "v", agent.generators)
                         omega_snapshot[agent_id] = omega
                     self.redual_v_log.append((self.t, value_snapshot))
 
@@ -227,11 +229,12 @@ class Coordinator:
                                           'attr': 'v',
                                           'value': 0})
                     elif self.andes.failure == 'generator':
-                        self.andes.set_value({'model': 'GENROU',
-                                          'idx': 'GENROU_1',
-                                          'src': 'u',
-                                          'attr': 'v',
-                                          'value': 0})
+                        for generator in self.andes.failure_params:
+                            self.andes.set_value({'model': 'GENROU',
+                                              'idx': generator,
+                                              'src': 'u',
+                                              'attr': 'v',
+                                              'value': 0})
                     else:
                         self.andes.set_value({'model': 'PQ',
                                               'idx': 'PQ_1',
@@ -331,31 +334,46 @@ class Coordinator:
                     (self.t, {str(agent.area): omega_coi})
                     )
                 
-                if 'converters' in Config.case_name:
-                    value_snapshot = {}
+                if Config.converters:
+                    omega_snapshot = {}
                     for agent_id, agent in self.agents.items():
-                        omega = self.andes.get_partial_variable("Bus", "v", agent.generators)
+                        omega = self.andes.get_complete_variable("Bus", "v")
                         omega_snapshot[agent_id] = omega
-                    self.bus_v_log.append((self.t, value_snapshot))
+                    self.bus_v_log.append((self.t, omega_snapshot))
 
-                    value_snapshot = {}
+                    omega_snapshot = {}
                     for agent_id, agent in self.agents.items():
-                        omega = self.andes.get_partial_variable("Bus", "a", agent.generators)
+                        omega = self.andes.get_complete_variable("Bus", "a")
                         omega_snapshot[agent_id] = omega
-                    self.bus_a_log.append((self.t, value_snapshot))
+                    self.bus_a_log.append((self.t, omega_snapshot))
 
-                    value_snapshot = {}
+                    omega_snapshot = {}
                     for agent_id, agent in self.agents.items():
-                        omega = self.andes.get_partial_variable("REDUAL", "v", agent.generators)
+                        omega = self.andes.get_complete_variable("REDUAL", "a")
                         omega_snapshot[agent_id] = omega
-                    self.redual_v_log.append((self.t, value_snapshot))
-
-                    value_snapshot = {}
-                    for agent_id, agent in self.agents.items():
-                        omega = self.andes.get_partial_variable("REDUAL", "a", agent.generators)
-                        omega_snapshot[agent_id] = omega
-                    self.redual_a_log.append((self.t, value_snapshot))
+                    self.redual_a_log.append((self.t, omega_snapshot))
                     
+                    omega_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_complete_variable("REDUAL", "v")
+                        omega_snapshot[agent_id] = omega
+                    self.redual_v_log.append((self.t, omega_snapshot))
+                    
+                    time_sync = self.andes.get_dae_time()
+                    if time_sync > 4.95 and time_sync < 5.05:
+                        self.andes.set_value({'model': 'REDUAL',
+                                              'idx': 'REDUAL_1',
+                                              'src': 'is_GFM',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                    elif time_sync > 6 and time_sync <7:
+                        self.andes.set_value({'model': 'REDUAL',
+                                              'idx': 'REDUAL_1',
+                                              'src': 'is_GFM',
+                                              'attr': 'v',
+                                              'value': 1})
+
+                
                 # === Disturbance injection ===
                 if self.k == int(self.td/self.tstep):
                     self.disturbance = True
@@ -373,11 +391,12 @@ class Coordinator:
                                           'attr': 'v',
                                           'value': 0})
                     elif self.andes.failure == 'generator':
-                        self.andes.set_value({'model': 'GENROU',
-                                          'idx': 'GENROU_1',
-                                          'src': 'u',
-                                          'attr': 'v',
-                                          'value': 0})
+                        for generator in self.andes.failure_params:
+                            self.andes.set_value({'model': 'GENROU',
+                                                  'idx': generator,
+                                                  'src': 'u',
+                                                  'attr': 'v',
+                                                  'value': 0})
                     else:
                         self.andes.set_value({'model': 'PQ',
                                               'idx': 'PQ_1',

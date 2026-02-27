@@ -7,7 +7,7 @@ import time
 import numpy as np
 from colmenasrc.config.config import Config
 from colmenasrc.controller.admm import ADMM
-from colmenasrc.controller.mpc_agent import MPCAgent
+from colmenasrc.controller.mpc_agent import MPCAgent, MPCAgentv2
 from colmenasrc.simulator.andes_wrapper import AndesWrapper
 
 class Coordinator:
@@ -51,7 +51,8 @@ class Coordinator:
         self.K =          Config.K
         self.tdmpc =      Config.tdmpc
         self.td =         Config.td
-        self.failure =    Config.failure
+        self.T_send =     Config.T_send
+        self.angles =     Config.angles
         self.controlled = Config.controlled
 
         self.disturbance = False
@@ -63,40 +64,81 @@ class Coordinator:
         self.areas = self.andes.get_complete_variable("Area", "idx")
 
         # System agents and cache 
-        self.agents = {agent: MPCAgent(agent, andes) for agent in self.areas}
+        if self.angles:
+            self.agents = {agent: MPCAgentv2(agent, andes) for agent in self.areas}
+        else:
+            self.agents = {agent: MPCAgent(agent, andes) for agent in self.areas}
 
         self.neighbours = {
             area: self.andes.get_neighbour_areas(area)
             for area in self.agents
         }
 
-        self.variables_horizon_values = {
-            (i, j, t, w): 0.0 
-            for i in self.agents
-            for j in self.agents
-            for t in range(self.K)
-            for w in self.agents
-            }
-        
-        self.dual_vars = {
-            (i, j, t): 0.0
-            for i in self.agents
-            for j in self.agents
-            for t in range(self.K)
-            }
+        if not Config.angles:
+            self.variables_horizon_values = {
+                (i, j, t, w): 0.0 
+                for i in self.agents
+                for j in self.agents
+                for t in range(self.K)
+                for w in self.agents
+                }
+
+            self.dual_vars = {
+                (i, j, t): 0.0
+                for i in self.agents
+                for j in self.agents
+                for t in range(self.K)
+                }
+        else:
+            self.variables_horizon_values = {
+                (i, j, t): 0.0 
+                for i in self.agents
+                for j in self.agents
+                for t in range(self.K)
+                }
+
+            self.dual_vars = {
+                (i, j, t): 0.0
+                for i in self.agents
+                for j in self.agents
+                for t in range(self.K)
+                }
+            
+            self.dual_vars_P = {
+                (i, j, t): 0.0
+                for i in self.agents
+                for j in self.agents
+                for t in range(self.K)
+                }
+            
+            self.dual_vars_diff = {
+                (i, j, t): 0.0
+                for i in self.agents
+                for j in self.agents
+                for t in range(self.K)
+                }
 
         # Logs
         self.error_save = [] 
         self.omega_log = []  
         self.omega_coi_prediction_log = []
         self.omega_coi_log = []
+        self.bus_v_log = []
+        self.bus_a_log = []
+        self.redual_v_log = []
+        self.redual_a_log = []
 
         # Initilailzed ADMM algorithm 
         self.admm = ADMM(self)
         self.colmena = True
         print("[Main] Coordinator initialized.")
+        if Config.agent:
+            return 
         try:
-            self.terminated = self.run_colmena()
+            if Config.colmena:
+                self.terminated = self.run_colmena()
+            else:
+                self.terminated = self.run()
             return         
 
         except Exception as e:
@@ -149,30 +191,82 @@ class Coordinator:
                     (self.t, {str(agent.area): omega_coi})
                     )
 
+                if Config.converters:
+                    value_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_partial_variable("Bus", "v", agent.generators)
+                        omega_snapshot[agent_id] = omega
+                    self.bus_v_log.append((self.t, value_snapshot))
+                    print(f'value snapshot is {value_snapshot}')
+
+                    value_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_partial_variable("Bus", "a", agent.generators)
+                        omega_snapshot[agent_id] = omega
+                    self.bus_a_log.append((self.t, value_snapshot))
+
+                    value_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_partial_variable("REDUAL", "a", agent.generators)
+                        omega_snapshot[agent_id] = omega
+                    self.redual_a_log.append((self.t, value_snapshot))
+                    
+                    value_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_partial_variable("REDUAL", "v", agent.generators)
+                        omega_snapshot[agent_id] = omega
+                    self.redual_v_log.append((self.t, value_snapshot))
+
                 # === Disturbance injection ===
                 if self.k == int(self.td/self.tstep):
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
 
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'tm0',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'u',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-
-                    self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_0',
-                                          'src': 'Ppf',
+                    if self.andes.failure == 'line':
+                        self.andes.set_value({'model': 'Line',
+                                          'idx': 'Line_1',
+                                          'src': 'u',
                                           'attr': 'v',
-                                          'value': 5.0})
+                                          'value': 0})
+                    elif self.andes.failure == 'generator':
+                        for generator in self.andes.failure_params:
+                            self.andes.set_value({'model': 'GENROU',
+                                              'idx': generator,
+                                              'src': 'u',
+                                              'attr': 'v',
+                                              'value': 0})
+                    else:
+                        self.andes.set_value({'model': 'PQ',
+                                              'idx': 'PQ_1',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        self.andes.set_value({'model': 'PQ',
+                                              'idx': 'PQ_2',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        for i in range(1, 11):
+                            if i == 5:
+                                continue
+                            self.andes.set_value({'model': 'PQ',
+                                              'idx': f'PQ_{i*3}',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        
+                for i,failure in enumerate(self.andes.additional_failures):
+                    sync_time = self.andes.get_dae_time()
+                    if failure['t'] >= sync_time:
+                        failure.pop('t')
+                        self.andes.set_value(failure)
+                        self.andes.additional_failures.pop(i) 
 
                 # === Execute control ===
-                if self.k >= j * int(self.tdmpc/self.tstep):
+                sync_time = self.andes.get_dae_time()
+                if sync_time < 10:
+                    _ = 0
+                elif self.k >= j * int(self.tdmpc/self.tstep):
                     j += 1
                     success, role_change_list = self.run_admm()
                     if not success:
@@ -239,31 +333,97 @@ class Coordinator:
                     self.omega_coi_log.append(
                     (self.t, {str(agent.area): omega_coi})
                     )
+                
+                if Config.converters:
+                    omega_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_complete_variable("Bus", "v")
+                        omega_snapshot[agent_id] = omega
+                    self.bus_v_log.append((self.t, omega_snapshot))
+
+                    omega_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_complete_variable("Bus", "a")
+                        omega_snapshot[agent_id] = omega
+                    self.bus_a_log.append((self.t, omega_snapshot))
+
+                    omega_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_complete_variable("REDUAL", "a")
+                        omega_snapshot[agent_id] = omega
+                    self.redual_a_log.append((self.t, omega_snapshot))
+                    
+                    omega_snapshot = {}
+                    for agent_id, agent in self.agents.items():
+                        omega = self.andes.get_complete_variable("REDUAL", "v")
+                        omega_snapshot[agent_id] = omega
+                    self.redual_v_log.append((self.t, omega_snapshot))
+                    
+                    time_sync = self.andes.get_dae_time()
+                    if time_sync > 4.95 and time_sync < 5.05:
+                        self.andes.set_value({'model': 'REDUAL',
+                                              'idx': 'REDUAL_1',
+                                              'src': 'is_GFM',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                    elif time_sync > 6 and time_sync <7:
+                        self.andes.set_value({'model': 'REDUAL',
+                                              'idx': 'REDUAL_1',
+                                              'src': 'is_GFM',
+                                              'attr': 'v',
+                                              'value': 1})
+
+                
+                # === Disturbance injection ===
+                if self.k == int(self.td/self.tstep):
+                    self.disturbance = True
+                    print("[Loop] Disturbance acting")
 
                 # === Disturbance injection ===
                 if self.k == int(self.td/self.tstep):
                     self.disturbance = True
                     print("[Loop] Disturbance acting")
 
-                    if self.andes.failure == 'load':
-                        self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_1',
-                                          'src': 'Ppf',
-                                          'attr': 'v',
-                                          'value': 0.0})
-                    elif self.andes.failure == 'line':
+                    if self.andes.failure == 'line':
                         self.andes.set_value({'model': 'Line',
                                           'idx': 'Line_1',
                                           'src': 'u',
                                           'attr': 'v',
                                           'value': 0})
                     elif self.andes.failure == 'generator':
-                        self.andes.set_value({'model': 'GENROU',
-                                          'idx': 'GENROU_1',
-                                          'src': 'u',
-                                          'attr': 'v',
-                                          'value': 0})
+                        for generator in self.andes.failure_params:
+                            self.andes.set_value({'model': 'GENROU',
+                                                  'idx': generator,
+                                                  'src': 'u',
+                                                  'attr': 'v',
+                                                  'value': 0})
+                    else:
+                        self.andes.set_value({'model': 'PQ',
+                                              'idx': 'PQ_1',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        self.andes.set_value({'model': 'PQ',
+                                              'idx': 'PQ_2',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
+                        for i in range(1, 11):
+                            if i == 5:
+                                continue
+                            self.andes.set_value({'model': 'PQ',
+                                              'idx': f'PQ_{i*3}',
+                                              'src': 'Ppf',
+                                              'attr': 'v',
+                                              'value': 0.0})
 
+                for i,failure in enumerate(self.andes.additional_failures):
+                    sync_time = self.andes.get_dae_time()
+                    if failure['t'] >= sync_time:
+                        failure.pop('t')
+                        self.andes.set_value(failure)
+                        self.andes.additional_failures.pop(i) 
+                        
                 # === Simulate system forward ===
                 sync_time = self.andes.get_dae_time()
                 if self.t < 6:
@@ -287,94 +447,24 @@ class Coordinator:
             traceback.print_exc()
         return False
     
-    def run(self, colmena_run = False):
-        """
-        Main simulation loop handling:
-        - disturbance injection
-        - control execution
-        - system evolution
-
-        Returns:
-            bool: True if simulation completed successfully, False otherwise.
-        """
-        self.k = 0
-        self.t = 0.0
-
-        print(f"[Init] Starting MPC loop at t = {self.t}, final time = {self.tf}")
-
-        try:
-            j = 0 # Counter for DMPC activation
-            while self.k < int(self.tf/self.tstep): 
-                print(f"[Loop] Time {self.t:.2f}")
-
-                # === Log omega for plotting ===
-                # Omega
-                omega_snapshot = {}
-                for agent_id, agent in self.agents.items():
-                    omega = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
-                    omega_snapshot[agent_id] = omega
-                self.omega_log.append((self.t, omega_snapshot))
-                # Omegas COI
-                for agent in self.agents.values():
-                    omega_values = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
-                    weight = np.array(agent.M_values) * np.array(agent.Sn_values)
-                    omega_coi = np.dot(weight, np.array(omega_values)) / np.sum(weight)
-
-                    self.omega_coi_log.append(
-                    (self.t, {str(agent.area): omega_coi})
-                    )
-
-                # === Disturbance injection ===
-                if self.k == int(self.td/self.tstep):
-                    self.disturbance = True
-                    print("[Loop] Disturbance acting")
-
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'tm0',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-                    # self.andes.set_value({'model': 'GENROU',
-                    #                       'idx': 'GENROU_2',
-                    #                       'src': 'u',
-                    #                       'attr': 'v',
-                    #                       'value': 0})
-
-                    self.andes.set_value({'model': 'PQ',
-                                          'idx': 'PQ_0',
-                                          'src': 'Ppf',
-                                          'attr': 'v',
-                                          'value': 5.0})
-
-                # === Execute control ===
-                if self.k >= j * int(self.tdmpc/self.tstep):
-                    j += 1
-                    success, role_change_list = self.run_admm()
-                    if not success:
-                        print("[Error] ADMM failed.")
-                        # break
-
-                    # Send set pointscollect_role_changes
-                    if self.controlled and self.disturbance:
-                        for role_change in role_change_list:
-                            if not role_change: 
-                                print("[Warning] Empty role change detected.")
-                            self.andes.set_value(role_change)
-
-                # === Simulate system forward ===
-                success, new_time = self.andes.run_step()
-                if not success:
-                    print(f"[Error] Simulation step failed at simulation time {new_time}.")
-                    break
-                
-                self.k += 1
-                self.t += self.tstep
-
-            return True
-        except Exception as e:
-            print(f"[Exception] Error during loop: {e}")
-            traceback.print_exc()
-        return False
+    def run_colmena_step(self):
+        success, new_time = self.andes.run_step()
+        omega_snapshot = {}
+        for agent_id, agent in self.agents.items():
+            omega = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
+            omega_snapshot[agent_id] = omega
+        self.omega_log.append((self.t, omega_snapshot))
+        # Omegas COI
+        for agent in self.agents.values():
+            omega_values = self.andes.get_partial_variable("GENROU", "omega", agent.generators)
+            weight = np.array(agent.M_values) * np.array(agent.Sn_values)
+            omega_coi = np.dot(weight, np.array(omega_values)) / np.sum(weight)
+            self.omega_coi_log.append(
+            (self.t, {str(agent.area): omega_coi})
+            )
+        self.t += self.tstep
+        self.k += 1
+        return True
 
     def collect_role_changes(self, specific_agent = None):
         """
@@ -390,15 +480,27 @@ class Coordinator:
         if self.controlled:
             for agent in agents:
                 for i, (gen_id, gov_id) in enumerate(zip(agent.generators, agent.governors)):
+                    if not Config.angles:
+                        role_change = {
+                            'model': 'TGOV1N',
+                            'src': 'paux0',
+                            'idx': gov_id,
+                            'attr': 'v',
+                            'value': agent.model.Pg[0, gen_id].value - agent.pref0[i]
+                        }
+                        andes_role_changes.append(role_change.copy())
 
-                    role_change = {
-                        'model': 'TGOV1N',
-                        'src': 'paux0',
-                        'idx': gov_id,
-                        'attr': 'v',
-                        'value': agent.model.Pg[0, gen_id].value - agent.pref0[i]
-                    }
-
-                    andes_role_changes.append(role_change.copy())
+                    else:
+                        for t in range(self.T_send):
+                            sync_time = self.andes.get_dae_time()
+                            role_change = {
+                                'model': 'TGOV1N',
+                                'src': 'paux0',
+                                'idx': gov_id,
+                                'attr': 'v',
+                                'value': agent.model.Pg[t, gen_id].value - agent.pref0[i],
+                                'time': sync_time + t*Config.dt
+                            }
+                        andes_role_changes.append(role_change.copy())
 
         return andes_role_changes

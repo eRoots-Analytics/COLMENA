@@ -1,4 +1,4 @@
-FROM pablodejuan/docker_ipopt_combined
+FROM xaviercasasbsc/docker_ipopt_combined
 
 # Set the working directory to the home directory of the container
 WORKDIR /home

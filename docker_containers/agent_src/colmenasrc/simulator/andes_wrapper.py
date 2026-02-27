@@ -11,6 +11,7 @@ class AndesWrapper:
 
         self.andes_url = Config.andes_url
         self.failure = Config.failure
+        self.failure_params = Config.failure_params
         self.additional_failures = Config.additional_failures
         
         #self.case_path = get_case(Config.case_path)

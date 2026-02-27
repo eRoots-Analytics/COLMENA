@@ -6,11 +6,12 @@ class Config:
     andes_url = "http://127.0.0.1:5000" # andes_url = 'http://192.168.68.59:5000'
     case_name = "npcc" # case_name = "kundur" "ieee39" "npcc"
     case_path = f"{case_name}/{case_name}_modified.xlsx" 
-    converters = False
+    converters = True
     if converters:
         case_path = f"{case_name}/{case_name}_converters.xlsx" 
 
     failure = 'load'
+    failure_params = []
     additional_failures = []
     # Simulator 
     tstep = 0.05
@@ -24,7 +25,7 @@ class Config:
     controlled = True
     # Horizon
     dt = tstep * 5
-    K = 2
+    K = 5
     # Execution
     tdmpc = 2.5
 

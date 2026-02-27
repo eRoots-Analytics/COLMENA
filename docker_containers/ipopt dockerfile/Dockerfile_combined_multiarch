@@ -1,0 +1,38 @@
+FROM coinor/coin-or-optimization-suite AS solver-source
+
+FROM python:3.9-slim-trixie AS final
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install runtime dependencies, including glibc (with libmvec)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libgfortran5 \
+    libblas3 \
+    liblapack3 \
+    libc6 \
+    libc6-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy IPOPT and COIN-OR libraries from solver image
+COPY --from=solver-source /usr/bin/ipopt /usr/local/bin/
+COPY --from=solver-source /usr/lib/libipopt.so.3 /usr/local/lib/
+COPY --from=solver-source /usr/lib/libipoptamplinterface.so.3 /usr/local/lib/
+COPY --from=solver-source /usr/lib/libcoin* /usr/local/lib/
+
+# Register /usr/local/lib as a library search path (works for amd64 & arm64)
+RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/coinor.conf && ldconfig
+
+# Install Pyomo (system-wide, override Debian restriction)
+RUN pip install --no-cache-dir --break-system-packages pyomo
+
+# Set working directory
+WORKDIR /app
+
+# Copy test script
+COPY test_pyomo_ipopt.py .
+
+# Run the test script by default
+CMD ["python3", "test_pyomo_ipopt.py"]
+
