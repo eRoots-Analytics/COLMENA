@@ -99,7 +99,7 @@ class AgentControl(Service):
 
     class Distributed_MPC(Role):
         @Version("0.0")
-        @BaseImage("xaviercasasbsc/agent_src_test")
+        @BaseImage("xaviercasasbsc/agent_src")
         @Requirements('AREA')
         @Metric('frequency')
         @Data(name = 'dual_vars', scope = 'grid_areas/id = .')
