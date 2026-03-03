@@ -281,4 +281,4 @@ class AgentControl(Service):
         @Persistent()
         def behavior(self):
             self.andes.run_step()
-            time.sleep(Config.tstep)
+            time.sleep(Config.tstep*Config.sim_ratio)
