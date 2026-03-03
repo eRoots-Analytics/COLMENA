@@ -1,43 +1,44 @@
 """
 This class contains all the parameter values for the configuration of the simulation.
 """
+import os
+
 class Config:
 
-    andes_url = "http://127.0.0.1:5000" # andes_url = 'http://192.168.68.59:5000'
+    andes_url = "http://andes:5000" # andes_url = 'http://192.168.68.59:5000'
     case_name = "npcc" # case_name = "kundur" "ieee39" "npcc"
-    case_path = f"{case_name}/{case_name}_modified.xlsx" 
-    converters = True
-    if converters:
-        case_path = f"{case_name}/{case_name}_converters.xlsx" 
-
-    failure = 'load'
-    failure_params = []
+    case_path = f"{case_name}/{case_name}.xlsx"
+    failure = 'load_multiple_10'
     additional_failures = []
-    # Simulator 
-    tstep = 0.05
-    tf = 25.0
+    failure_params = ['GENROU_46', 'GENROU_38']
+    converters = False
+    load_curtailment = False
+    sim_ratio = 1.5
 
-    # Disturbance 
-    td = 5.0
+    # Simulator
+    tstep = 0.05
+    tf = 50.0
+
+    # Disturbance
+    td = 7.0
 
     # DMPC
-    # Status 
+    # Status
     controlled = True
     # Horizon
-    dt = tstep * 5
-    K = 5
+    dt = 0.25
+    K = 2
     # Execution
     tdmpc = 2.5
 
-    ramp_up = -1
+    ramp_up = 1
     ramp_down = 1
 
-    angles = False 
+    T_send = K
+    angles = False
     omega_ref = 1.0
 
     q = 1e8 # NOTE: da abbassare se l'integratore viene introdotto
-    load_curtailment = True
-    w_shed = 1e5
     alpha = 100
     rho = 2.5e3
 
@@ -47,10 +48,10 @@ class Config:
     if angles:
         rho = 5e1
         dt = 0.1
-        K = 18 
+        K = 18
         T = K
         T_send = min(T, 8)
-        
+
     # q = 10/20
     # alpha = 15
     # rho = 1e3
@@ -59,9 +60,13 @@ class Config:
     # alpha = 100
     # rho = 2.5e3
 
-    max_iter = 500
-    tol = 1e-2
+    w_shed = 1e5
+
+    max_iter = 3 #2 intentar
+    tol = 1e-3 # ieee 1e-2
 
     fn = 60
-    colmena = False
+
+    colmena = True
     agent = False
+    
