@@ -36,6 +36,7 @@ class Config:
     omega_ref = 1.0
 
     q = 1e8 # NOTE: da abbassare se l'integratore viene introdotto
+    load_curtailment = True
     w_shed = 1e5
     alpha = 100
     rho = 2.5e3

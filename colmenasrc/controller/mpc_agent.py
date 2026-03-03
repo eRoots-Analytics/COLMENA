@@ -49,6 +49,7 @@ class MPCAgent:
         self.omega_ref =        Config.omega_ref 
 
         self.q =                Config.q
+        self.load_curtailment = Config.load_curtailment
         self.w_shed =           Config.w_shed
         self.rho =              Config.rho
 
@@ -72,10 +73,11 @@ class MPCAgent:
                             'omega': np.ones(self.K + 1),
                             'P': np.zeros(self.K),
                             'Pg': {(g, k): 0.0 for g in self.generators for k in range(self.K)},
-                            'Pshed': {(l, k): 0.0 for l in self.loads for k in range(self.K)},
                             'P_exchange': {(area, k): 0.0 for area in self.other_areas for k in range(self.K)},
                             'P_exchange_areas': {(area, k): 0.0 for area in self.other_areas for k in range(self.K)},
                             }
+        if self.load_curtailment:
+            self.vars_saved['Pshed'] = {(l, k): 0.0 for l in self.loads for k in range(self.K)}
         
         ### Set up individial optimization model ###
         self.model =                    pyo.ConcreteModel()
@@ -93,8 +95,9 @@ class MPCAgent:
  
         # Params: tuning cost function
         self.model.q =                  pyo.Param(initialize=self.q)
-        self.model.w_shed =             pyo.Param(initialize=self.w_shed)
         self.model.rho =                pyo.Param(initialize=self.rho)
+        if self.load_curtailment:
+            self.model.w_shed =         pyo.Param(initialize=self.w_shed)
 
         # Params: system parameters
         self.model.M =                  pyo.Param(initialize=self.M_coi)  # System inertia
@@ -103,8 +106,9 @@ class MPCAgent:
         self.model.omega0 =             pyo.Param(mutable=True)
         self.model.P0 =                 pyo.Param(mutable=True)
         self.model.Pd =                 pyo.Param(initialize=0, mutable=True)
-        self.model.Pd_load =            pyo.Param(self.model.loads, mutable=True, initialize=0.0)
         self.model.u_GENROU_values =    pyo.Param(self.model.generators, mutable=True)
+        if self.load_curtailment:
+            self.model.Pd_load =        pyo.Param(self.model.loads, mutable=True, initialize=0.0)
 
         # Decision variables
         def _get_power_bounds(model, k, i):
@@ -122,9 +126,10 @@ class MPCAgent:
         self.model.omega =               pyo.Var(self.model.TimeHorizon, bounds=(0.85, 1.15))
         self.model.P =                   pyo.Var(self.model.TimeInput)
         self.model.Pg =                  pyo.Var(self.model.TimeInput, self.model.generators, bounds=_get_power_bounds)
-        self.model.Pshed =               pyo.Var(self.model.TimeInput, self.model.loads, bounds=(0.0, None))
         self.model.P_exchange =          pyo.Var(self.model.TimeInput, self.model.other_areas)
         self.model.P_exchange_areas =    pyo.Var(self.model.TimeInput, self.model.other_areas)
+        if self.load_curtailment:
+            self.model.Pshed =           pyo.Var(self.model.TimeInput, self.model.loads, bounds=(0.0, None))
 
         ### Constraints ### 
         # Frequency
@@ -138,12 +143,16 @@ class MPCAgent:
             return model.Pg[k, i] <= model.u_GENROU_values[i] * ub
 
         self.model.trip_constr =          pyo.Constraint(self.model.TimeInput, self.model.generators, rule=_tripping_constraint)
-        self.model.shed_constr =          pyo.Constraint(self.model.TimeInput, self.model.loads, rule=lambda model, k, l: model.Pshed[k, l] <= model.Pd_load[l])
         self.model.balance_constr_area =  pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.P[k] == sum(model.u_GENROU_values[gen] * model.Pg[k, gen] for gen in model.generators))
         self.model.power_exchang_constr = pyo.Constraint(self.model.TimeInput, self.model.other_areas, rule=lambda model, k, nbr: model.P_exchange_areas[k, nbr] == -model.P_exchange[k, nbr])
+        if self.load_curtailment:
+            self.model.shed_constr =      pyo.Constraint(self.model.TimeInput, self.model.loads, rule=lambda model, k, l: model.Pshed[k, l] <= model.Pd_load[l])
         
         # Frequency dynamic 
-        self.model.dynamic_constr_freq =  pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - (model.Pd - sum(model.Pshed[k, l] for l in model.loads)) - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
+        if self.load_curtailment:
+            self.model.dynamic_constr_freq = pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - (model.Pd - sum(model.Pshed[k, l] for l in model.loads)) - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
+        else:
+            self.model.dynamic_constr_freq = pyo.Constraint(self.model.TimeInput, rule=lambda model, k: model.M * (model.omega[k + 1] - model.omega[k]) / self.dt == model.P[k] - model.Pd - sum(model.P_exchange[k, nbr] for nbr in model.other_areas)) #- model.P_offset[k] - model.D * (model.omega[k] - self.omega_ref)
 
     def setup_dmpc(self, coordinator):
         """
@@ -179,11 +188,15 @@ class MPCAgent:
             )
 
         self.model.freq_cost =       pyo.Expression(rule=_freq_cost)
-        self.model.load_shed_cost =  pyo.Expression(rule=_load_shedding_cost)
         self.model.lagrangian_term = pyo.Expression(rule=_lagrangian_term)
         self.model.convex_term =     pyo.Expression(rule=_convex_term)
+        if self.load_curtailment:
+            self.model.load_shed_cost = pyo.Expression(rule=_load_shedding_cost)
+            objective_expr = self.model.freq_cost + self.model.load_shed_cost + self.model.lagrangian_term + self.model.convex_term
+        else:
+            objective_expr = self.model.freq_cost + self.model.lagrangian_term + self.model.convex_term
 
-        self.model.cost = pyo.Objective(expr=self.model.freq_cost + self.model.load_shed_cost + self.model.lagrangian_term + self.model.convex_term, sense=pyo.minimize)
+        self.model.cost = pyo.Objective(expr=objective_expr, sense=pyo.minimize)
 
         return self.model
     
@@ -260,11 +273,15 @@ class MPCAgent:
         # Demand
         self.Pd = 0.0
         self.u_PQ_values = self.andes.get_partial_variable("PQ", "u", self.loads)
-        self.Ppf_values = self.andes.get_partial_variable("PQ", "Ppf", self.loads)
+        ppf_values = self.andes.get_partial_variable("PQ", "Ppf", self.loads)
+        if self.load_curtailment:
+            self.Ppf_values = ppf_values
         for i, (load, bus) in enumerate(zip(self.loads, self.loads_bus)):
             if bus in self.buses:
-                load_power = self.Ppf_values[i] * self.u_PQ_values[i]
-                self.model.Pd_load[load] = load_power
+                load_power = ppf_values[i] * self.u_PQ_values[i]
+                if self.load_curtailment:
+                    # Only positive net demand can be curtailed.
+                    self.model.Pd_load[load] = max(0.0, load_power)
                 self.Pd += load_power
         self.model.Pd = self.Pd
         
@@ -287,8 +304,9 @@ class MPCAgent:
             for i, gen in enumerate(self.generators):
                 self.vars_saved['Pg'][(gen, k)] = self.tm_values[i] 
 
-            for load in self.loads:
-                self.vars_saved['Pshed'][(load, k)] = 0.0
+            if self.load_curtailment:
+                for load in self.loads:
+                    self.vars_saved['Pshed'][(load, k)] = 0.0
                 
             for nbr in self.other_areas:
                 self.vars_saved['P_exchange'][(nbr, k)] = self.model.P_exchange[k, nbr].value                   #self.model.P_exchange[nbr].value
@@ -316,8 +334,9 @@ class MPCAgent:
             for gen in self.generators:
                 self.model.Pg[k, gen].value = self.vars_saved['Pg'][(gen, k)]
 
-            for load in self.loads:
-                self.model.Pshed[k, load].value = self.vars_saved['Pshed'][(load, k)]
+            if self.load_curtailment:
+                for load in self.loads:
+                    self.model.Pshed[k, load].value = self.vars_saved['Pshed'][(load, k)]
     
     def save_warm_start(self):
         """
@@ -332,8 +351,9 @@ class MPCAgent:
             for gen in self.generators:
                 self.vars_saved['Pg'][(gen, k)] = self.model.Pg[k, gen].value
 
-            for load in self.loads:
-                self.vars_saved['Pshed'][(load, k)] = self.model.Pshed[k, load].value
+            if self.load_curtailment:
+                for load in self.loads:
+                    self.vars_saved['Pshed'][(load, k)] = self.model.Pshed[k, load].value
                 
             for nbr in self.other_areas:
                 self.vars_saved['P_exchange'][(nbr, k)] = self.model.P_exchange[k, nbr].value

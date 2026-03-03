@@ -7,13 +7,13 @@ WORKDIR /home
 ENV PYTHONPATH=/home/colmenasrc:$PYTHONPATH
 
 # Copy the 'src' folder from the host machine into the container's home directory
-COPY colmenasrc/colmenasrc/ /home/colmenasrc/
-COPY utils/ /home/utils/
-COPY andes/ /home/andes/
+COPY colmenasrc/ /home/colmenasrc/
+COPY docker_containers/andes_src/utils/ /home/utils/
 COPY requirements.txt /home/
 COPY main_colmena.py /home/
 
 # Install Python dependencies
-RUN pip install --break-system-packages -r /home/requirements.txt
+RUN pip install --break-system-packages -r /home/requirements.txt \
+ && pip install --break-system-packages andes
 
 CMD ["python3", "/home/main_colmena.py"]
