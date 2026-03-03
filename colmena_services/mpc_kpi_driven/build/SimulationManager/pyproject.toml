@@ -3,12 +3,12 @@ requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
 
 [project]
-name = "all_global"
+name = "SimulationManager"
 dynamic = ["version", "dependencies"]
 authors = [
     { name = "Workflows and Distributed Computing group" },
 ]
-description = "COLMENA: all_global"
+description = "COLMENA: SimulationManager"
 requires-python = ">=3.8"
 license = "Apache-2.0"
 classifiers = [
@@ -19,7 +19,7 @@ classifiers = [
 homepage = "https://proyecto-colmena.com/en"
 
 [project.scripts]
-start = "all_global.main:main"
+start = "SimulationManager.main:main"
 
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.txt"]
@@ -31,9 +31,9 @@ extra-index-url = "https://test.pypi.org/simple/"
 allow-direct-references = true
 
 [tool.hatch.version]
-path = "all_global/main.py"
+path = "SimulationManager/main.py"
 
 [tool.hatch.build]
 include = [
-    "all_global/*"
+    "SimulationManager/*"
 ]

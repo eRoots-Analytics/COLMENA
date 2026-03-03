@@ -2,7 +2,6 @@ import os
 import numpy as np
 import json
 import time
-import re
 
 try:
     import requests
@@ -69,7 +68,7 @@ class GridAreas(Context):
     @Dependencies(*["pyomo", "requests"])
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+    
     def locate(self, device):
         num_area = os.getenv('AGENT_ID')[-1]
         id = {'id': f"area_{num_area}"}
@@ -80,7 +79,7 @@ class GlobalError(Context):
     @Dependencies(*["pyomo", "requests"])
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+    
     def locate(self, device):
         agent_id = os.getenv('AGENT_ID')
         id = {'id':1}
@@ -99,7 +98,7 @@ class AgentControl(Service):
 
     class Distributed_MPC(Role):
         @Version("0.0")
-        @BaseImage("xaviercasasbsc/agent_src_test")
+        @BaseImage("xaviercasasbsc/agent_src")
         @Requirements('AREA')
         @Metric('frequency')
         @Data(name = 'dual_vars', scope = 'grid_areas/id = .')
@@ -117,13 +116,13 @@ class AgentControl(Service):
                 self.andes = AndesWrapper(load = False)
             except:
                 self.andes = AndesWrapper()
-
+            
             self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])
             self.neighbors = requests.get(self.andes_url + '/neighbour_area', params={'area':self.area}).json()['value']
             self.iter = 0
-            self.max_iter = Config.max_iter
+            self.max_iter = 50
 
             self.data_read_scope = f"grid_areas/id = {str(self.area)}"
             self.data_write_scope = f"grid_areas/id = {str(self.area+1 if self.area < self.n_areas else 1)}"
@@ -142,88 +141,114 @@ class AgentControl(Service):
         def behavior(self):
             self.logger.info('Running')
             self.iter = 0
-            self.error = 1.0
-
             self.agent.initialize_variables_values()
             self.agent.first_warm_start()
             time.sleep(0.1)
-
             if not self.initialized_decorators:
-                self.state_horizon_jsonlike = {
-                    f"{a}_{b}_{c}_{d}": val
-                    for (a, b, c, d), val in self.coordinator.variables_horizon_values.items()
-                }
+                self.error = 1
+                self.global_error.publish({
+                    'agent': 1,
+                    'error': self.error,
+                    'to_publish': 1
+                })
+                self.state_horizon_jsonlike = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.state.publish(self.state_horizon_jsonlike, scope=self.data_write_scope)
                 self.state.publish(self.state_horizon_jsonlike, scope=self.data_read_scope)
                 self.initialized_decorators = True
+                #self.wait_for_all()
+                time.sleep(0.1)
+            else:
                 time.sleep(0.1)
 
+            # Stop Flask logs
             time_start = time.time()
-
-            while self.error >= self.admm.tol and self.iter < self.max_iter:
+            while self.error > self.admm.tol and self.iter < self.max_iter + 1.5*(self.iter==0)*(self.max_iter):
                 self.logger.info(f'Iteration {self.iter}')
-
                 initial_state_horizon_jsonlike = self.state.get(scope=self.data_read_scope)
                 if not isinstance(initial_state_horizon_jsonlike, dict):
                     initial_state_horizon_jsonlike = json.loads(initial_state_horizon_jsonlike)
-
-                if self.agent.generators:
-                    if self.iter == 0:
+                if self.agent.generators: 
+                    if self.iter ==0: 
+                        # Initialize the model for the first iteration
                         self.agent.initialize_variables_values()
+
                     if self.admm.controlled:
                         self.admm._solve_agent(self.agent, self.iter)
 
-                self.admm._update_duals()
-                self.admm._update_pyomo_params(self.agent)
+                    # Residual computation
+                    self.logger.info(f"Iteration {self.iter}, Primal Residual: is undefinided")
 
-                self.variables_horizon_values_json = {
-                    f"{a}_{b}_{c}_{d}": val
-                    for (a, b, c, d), val in self.coordinator.variables_horizon_values.items()
-                }
+                self.admm._update_duals()
+                self.admm._update_pyomo_params(self.agent) 
+
+                self.variables_horizon_values_json = {f"{a}_{b}_{c}_{d}": val for (a,b,c,d), val in self.coordinator.variables_horizon_values.items()}
                 self.state.publish(self.variables_horizon_values_json, scope=self.data_write_scope)
 
-                # Wait for neighbor horizon update (ring sync)
+                mse_error = self.admm._compute_primal_residual_mse()
+
+                #We read the global_error data channel and wait to publish our error when its the agent's turn
+                global_error_dict = self.global_error.get()
+                if not isinstance(global_error_dict, dict):
+                    global_error_dict = json.loads(global_error_dict)
+
+                while global_error_dict['to_publish'] != self.area:
+                    global_error_dict = self.global_error.get()
+                    if not isinstance(global_error_dict, dict):
+                        global_error_dict = json.loads(global_error_dict)
+                    print(f'waiting for areas to publish errors {global_error_dict} in {self.area}')
+                    time.sleep(0.001)
+                global_error_dict[f'{self.area}_{self.iter}'] = mse_error
+                global_error_dict['to_publish'] = self.area + 1 if self.area < self.n_areas else 1
+                self.global_error.publish(global_error_dict)
+
+                #Once all agents have updated the error, we compute the global error from the previous iteration (!)
+                new_error = 0
+                if self.iter >= 1:
+                    for i in range(1,self.n_areas+1):
+                        try:
+                            new_error = max(new_error, global_error_dict[f'{i}_{self.iter-1}'])
+                        except KeyError:
+                            self.logger.info("No error value found.")
+                else:
+                    new_error = 1
+                if self.area == self.n_areas:
+                    global_error_dict = filter_global_error(global_error_dict, self.iter)
+                    global_error_dict['to_publish'] = 1
+                    self.global_error.publish(global_error_dict)
+                self.error = new_error
+                print('f[Main] Current mse error is {self.error}')
+
+                #We wait until we have received a new message from the other area
                 changed_horizon = False
                 change_time_start = time.time()
                 while not changed_horizon:
-                    raw_state = self.state.get(scope=self.data_read_scope)
-                    state_horizon_jsonlike = raw_state if isinstance(raw_state, dict) else json.loads(raw_state)
+                    state_horizon_jsonlike = json.loads(self.state.get(scope=self.data_read_scope))
+                    self.logger.info(f'Waiting 3 for iter {self.iter} and online step {self.online_step}')
                     if state_horizon_jsonlike != initial_state_horizon_jsonlike:
-                        state_horizon_read = {
-                            tuple(map(int, key.split("_"))): val
-                            for key, val in state_horizon_jsonlike.items()
-                        }
-                        self.coordinator.variables_horizon_values.update(state_horizon_read)
+                        self.logger.info(f'Horizon changed')
                         changed_horizon = True
-                        break
+                        state_horizon_read = {tuple(map(int, key.split("_"))): val for key, val in state_horizon_jsonlike.items()}
+                        self.coordinator.variables_horizon_values.update(state_horizon_read)
+                        time.sleep(0.005)
+                        break 
                     if time.time() - change_time_start > 2:
-                        self.logger.info(f'Wait broken at iter {self.iter}')
+                        self.logger.info(f'Wait broken')
                         break
-                    time.sleep(0.001)
-
-                mse_error = self.admm._compute_primal_residual_mse()
-                self.error = float(mse_error)
-                self.logger.info(f"Iteration {self.iter}, local MSE residual: {self.error}")
-                print(f'[Main] Current mse error is {self.error}')
-
                 self.iter += 1
-
-            role_change_list = self.coordinator.collect_role_changes(specific_agent=self.agent)
-
-            if hasattr(self.agent.model, "Pshed"):
-                total_pshed = sum((self.agent.model.Pshed[0, l].value or 0.0) for l in self.agent.loads)
-                self.logger.info(f"Total Pshed k=0: {total_pshed}")
-
+                        
+            role_change_list = self.coordinator.collect_role_changes(specific_agent = self.agent)
             for role_change in role_change_list:
-                if role_change:
-                    self.logger.info(f'Role change is {role_change}')
-                    self.andes.set_value(role_change)
-
+                if not role_change:
+                    pass
+                    self.logger.info("[Warning] Empty role change detected.")
+                self.logger.info(f'Role change is {role_change}')
+                self.andes.set_value(role_change)
             time_spent = time.time() - time_start
             self.online_step += 1
-            time.sleep(max(0, self.agent.dt - time_spent))
-            return 1
+            time.sleep(max(0,self.agent.dt - time_spent))
 
+            return 1
+    
     class MonitoringRole(Role):
         @Version("0.0")
         @BaseImage("xaviercasasbsc/agent_src")
