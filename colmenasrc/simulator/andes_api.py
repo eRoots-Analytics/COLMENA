@@ -46,11 +46,7 @@ def load_simulation():
             case_file,
             setup=False
         )
-        if 'converter' in case_file:
-            print(case_file)
-            print(ad.__file__)
-            system.REDUAL.prepare()
-            
+        system.prepare()
         system.setup()
         system.files.no_output = True # no .lst, .npz and .txt output
         system.PFlow.run()
@@ -429,7 +425,7 @@ def complete_variable_sync(all_devices = False):
         response = {}
         model_name = data['model']
         var_name = data['var']
-       
+
         model = getattr(system, model_name, None)
         var = getattr(model, var_name)
         value = var.v
