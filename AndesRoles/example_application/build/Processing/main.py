@@ -1,6 +1,0 @@
-from example_application import ExampleApplication
-
-
-if __name__ == '__main__':
-	r = ExampleApplication.Processing(ExampleApplication)
-	r.execute()

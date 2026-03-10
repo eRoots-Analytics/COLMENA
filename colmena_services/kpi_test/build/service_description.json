@@ -1,0 +1,48 @@
+{
+    "id": {
+        "value": "AgentControl"
+    },
+    "dockerContextDefinitions": [
+        {
+            "id": "globalerror",
+            "imageId": "globalerror:latest"
+        }
+    ],
+    "kpis": [],
+    "dockerRoleDefinitions": [
+        {
+            "id": "ActivationRole",
+            "imageId": "activationrole:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": []
+        },
+        {
+            "id": "Distributed_MPC",
+            "imageId": "distributed_mpc:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": [
+                {
+                    "query": "agentcontrol/frequency > 1",
+                    "scope": "all_global/id = ."
+                }
+            ]
+        },
+        {
+            "id": "MonitoringRole",
+            "imageId": "monitoringrole:latest",
+            "hardwareRequirements": [
+                "AREA"
+            ],
+            "kpis": [
+                {
+                    "query": "agentcontrol/always_negative[3s] > 1",
+                    "scope": "all_global/id = ."
+                }
+            ]
+        }
+    ]
+}

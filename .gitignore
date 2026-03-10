@@ -1,3 +1,78 @@
-AndesRoles/roles_tests/build/LayerOne/Ipopt
-/venv/
-/plots/
+# ================================
+# Python bytecode and cache
+# ================================
+*.py[cod]
+*$py.class
+.history/
+
+# C extensions
+*.so
+
+# VS and IDE project files
+*.pyproj
+*.sln
+.vs/
+.idea/
+.vscode/
+
+# Distribution / packaging
+.Python
+env/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+venv/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Logs and test outputs
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Temporary/Editor/OS files
+.DS_Store
+*~
+*.swp
+*.swo
+~$*.xlsx
+
+# IPython/Jupyter
+.ipynb_checkpoints
+
+# PyBuilder
+target/
+
+# Your project-specific files
+venv/
+plots/
+pycode
+*.png
+*.pyc

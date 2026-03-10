@@ -121,7 +121,10 @@ class AgentControl(Service):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.andes_url = andes_url
-            self.andes = AndesWrapper()
+            try:
+                self.andes = AndesWrapper(load =False)
+            except:
+                self.andes = AndesWrapper()
             self.n_areas = len(self.andes.get_complete_variable("Area", "idx"))
             self.agent_id = os.getenv('AGENT_ID')
             self.area = int(self.agent_id[-1])

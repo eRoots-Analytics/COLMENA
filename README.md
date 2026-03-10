@@ -21,67 +21,42 @@ You also need **Docker** for containerized execution:
 
 ## Repository Structure  
 
-### **AndesApp Folder**  
-The **AndesApp** folder contains essential files for the use case, including:  
+### **andes** 
+This folder contains a modified version of the power system dynamic simulator ANDES. In particular, the modes of the governors used in the three cases kundur, ieee39 and npcc have been changed such that the distributed MPC scheme do not need to be modified depending on the considered case.
 
-- A **customized Andes version** with **new models and routines** for the use case.  
-- An **implementation of Andes in Flask**, enabling integration realtime simulation of a grid in parallel with COLMENA integration.  
-- A **stable version** of the customized Andes setup for testing and deployment.  
+### **notebooks** 
+This folder contains contains notebooks to play around with ANDES and learn about all of its functionalities and peculiarities. 
 
-### **AndesRoles Folder**  
+### **plots** 
+This folder is used to save all result figures.
 
+### **scripts**
+This folder contains the main script, which intializes the web communication between coordinator and ANDES, run the simulation and plot the results. 
 
+### **src**
+This folder contains the following: 
+- config: where all the system parameters are defined and stored.
+- controller: where the DMPC is implemented
+    - mpc_agent.py defines the agent optimization problem 
+    - admm.py performs the admm algorithm, i.e. first it solves for each agent, then it check for convergence and finally it executes the duals and parameters update if necessary. 
+    - coordinator.py coordinates the simulation with the execution of the DMPC and manage the sharing of variables. 
+- simulator: where the web interface with ANDES is defined
+    - andes_api.py defines all the web application functions using Flask that allow the coordinator to communicate with ANDES via POST/GET requests. 
+    - andes_wrapper.py wraps all these functions for readibility porpuses. 
 
-## **Usage & First Testing**  
-To launch the Flask implementation of Andes, run:  
-```bash
-python AndesApp/Scripts/app_andes_interfacy.py
-```
+### **tests** 
+This folder contains test scripts.
+
+### **utils** 
+This folder contains util functions.
+- plotting.py is where all the plots are defined. 
 
 #### **Running a Stable Dynamic Grid Case**  
-To execute a stable version of a dynamic grid simulation (IEEE 39-bus case), run:  
+To execute a stable version of a dynamic grid simulation (kundur, ieee39 or npcc), run:  
 
 ```bash
-python AndesApp/Scripts/ieee39_cases/ieee39_REDUAL.py
+python scripts/main.py
 ```
 
-This simulation provides a desired scenario in which a grid changes dynamically through the simulation. The charge of different loads as well as the operation mode of different converters change during the simulation. 
+This simulation provides a desired scenario in which a grid changes dynamically through the simulation. To change the case to simulate it is necessary to change the config.py file. 
 
-#### **Service & Role definition**  
-
-Service Definition and Role definition can be found the file:
-
-```bash
-AndesRoles/Scripts/example_eroots_edit.py
-```
-
-For testing purposes, these roles can be executed alongside AndesApp in Flask by running the script.
-```bash
-python AndesRoles/main.py
-```
-
-Changing the line to the appropriate file name and service name changes the executed roles. 
-
-```python
-from eroots_test import ErootsUseCase
-from ${FileName} import ${ServiceName}
-```
-Executing the roles in this way runs the roles continuously disregarding the activation condition for the role (KPIs). For a complete COLMENA execution run the following file (Not fully supported):
-
-```bash
-python AndesApp/colmena_deploy/colmena_terminals.py
-```
-
-Before running the code it is important to also change your machine's local IP in the service definition to ensure the program is working as intended. 
-
-```python
-# Update this to match your machine's local IP before running the script
-HOST_IP = "192.168.1.122"
-```
-Then you can chose which service to run by changing the line:
-
-```python
-SERVICE_FILENAME = 'eroots_test'
-```
-
-This will launch a simulation of colmena with 2 different agents in different docker containers.

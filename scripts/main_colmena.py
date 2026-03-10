@@ -15,6 +15,7 @@ from colmenasrc.config.config import Config
 from colmenasrc.simulator.andes_api import app
 from colmenasrc.controller.coordinator import Coordinator  
 from colmenasrc.simulator.andes_wrapper import AndesWrapper  
+Config.colmena = True
 
 def run_flask_app():
     # Stop Flask logs
@@ -67,10 +68,16 @@ if __name__ == '__main__':
     # Plotting
     import matplotlib
     matplotlib.use("TkAgg") 
-    from utils.plotting import plot_omegas, plot_omega_coi
-    print(sim)
+    from utils.plotting import plot_omegas, plot_omega_coi, plot_coordinator_log
+    a = sim.andes.get_complete_variable('REDUAL', 'is_GFM')
+    b = sim.andes.get_complete_variable('REDUAL', 'a')
+    print(a)
+    print(b)
     plot_omegas(sim)
     plot_omega_coi(sim) 
-    
+    plot_coordinator_log(sim, log='bus_v_log')
+    plot_coordinator_log(sim, log='bus_a_log')
+    plot_coordinator_log(sim, log='redual_a_log')
+    plot_coordinator_log(sim, log='redual_v_log')
 
 

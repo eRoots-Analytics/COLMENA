@@ -5,38 +5,42 @@
     "dockerContextDefinitions": [
         {
             "id": "grid_areas",
-            "imageId": "grid_areas:latest"
+            "imageId": "grid_areas:0.1"
         },
         {
             "id": "all_global",
-            "imageId": "all_global:latest"
+            "imageId": "all_global:0.1"
         }
     ],
     "kpis": [],
     "dockerRoleDefinitions": [
         {
             "id": "Distributed_MPC",
-            "imageId": "distributed_mpc:latest",
+            "imageId": "distributed_mpc:0.0",
             "hardwareRequirements": [
                 "AREA"
             ],
             "kpis": [
                 {
-                    "query": "AgentControl/frequency[5s] < 1.001 or AgentControl/frequency[5s] > 0.999"
+                    "query": "abs(avg(avg_over_time(agentcontrol_frequency[1m])) - 1) < 0.001"
                 }
             ]
         },
         {
             "id": "MonitoringRole",
-            "imageId": "monitoringrole:latest",
+            "imageId": "monitoringrole:0.0",
             "hardwareRequirements": [
                 "AREA"
             ],
-            "kpis": [
-                {
-                    "query": "always_negative[10s] > 1"
-                }
-            ]
+            "kpis": []
+        },
+        {
+            "id": "SimulationManager",
+            "imageId": "simulationmanager:0.0",
+            "hardwareRequirements": [
+                "SIMULATOR"
+            ],
+            "kpis": []
         }
     ]
 }
